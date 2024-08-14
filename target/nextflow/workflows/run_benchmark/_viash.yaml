@@ -43,6 +43,10 @@ authors:
     info:
       github: rcannood
       orcid: "0000-0003-3641-729X"
+links:
+  issue_tracker: https://github.com/openproblems-bio/task_predict_modality/issues
+  repository: https://github.com/openproblems-bio/task_predict_modality
+  docker_registry: ghcr.io
 info:
   image: thumbnail.svg
   test_resources:

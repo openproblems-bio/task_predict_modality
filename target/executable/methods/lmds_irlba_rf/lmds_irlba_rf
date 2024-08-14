@@ -493,9 +493,9 @@ RUN Rscript -e 'if (!requireNamespace("remotes", quietly = TRUE)) install.packag
   Rscript -e 'remotes::install_cran(c("lmds", "ranger", "pbapply", "irlba"), repos = "https://cran.rstudio.com")'
 
 LABEL org.opencontainers.image.description="Companion container for running component methods lmds_irlba_rf"
-LABEL org.opencontainers.image.created="2024-08-14T20:54:21Z"
+LABEL org.opencontainers.image.created="2024-08-14T21:00:08Z"
 LABEL org.opencontainers.image.source="https://github.com/openproblems-bio/task_predict_modality"
-LABEL org.opencontainers.image.revision="27b491e90222fa50a98c10fa8982b9ed420c6be3"
+LABEL org.opencontainers.image.revision="3dd483caa5266e3ccc789edc4be5efa19b752f5f"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER
@@ -798,7 +798,7 @@ if [[ "$VIASH_ENGINE_TYPE" == "docker" ]]; then
 
   # determine docker image id
   if [[ "$VIASH_ENGINE_ID" == 'docker' ]]; then
-    VIASH_DOCKER_IMAGE_ID='openproblems-bio/task_predict_modality/methods/lmds_irlba_rf:build_main'
+    VIASH_DOCKER_IMAGE_ID='ghcr.io/openproblems-bio/task_predict_modality/methods/lmds_irlba_rf:build_main'
   fi
 
   # print dockerfile

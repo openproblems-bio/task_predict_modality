@@ -498,9 +498,9 @@ RUN pip install --upgrade pip && \
   pip install --upgrade --no-cache-dir "scikit-learn" "pandas" "numpy"
 
 LABEL org.opencontainers.image.description="Companion container for running component methods guanlab_dengkw_pm"
-LABEL org.opencontainers.image.created="2024-08-14T20:54:20Z"
+LABEL org.opencontainers.image.created="2024-08-14T21:00:07Z"
 LABEL org.opencontainers.image.source="https://github.com/openproblems-bio/task_predict_modality"
-LABEL org.opencontainers.image.revision="27b491e90222fa50a98c10fa8982b9ed420c6be3"
+LABEL org.opencontainers.image.revision="3dd483caa5266e3ccc789edc4be5efa19b752f5f"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER
@@ -792,7 +792,7 @@ if [[ "$VIASH_ENGINE_TYPE" == "docker" ]]; then
 
   # determine docker image id
   if [[ "$VIASH_ENGINE_ID" == 'docker' ]]; then
-    VIASH_DOCKER_IMAGE_ID='openproblems-bio/task_predict_modality/methods/guanlab_dengkw_pm:build_main'
+    VIASH_DOCKER_IMAGE_ID='ghcr.io/openproblems-bio/task_predict_modality/methods/guanlab_dengkw_pm:build_main'
   fi
 
   # print dockerfile

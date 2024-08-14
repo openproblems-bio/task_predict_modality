@@ -3481,6 +3481,10 @@ meta = [
     }
   ],
   "license" : "MIT",
+  "links" : {
+    "repository" : "https://github.com/openproblems-bio/task_predict_modality",
+    "docker_registry" : "ghcr.io"
+  },
   "runners" : [
     {
       "type" : "nextflow",
@@ -3524,7 +3528,7 @@ meta = [
     "engine" : "native",
     "output" : "target/nextflow/workflows/run_benchmark",
     "viash_version" : "0.9.0-RC7",
-    "git_commit" : "27b491e90222fa50a98c10fa8982b9ed420c6be3",
+    "git_commit" : "3dd483caa5266e3ccc789edc4be5efa19b752f5f",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3646,7 +3650,12 @@ meta = [
       "single-cell"
     ],
     "license" : "MIT",
-    "organization" : "openproblems-bio"
+    "organization" : "openproblems-bio",
+    "links" : {
+      "repository" : "https://github.com/openproblems-bio/task_predict_modality",
+      "docker_registry" : "ghcr.io",
+      "issue_tracker" : "https://github.com/openproblems-bio/task_predict_modality/issues"
+    }
   }
 }'''))
 ]
