@@ -1,0 +1,58 @@
+viash_version: 0.9.0-RC6
+# Step 1: Change the name of the task.
+# example: task_name_of_this_task
+name: task_template
+organization: openproblems-bio
+version: build_main
+# Step 2: Update the description to a short description of the task.
+description: |
+  An OpenProblems benchmark task.
+license: MIT
+# Step 3: Add keywords to describe the task.
+keywords: [single-cell, openproblems, benchmark]
+# Step 4: Update the `task_template` to the name of the task from step 1.
+links:
+  issue_tracker: https://github.com/openproblems-bio/task_template/issues
+  repository: https://github.com/openproblems-bio/task_template
+  docker_registry: ghcr.io
+# Step 5: Update the info fields to the text from the task issue. 
+info:
+  # A unique, human-readable, short label. Used for creating summary tables and visualisations.
+  label: Template
+  description: |
+    Provide a clear and concise description of your task, detailing the specific problem it aims
+    to solve. Outline the input data types, the expected output, and any assumptions or constraints.
+    Be sure to explain any terminology or concepts that are essential for understanding the task.
+  summary: A one sentence summary of purpose and methodology. Used for creating an overview tables.
+  motivation: "Explain the motivation behind your proposed task. Describe the biological or computational \nproblem you aim to address and why it’s important. Discuss the current state of research in\nthis area and any gaps or challenges that your task could help address. This section \nshould convince readers of the significance and relevance of your task.\n"
+  image: The name of the image file to use for the component on the website.
+  # Step 6: Replace the task_template to the name of the task in `info.name`.
+  test_resources:
+    - type: s3
+      path: s3://openproblems-data/resources_test/task_template/
+      dest: resources_test/task_template
+    - type: s3
+      path: s3://openproblems-data/resources_test/common/
+      dest: resources_test/common
+# Step 7: Update the authors of the task.
+authors:
+  # Full name of the author, usually in the name of FirstName MiddleName LastName.
+  - name: Kai Waldrant
+    # Role of the author. Possible values:
+    # 
+    # * `"author"`: Authors who have made substantial contributions to the component.
+    # * `"maintainer"`: The maintainer of the component.
+    # * `"contributor"`: Authors who have made smaller contributions (such as code patches etc.).
+    roles: ["author", "maintainer"]
+    # Additional information on the author
+    info:
+      github: KaiWaldrant
+      orcid: 0009-0003-8555-1361
+      email: '...'
+      twitter: '...'
+      linkedin: '...'
+# Step 8: Remove all of the comments of the steps you completed
+# Step 9: High five yourself!
+
+config_mods: |
+  .runners[.type == "nextflow"].config.labels := { lowmem : "memory = 20.Gb", midmem : "memory = 50.Gb", highmem : "memory = 100.Gb", lowcpu : "cpus = 5", midcpu : "cpus = 15", highcpu : "cpus = 30", lowtime : "time = 1.h", midtime : "time = 4.h", hightime : "time = 8.h", veryhightime : "time = 24.h" }
