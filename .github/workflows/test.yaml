@@ -1,0 +1,11 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build:
+    uses: openproblems-bio/actions/.github/workflows/test.yml@main
