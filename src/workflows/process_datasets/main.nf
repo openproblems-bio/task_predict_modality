@@ -1,7 +1,7 @@
 include { findArgumentSchema } from "${meta.resources_dir}/helper.nf"
 
 workflow auto {
-  findStatesTemp(params, meta.config)
+  findStates(params, meta.config)
     | meta.workflow.run(
       auto: [publish: "state"]
     )
@@ -12,15 +12,18 @@ workflow run_wf {
   input_ch
 
   main:
-  output_ch = input_ch
 
+  output_ch = input_ch
+  
+    // Check if the input datasets match the desired format --------------------------------
     | check_dataset_schema.run(
+      key: "check_dataset_schema_mod1",
       fromState: { id, state ->
-        def schema = findArgumentSchema(meta.config, "input")
+        def schema = findArgumentSchema(meta.config, "input_mod1")
         def schemaYaml = tempFile("schema.yaml")
         writeYaml(schema, schemaYaml)
         [
-          "input": state.input,
+          "input": state.input_mod1,
           "schema": schemaYaml
         ]
       },
@@ -28,146 +31,99 @@ workflow run_wf {
         // read the output to see if dataset passed the qc
         def checks = readYaml(output.output)
         state + [
-          "dataset": checks["exit_code"] == 0 ? state.input : null,
+          "dataset_mod1": checks["exit_code"] == 0 ? state.input_mod1 : null,
         ]
       }
     )
 
+    | check_dataset_schema.run(
+      key: "check_dataset_schema_mod2",
+      fromState: { id, state ->
+        def schema = findArgumentSchema(meta.config, "input_mod2")
+        def schemaYaml = tempFile("schema.yaml")
+        writeYaml(schema, schemaYaml)
+        [
+          "input": state.input_mod2,
+          "schema": schemaYaml
+        ]
+      },
+      toState: { id, output, state ->
+        // read the output to see if dataset passed the qc
+        def checks = readYaml(output.output)
+        state + [
+          "dataset_mod2": checks["exit_code"] == 0 ? state.input_mod2 : null,
+        ]
+      }
+    )
+    | view{"test: ${it}"}
+
     // remove datasets which didn't pass the schema check
     | filter { id, state ->
-      state.dataset != null
+      state.dataset_mod1 != null &&
+      state.dataset_mod2 != null
+    }
+
+    // Use datasets in both directions (mod1 -> mod2 and mod2 -> mod1) ---------------------
+    // extract the dataset metadata
+    | extract_metadata.run(
+      key: "extract_metadata",
+      fromState: [input: "dataset_mod1"],
+      toState: { id, output, state ->
+        def uns = readYaml(output.output).uns
+        state + [
+          "dataset_id": uns.dataset_id,
+          "normalization_id": uns.normalization_id
+        ]
+      }
+    )
+
+    // Add swap direction to the state and set new id
+    | flatMap{id, state -> 
+      ["normal", "swap"].collect { dir ->
+        // Add direction (normal / swap) to id  
+        // Note: this id is added before the normalisation id  
+        // Example old id: dataset_loader/dataset_id/normalization_id  
+        // Example new id: dataset_loader/dataset_id/direction/normalization_id
+        def orig_dataset_id = id.replaceAll("/${state.normalization_id}", "")
+        def normalization_id = id.replaceAll("^${orig_dataset_id}", "")
+        def new_dataset_id = orig_dataset_id + "/" + dir
+        def new_id = new_dataset_id + normalization_id
+
+        [new_id, state + [dataset_id: new_dataset_id, direction: dir, "_meta": [join_id: id]]]
+      }
     }
 
     | process_dataset.run(
-      fromState: [ input: "dataset" ],
+      fromState: { id, state ->
+        def swap_state = state.direction == "swap" ? true : false
+        [
+          dataset_id: state.dataset_id,
+          input_mod1: state.dataset_mod1,
+          input_mod2: state.dataset_mod2,
+          output_train_mod1: state.output_train_mod1,
+          output_train_mod2: state.output_train_mod2,
+          output_test_mod1: state.output_test_mod1,
+          output_test_mod2: state.output_test_mod2,
+          swap: swap_state
+        ]
+      },
       toState: [
-        output_train: "output_train",
-        output_test: "output_test",
-        output_solution: "output_solution"
+        "output_train_mod1",
+        "output_train_mod2",
+        "output_test_mod1",
+        "output_test_mod2"
       ]
     )
 
     // only output the files for which an output file was specified
-    | setState(["output_train", "output_test", "output_solution"])
+    | setState ([
+      "output_train_mod1",
+      "output_train_mod2",
+      "output_test_mod1",
+      "output_test_mod2",
+      "_meta"
+    ])
 
   emit:
   output_ch
-}
-
-
-// temp fix for rename_keys typo
-
-def findStatesTemp(Map params, Map config) {
-  def auto_config = deepClone(config)
-  def auto_params = deepClone(params)
-
-  auto_config = auto_config.clone()
-  // override arguments
-  auto_config.argument_groups = []
-  auto_config.arguments = [
-    [
-      type: "string",
-      name: "--id",
-      description: "A dummy identifier",
-      required: false
-    ],
-    [
-      type: "file",
-      name: "--input_states",
-      example: "/path/to/input/directory/**/state.yaml",
-      description: "Path to input directory containing the datasets to be integrated.",
-      required: true,
-      multiple: true,
-      multiple_sep: ";"
-    ],
-    [
-      type: "string",
-      name: "--filter",
-      example: "foo/.*/state.yaml",
-      description: "Regex to filter state files by path.",
-      required: false
-    ],
-    // to do: make this a yaml blob?
-    [
-      type: "string",
-      name: "--rename_keys",
-      example: ["newKey1:oldKey1", "newKey2:oldKey2"],
-      description: "Rename keys in the detected input files. This is useful if the input files do not match the set of input arguments of the workflow.",
-      required: false,
-      multiple: true,
-      multiple_sep: ";"
-    ],
-    [
-      type: "string",
-      name: "--settings",
-      example: '{"output_dataset": "dataset.h5ad", "k": 10}',
-      description: "Global arguments as a JSON glob to be passed to all components.",
-      required: false
-    ]
-  ]
-  if (!(auto_params.containsKey("id"))) {
-    auto_params["id"] = "auto"
-  }
-
-  // run auto config through processConfig once more
-  auto_config = processConfig(auto_config)
-
-  workflow findStatesTempWf {
-    helpMessage(auto_config)
-
-    output_ch = 
-      channelFromParams(auto_params, auto_config)
-        | flatMap { autoId, args ->
-
-          def globalSettings = args.settings ? readYamlBlob(args.settings) : [:]
-
-          // look for state files in input dir
-          def stateFiles = args.input_states
-
-          // filter state files by regex
-          if (args.filter) {
-            stateFiles = stateFiles.findAll{ stateFile ->
-              def stateFileStr = stateFile.toString()
-              def matcher = stateFileStr =~ args.filter
-              matcher.matches()}
-          }
-
-          // read in states
-          def states = stateFiles.collect { stateFile ->
-            def state_ = readTaggedYaml(stateFile)
-            [state_.id, state_]
-          }
-
-          // construct renameMap
-          if (args.rename_keys) {
-            def renameMap = args.rename_keys.collectEntries{renameString ->
-              def split = renameString.split(":")
-              assert split.size() == 2: "Argument 'rename_keys' should be of the form 'newKey:oldKey;newKey:oldKey'"
-              split
-            }
-
-            // rename keys in state, only let states through which have all keys
-            // also add global settings
-            states = states.collectMany{id, state ->
-              def newState = [:]
-
-              for (key in renameMap.keySet()) {
-                def origKey = renameMap[key]
-                if (!(state.containsKey(origKey))) {
-                  return []
-                }
-                newState[key] = state[origKey]
-              }
-
-              [[id, globalSettings + newState]]
-            }
-          }
-
-          states
-        }
-    emit:
-    output_ch
-  }
-
-  return findStatesTempWf
 }
