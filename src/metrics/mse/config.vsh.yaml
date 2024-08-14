@@ -1,0 +1,33 @@
+__merge__: ../../api/comp_metric.yaml
+name: mse
+info:
+  metrics:
+    - name: rmse
+      label: RMSE
+      summary: The root mean squared error.
+      description: The square root of the mean of the square of all of the error.
+      min: 0
+      max: "+inf"
+      maximize: false
+      references:
+        doi: 10.5194/gmdd-7-1525-2014
+    - name: mae
+      label: MAE
+      summary: The mean absolute error.
+      description: The average difference between the expression values and the predicted expression values.
+      min: 0
+      max: "+inf"
+      maximize: false
+      references:
+        doi: 10.5194/gmdd-7-1525-2014
+resources:
+  - type: python_script
+    path: script.py
+engines:
+  - type: docker
+    image: openproblems/base_python:1.0.0
+runners:
+  - type: executable
+  - type: nextflow
+    directives:
+      label: [midtime, lowmem, lowcpu]

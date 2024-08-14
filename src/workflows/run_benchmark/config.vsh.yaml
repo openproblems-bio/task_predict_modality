@@ -1,24 +1,24 @@
-name: run_benchmark
-namespace: workflows
-
+name: "run_benchmark"
+namespace: "workflows"
 argument_groups:
   - name: Inputs
     arguments:
-      - name: "--input_train"
-        __merge__: /src/api/file_train_h5ad.yaml
-        type: file
-        direction: input
+      - name: "--input_train_mod1"
+        __merge__: /src/api/file_train_mod1.yaml
         required: true
-      - name: "--input_test"
-        __merge__: /src/api/file_test_h5ad.yaml
-        type: file
         direction: input
+      - name: "--input_train_mod2"
+        __merge__: /src/api/file_train_mod2.yaml
         required: true
-      - name: "--input_solution"
-        __merge__: /src/api/file_solution.yaml
-        type: file
         direction: input
+      - name: "--input_test_mod1"
+        __merge__: /src/api/file_test_mod1.yaml
         required: true
+        direction: input
+      - name: "--input_test_mod2"
+        __merge__: /src/api/file_test_mod2.yaml
+        required: true
+        direction: input
   - name: Outputs
     arguments:
       - name: "--output_scores"
@@ -53,27 +53,27 @@ argument_groups:
         type: string
         multiple: true
         description: A list of method ids to run. If not specified, all methods will be run.
-
 resources:
   - type: nextflow_script
     path: main.nf
     entrypoint: run_wf
   - type: file
     path: /_viash.yaml
-
-repositories:
-  - name: openproblems-v2
-    type: github
-    repo: openproblems-bio/openproblems-v2
-    tag: main_build
 dependencies:
   - name: common/check_dataset_schema
-    repository: openproblems-v2
+    repository: openproblems_v2
   - name: common/extract_metadata
-    repository: openproblems-v2
-  - name: control_methods/true_labels
-  - name: methods/logistic_regression
-  - name: metrics/accuracy
-
+    repository: openproblems_v2
+  - name: control_methods/mean_per_gene
+  - name: control_methods/random_predict
+  - name: control_methods/zeros
+  - name: control_methods/solution
+  - name: methods/knnr_py
+  - name: methods/knnr_r
+  - name: methods/lm
+  - name: methods/lmds_irlba_rf
+  - name: methods/guanlab_dengkw_pm
+  - name: metrics/correlation
+  - name: metrics/mse
 runners:
   - type: nextflow
