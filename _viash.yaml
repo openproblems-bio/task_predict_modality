@@ -19,7 +19,7 @@ description: |
   multi-modal data shows that this is not trivial.
 
   Explain the motivation behind your proposed task. Describe the biological or computational 
-  problem you aim to address and why it’s important. Discuss the current state of research in
+  problem you aim to address and why it's important. Discuss the current state of research in
   this area and any gaps or challenges that your task could help address. This section 
   should convince readers of the significance and relevance of your task.
 
@@ -70,6 +70,12 @@ info:
     - type: s3
       path: s3://openproblems-data/resources_test/predict_modality/
       dest: resources_test/predict_modality
+
+repositories:
+  - name: openproblems_v2
+    type: github
+    repo: openproblems-bio/openproblems-v2
+    tag: main_build
 
 config_mods: |
   .runners[.type == "nextflow"].config.labels := { lowmem : "memory = 20.Gb", midmem : "memory = 50.Gb", highmem : "memory = 100.Gb", lowcpu : "cpus = 5", midcpu : "cpus = 15", highcpu : "cpus = 30", lowtime : "time = 1.h", midtime : "time = 4.h", hightime : "time = 8.h", veryhightime : "time = 24.h" }
