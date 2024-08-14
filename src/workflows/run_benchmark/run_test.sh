@@ -23,7 +23,7 @@ nextflow run . \
   -resume \
   -entry auto \
   -with-trace \
-  -c src/wf_utils/labels_ci.config \
+  -c common/nextflow_helpers/labels_ci.config \
   --input_states "$DATASETS_DIR/**/state.yaml" \
   --rename_keys 'input_train_mod1:output_train_mod1,input_train_mod2:output_train_mod2,input_test_mod1:output_test_mod1,input_test_mod2:output_test_mod2' \
   --settings '{"output_scores": "scores.yaml", "output_dataset_info": "dataset_info.yaml", "output_method_configs": "method_configs.yaml", "output_metric_configs": "metric_configs.yaml", "output_task_info": "task_info.yaml"}' \
