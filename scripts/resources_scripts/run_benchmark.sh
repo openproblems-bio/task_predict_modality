@@ -12,13 +12,13 @@ output_state: "state.yaml"
 publish_dir: "$publish_dir"
 HERE
 
-tw launch https://github.com/openproblems-bio/openproblems-v2.git \
+tw launch https://github.com/openproblems-bio/task_predict_modality.git \
   --revision main_build \
   --pull-latest \
-  --main-script target/nextflow/predict_modality/workflows/run_benchmark/main.nf \
+  --main-script target/nextflow/workflows/run_benchmark/main.nf \
   --workspace 53907369739130 \
   --compute-env 6TeIFgV5OY4pJCk8I0bfOh \
   --params-file /tmp/params.yaml \
   --entry-name auto \
-  --config src/wf_utils/labels_tw.config \
+  --config common/nextflow_helpers/labels_tw.config \
   --labels predict_modality,full

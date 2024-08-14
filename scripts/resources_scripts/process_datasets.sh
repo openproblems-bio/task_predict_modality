@@ -18,5 +18,5 @@ tw launch https://github.com/openproblems-bio/openproblems-v2.git \
   --compute-env 6TeIFgV5OY4pJCk8I0bfOh \
   --params-file /tmp/params.yaml \
   --entry-name auto \
-  --config src/wf_utils/labels_tw.config \
+  --config common/nextflow_helpers/labels_tw.config \
   --labels predict_modality,process_datasets
