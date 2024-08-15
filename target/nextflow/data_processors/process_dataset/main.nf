@@ -3683,7 +3683,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/data_processors/process_dataset",
     "viash_version" : "0.9.0-RC7",
-    "git_commit" : "81db658f1a592e2bd32ede81533d8280718d4691",
+    "git_commit" : "a6de9f1e4a8a46af91c1d5e7cc03e18d7ace320e",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3691,7 +3691,7 @@ meta = [
     "version" : "build_main",
     "label" : "Predict Modality",
     "summary" : "Predicting the profiles of one modality (e.g. protein abundance) from another (e.g. mRNA expression).",
-    "description" : "Experimental techniques to measure multiple modalities within the same single cell are increasingly becoming available. \nThe demand for these measurements is driven by the promise to provide a deeper insight into the state of a cell. \nYet, the modalities are also intrinsically linked. We know that DNA must be accessible (ATAC data) to produce mRNA \n(expression data), and mRNA in turn is used as a template to produce protein (protein abundance). These processes \nare regulated often by the same molecules that they produce: for example, a protein may bind DNA to prevent the production \nof more mRNA. Understanding these regulatory processes would be transformative for synthetic biology and drug target discovery. \nAny method that can predict a modality from another must have accounted for these regulatory processes, but the demand for \nmulti-modal data shows that this is not trivial.\n\nExplain the motivation behind your proposed task. Describe the biological or computational \nproblem you aim to address and why it's important. Discuss the current state of research in\nthis area and any gaps or challenges that your task could help address. This section \nshould convince readers of the significance and relevance of your task.\n",
+    "description" : "Experimental techniques to measure multiple modalities within the same single cell are increasingly becoming available. \nThe demand for these measurements is driven by the promise to provide a deeper insight into the state of a cell. \nYet, the modalities are also intrinsically linked. We know that DNA must be accessible (ATAC data) to produce mRNA \n(expression data), and mRNA in turn is used as a template to produce protein (protein abundance). These processes \nare regulated often by the same molecules that they produce: for example, a protein may bind DNA to prevent the production \nof more mRNA. Understanding these regulatory processes would be transformative for synthetic biology and drug target discovery. \nAny method that can predict a modality from another must have accounted for these regulatory processes, but the demand for \nmulti-modal data shows that this is not trivial.\n",
     "info" : {
       "image" : "thumbnail.svg",
       "test_resources" : [
@@ -3806,6 +3806,14 @@ meta = [
     ],
     "license" : "MIT",
     "organization" : "openproblems-bio",
+    "references" : {
+      "doi" : [
+        "10.1101/2022.04.11.487796"
+      ],
+      "bibtex" : [
+        "@inproceedings{luecken2021sandbox,\n  title={A sandbox for prediction and integration of DNA, RNA, and proteins in single cells},\n  author={Luecken, Malte D and Burkhardt, Daniel Bernard and Cannoodt, Robrecht and Lance, Christopher and Agrawal, Aditi and Aliee, Hananeh and Chen, Ann T and Deconinck, Louise and Detweiler, Angela M and Granados, Alejandro A and others},\n  booktitle={Thirty-fifth conference on neural information processing systems datasets and benchmarks track (Round 2)},\n  year={2021}\n}\n"
+      ]
+    },
     "links" : {
       "repository" : "https://github.com/openproblems-bio/task_predict_modality",
       "docker_registry" : "ghcr.io",

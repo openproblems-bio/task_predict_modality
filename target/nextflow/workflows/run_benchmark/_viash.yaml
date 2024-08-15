@@ -6,7 +6,21 @@ license: MIT
 label: Predict Modality
 keywords: [multi-omics, regression, single-cell]
 summary: Predicting the profiles of one modality (e.g. protein abundance) from another (e.g. mRNA expression).
-description: "Experimental techniques to measure multiple modalities within the same single cell are increasingly becoming available. \nThe demand for these measurements is driven by the promise to provide a deeper insight into the state of a cell. \nYet, the modalities are also intrinsically linked. We know that DNA must be accessible (ATAC data) to produce mRNA \n(expression data), and mRNA in turn is used as a template to produce protein (protein abundance). These processes \nare regulated often by the same molecules that they produce: for example, a protein may bind DNA to prevent the production \nof more mRNA. Understanding these regulatory processes would be transformative for synthetic biology and drug target discovery. \nAny method that can predict a modality from another must have accounted for these regulatory processes, but the demand for \nmulti-modal data shows that this is not trivial.\n\nExplain the motivation behind your proposed task. Describe the biological or computational \nproblem you aim to address and why it's important. Discuss the current state of research in\nthis area and any gaps or challenges that your task could help address. This section \nshould convince readers of the significance and relevance of your task.\n"
+description: "Experimental techniques to measure multiple modalities within the same single cell are increasingly becoming available. \nThe demand for these measurements is driven by the promise to provide a deeper insight into the state of a cell. \nYet, the modalities are also intrinsically linked. We know that DNA must be accessible (ATAC data) to produce mRNA \n(expression data), and mRNA in turn is used as a template to produce protein (protein abundance). These processes \nare regulated often by the same molecules that they produce: for example, a protein may bind DNA to prevent the production \nof more mRNA. Understanding these regulatory processes would be transformative for synthetic biology and drug target discovery. \nAny method that can predict a modality from another must have accounted for these regulatory processes, but the demand for \nmulti-modal data shows that this is not trivial.\n"
+references:
+  doi:
+    # Multimodal single cell data integration challenge: results and lessons learned
+    # Christopher Lance, Malte D. Luecken, Daniel B. Burkhardt, Robrecht Cannoodt, Pia Rautenstrauch, Anna Laddach, Aidyn Ubingazhibov, Zhi-Jie Cao, Kaiwen Deng, Sumeer Khan, Qiao Liu, Nikolay Russkikh, Gleb Ryazantsev, Uwe Ohler, NeurIPS 2021 Multimodal data integration competition participants, Angela Oliveira Pisco, Jonathan Bloom, Smita Krishnaswamy, Fabian J. Theis
+    # bioRxiv 2022.04.11.487796; doi: https://doi.org/10.1101/2022.04.11.487796 
+    - 10.1101/2022.04.11.487796
+  bibtex:
+    - |
+      @inproceedings{luecken2021sandbox,
+        title={A sandbox for prediction and integration of DNA, RNA, and proteins in single cells},
+        author={Luecken, Malte D and Burkhardt, Daniel Bernard and Cannoodt, Robrecht and Lance, Christopher and Agrawal, Aditi and Aliee, Hananeh and Chen, Ann T and Deconinck, Louise and Detweiler, Angela M and Granados, Alejandro A and others},
+        booktitle={Thirty-fifth conference on neural information processing systems datasets and benchmarks track (Round 2)},
+        year={2021}
+      }
 authors:
   - name: Alejandro Granados
     roles: [author]
