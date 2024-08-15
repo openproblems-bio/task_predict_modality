@@ -4,6 +4,13 @@ set -e
 
 echo ">> Downloading resources"
 
-# the sync_resources script uses the test_resources S3 URI's in the _viash.yaml to download the resources.
+# original command:
+# common/sync_resources/sync_resources --delete
+
+# temporary workarounds:
+mkdir -p resources_test/common
+mkdir -p resources_test/predict_modality
+
 common/sync_resources/sync_resources \
+  --output . \
   --delete
