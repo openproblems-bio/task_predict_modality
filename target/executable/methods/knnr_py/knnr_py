@@ -489,9 +489,9 @@ function ViashDockerfile {
 FROM openproblems/base_python:1.0.0
 ENTRYPOINT []
 LABEL org.opencontainers.image.description="Companion container for running component methods knnr_py"
-LABEL org.opencontainers.image.created="2024-08-15T09:00:43Z"
+LABEL org.opencontainers.image.created="2024-08-15T09:16:05Z"
 LABEL org.opencontainers.image.source="https://github.com/openproblems-bio/task_predict_modality"
-LABEL org.opencontainers.image.revision="6b7001edd6d62a44dbf60355e33464022c1ba986"
+LABEL org.opencontainers.image.revision="81db658f1a592e2bd32ede81533d8280718d4691"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER
