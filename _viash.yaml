@@ -17,11 +17,21 @@ description: |
   of more mRNA. Understanding these regulatory processes would be transformative for synthetic biology and drug target discovery. 
   Any method that can predict a modality from another must have accounted for these regulatory processes, but the demand for 
   multi-modal data shows that this is not trivial.
+references:
+  doi:
+    # Multimodal single cell data integration challenge: results and lessons learned
+    # Christopher Lance, Malte D. Luecken, Daniel B. Burkhardt, Robrecht Cannoodt, Pia Rautenstrauch, Anna Laddach, Aidyn Ubingazhibov, Zhi-Jie Cao, Kaiwen Deng, Sumeer Khan, Qiao Liu, Nikolay Russkikh, Gleb Ryazantsev, Uwe Ohler, NeurIPS 2021 Multimodal data integration competition participants, Angela Oliveira Pisco, Jonathan Bloom, Smita Krishnaswamy, Fabian J. Theis
+    # bioRxiv 2022.04.11.487796; doi: https://doi.org/10.1101/2022.04.11.487796 
+    - 10.1101/2022.04.11.487796
+  bibtex:
+    - |
+      @inproceedings{luecken2021sandbox,
+        title={A sandbox for prediction and integration of DNA, RNA, and proteins in single cells},
+        author={Luecken, Malte D and Burkhardt, Daniel Bernard and Cannoodt, Robrecht and Lance, Christopher and Agrawal, Aditi and Aliee, Hananeh and Chen, Ann T and Deconinck, Louise and Detweiler, Angela M and Granados, Alejandro A and others},
+        booktitle={Thirty-fifth conference on neural information processing systems datasets and benchmarks track (Round 2)},
+        year={2021}
+      }
 
-  Explain the motivation behind your proposed task. Describe the biological or computational 
-  problem you aim to address and why it's important. Discuss the current state of research in
-  this area and any gaps or challenges that your task could help address. This section 
-  should convince readers of the significance and relevance of your task.
 
 authors:
   - name: Alejandro Granados
