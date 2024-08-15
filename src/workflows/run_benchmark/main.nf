@@ -21,8 +21,6 @@ workflow run_wf {
     knnr_r,
     lm,
     lmds_irlba_rf,
-    // newwave_knnr,
-    // random_forest,
     guanlab_dengkw_pm
   ]
 
@@ -80,18 +78,18 @@ workflow run_wf {
       // use the 'filter' argument to only run a method on the normalisation the component is asking for
       filter: { id, state, comp ->
         def norm = state.rna_norm
-        def pref = comp.config.functionality.info.preferred_normalization
+        def pref = comp.config.info.preferred_normalization
         // if the preferred normalisation is none at all,
         // we can pass whichever dataset we want
         def norm_check = (norm == "log_cp10k" && pref == "counts") || norm == pref
-        def method_check = !state.method_ids || state.method_ids.contains(comp.config.functionality.name)
+        def method_check = !state.method_ids || state.method_ids.contains(comp.config.name)
 
         method_check && norm_check
       },
 
       // define a new 'id' by appending the method name to the dataset id
       id: { id, state, comp ->
-        id + "." + comp.config.functionality.name
+        id + "." + comp.config.name
       },
 
       // use 'fromState' to fetch the arguments the component requires from the overall state
@@ -101,7 +99,7 @@ workflow run_wf {
           input_train_mod2: state.input_train_mod2,
           input_test_mod1: state.input_test_mod1
         ]
-        if (comp.config.functionality.info.type == "control_method") {
+        if (comp.config.info.type == "control_method") {
           new_args.input_test_mod2 = state.input_test_mod2
         }
         new_args
@@ -110,7 +108,7 @@ workflow run_wf {
       // use 'toState' to publish that component's outputs to the overall state
       toState: { id, output, state, comp ->
         state + [
-          method_id: comp.config.functionality.name,
+          method_id: comp.config.name,
           method_output: output.output
         ]
       }
@@ -120,7 +118,7 @@ workflow run_wf {
     | runEach(
       components: metrics,
       id: { id, state, comp ->
-        id + "." + comp.config.functionality.name
+        id + "." + comp.config.name
       },
       // use 'fromState' to fetch the arguments the component requires from the overall state
       fromState: [
@@ -130,7 +128,7 @@ workflow run_wf {
       // use 'toState' to publish that component's outputs to the overall state
       toState: { id, output, state, comp ->
         state + [
-          metric_id: comp.config.functionality.name,
+          metric_id: comp.config.name,
           metric_output: output.output
         ]
       }
