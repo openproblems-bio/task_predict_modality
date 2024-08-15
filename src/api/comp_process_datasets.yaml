@@ -1,7 +1,7 @@
 info:
-  type: process_datasets
+  type: process_dataset
   type_info:
-    label: Process dataset
+    label: Process Dataset
     summary: A predict modality dataset processor.
     description: |
       A component for processing a Common Dataset into a task-specific dataset.

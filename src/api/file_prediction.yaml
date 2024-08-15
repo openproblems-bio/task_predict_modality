@@ -1,8 +1,8 @@
 type: file
 example: "resources_test/predict_modality/openproblems_neurips2021/bmmc_cite/swap/prediction.h5ad"
+label: "Prediction"
+summary: "A prediction of the mod2 expression values of the test cells"
 info:
-  label: "Prediction"
-  summary: "A prediction of the mod2 expression values of the test cells"
   slots:
     layers:
       - type: double

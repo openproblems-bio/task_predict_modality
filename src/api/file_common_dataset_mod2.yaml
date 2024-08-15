@@ -1,8 +1,8 @@
 type: file
 example: "resources_test/common/openproblems_neurips2021/bmmc_cite/dataset_mod2.h5ad"
+label: "Raw dataset mod2"
+summary: "The second modality of the raw dataset. Must be an ADT or an ATAC dataset"
 info:
-  label: "Raw dataset mod2"
-  summary: "The second modality of the raw dataset. Must be an ADT or an ATAC dataset"
   slots:
     layers:
       - type: integer
