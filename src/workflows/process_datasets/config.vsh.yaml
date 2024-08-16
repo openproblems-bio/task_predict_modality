@@ -1,4 +1,4 @@
-__merge__: /src/api/comp_dataset_processor.yaml
+__merge__: /src/api/comp_process_datasets.yaml
 name: "process_datasets"
 namespace: "workflows"
 resources:

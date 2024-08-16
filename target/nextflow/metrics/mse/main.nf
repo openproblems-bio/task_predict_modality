@@ -2808,9 +2808,9 @@ meta = [
         {
           "type" : "file",
           "name" : "--input_prediction",
+          "label" : "Prediction",
+          "summary" : "A prediction of the mod2 expression values of the test cells",
           "info" : {
-            "label" : "Prediction",
-            "summary" : "A prediction of the mod2 expression values of the test cells",
             "slots" : {
               "layers" : [
                 {
@@ -2849,9 +2849,9 @@ meta = [
         {
           "type" : "file",
           "name" : "--input_test_mod2",
+          "label" : "Test mod2",
+          "summary" : "The mod2 expression values of the test cells.",
           "info" : {
-            "label" : "Test mod2",
-            "summary" : "The mod2 expression values of the test cells.",
             "slots" : {
               "layers" : [
                 {
@@ -2980,9 +2980,9 @@ meta = [
         {
           "type" : "file",
           "name" : "--output",
+          "label" : "Score",
+          "summary" : "Metric score file",
           "info" : {
-            "label" : "Score",
-            "summary" : "Metric score file",
             "slots" : {
               "uns" : [
                 {
@@ -3154,7 +3154,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/metrics/mse",
     "viash_version" : "0.9.0-RC7",
-    "git_commit" : "a6de9f1e4a8a46af91c1d5e7cc03e18d7ace320e",
+    "git_commit" : "bca3a0f1f485940f83127704c76fdde93ca1b320",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {

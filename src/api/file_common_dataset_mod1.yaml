@@ -1,8 +1,8 @@
 type: file
 example: "resources_test/common/openproblems_neurips2021/bmmc_cite/dataset_mod1.h5ad"
+label: "Raw dataset RNA"
+summary: "The RNA modality of the raw dataset."
 info:
-  label: "Raw dataset RNA"
-  summary: "The RNA modality of the raw dataset."
   slots:
     layers:
       - type: integer
