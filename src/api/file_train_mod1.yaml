@@ -3,7 +3,8 @@ example: "resources_test/predict_modality/openproblems_neurips2021/bmmc_cite/swa
 label: "Train mod1"
 summary: "The mod1 expression values of the train cells."
 info:
-  slots:
+  format:
+    type: h5ad
     layers:
       - type: integer
         name: counts
