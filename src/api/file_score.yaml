@@ -3,7 +3,8 @@ example: "resources_test/predict_modality/openproblems_neurips2021/bmmc_cite/swa
 label: "Score"
 summary: "Metric score file"
 info:
-  slots:
+  format:
+    type: h5ad
     uns:
       - type: string
         name: dataset_id
