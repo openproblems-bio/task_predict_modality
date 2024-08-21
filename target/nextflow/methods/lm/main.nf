@@ -2811,7 +2811,8 @@ meta = [
           "label" : "Train mod1",
           "summary" : "The mod1 expression values of the train cells.",
           "info" : {
-            "slots" : {
+            "format" : {
+              "type" : "h5ad",
               "layers" : [
                 {
                   "type" : "integer",
@@ -2918,7 +2919,8 @@ meta = [
           "label" : "Train mod2",
           "summary" : "The mod2 expression values of the train cells.",
           "info" : {
-            "slots" : {
+            "format" : {
+              "type" : "h5ad",
               "layers" : [
                 {
                   "type" : "integer",
@@ -3025,7 +3027,8 @@ meta = [
           "label" : "Test mod1",
           "summary" : "The mod1 expression values of the test cells.",
           "info" : {
-            "slots" : {
+            "format" : {
+              "type" : "h5ad",
               "layers" : [
                 {
                   "type" : "integer",
@@ -3162,7 +3165,8 @@ meta = [
           "label" : "Prediction",
           "summary" : "A prediction of the mod2 expression values of the test cells",
           "info" : {
-            "slots" : {
+            "format" : {
+              "type" : "h5ad",
               "layers" : [
                 {
                   "type" : "double",
@@ -3347,7 +3351,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/lm",
     "viash_version" : "0.9.0-RC7",
-    "git_commit" : "bca3a0f1f485940f83127704c76fdde93ca1b320",
+    "git_commit" : "4ba3a411248a3a30f8d41837e1d055f92b62df4e",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
