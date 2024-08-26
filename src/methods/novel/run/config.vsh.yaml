@@ -17,7 +17,7 @@ resources:
     type: nextflow_script
     entrypoint: run_wf
 dependencies:
-  - name: predict_modality/methods/novel_train
-  - name: predict_modality/methods/novel_predict
+  - name: methods/novel_train
+  - name: methods/novel_predict
 runners:
   - type: nextflow 
