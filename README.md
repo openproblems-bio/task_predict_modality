@@ -28,6 +28,19 @@ discovery. Any method that can predict a modality from another must have
 accounted for these regulatory processes, but the demand for multi-modal
 data shows that this is not trivial.
 
+## Authors & contributors
+
+| name               | roles              |
+|:-------------------|:-------------------|
+| Alejandro Granados | author             |
+| Alex Tong          | author             |
+| Bastian Rieck      | author             |
+| Daniel Burkhardt   | author             |
+| Kai Waldrant       | contributor        |
+| Kaiwen Deng        | contributor        |
+| Louise Deconinck   | author             |
+| Robrecht Cannoodt  | author, maintainer |
+
 ## API
 
 ``` mermaid
@@ -348,8 +361,8 @@ Arguments:
 
 | Name | Type | Description |
 |:---|:---|:---|
-| `--input_train_mod1` | `file` | The mod1 expression values of the train cells. |
-| `--input_train_mod2` | `file` | The mod2 expression values of the train cells. |
+| `--input_train_mod1` | `file` | (*Optional*) The mod1 expression values of the train cells. |
+| `--input_train_mod2` | `file` | (*Optional*) The mod2 expression values of the train cells. |
 | `--input_test_mod1` | `file` | The mod1 expression values of the test cells. |
 | `--input_model` | `file` | A pretrained model for predicting the expression of one modality from another. |
 | `--output` | `file` | (*Output*) A prediction of the mod2 expression values of the test cells. |
@@ -516,3 +529,4 @@ Data structure:
 | `uns["gene_activity_var_names"]` | `string` | (*Optional*) Names of the gene activity matrix. |
 
 </div>
+
