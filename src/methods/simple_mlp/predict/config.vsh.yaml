@@ -14,7 +14,7 @@ engines:
           - scikit-learn
           - scanpy
           - pytorch-lightning
-engines:
+runners:
   - type: executable
   - type: nextflow
     directives:
