@@ -21,7 +21,8 @@ workflow run_wf {
     knnr_r,
     lm,
     lmds_irlba_rf,
-    guanlab_dengkw_pm
+    guanlab_dengkw_pm,
+    novel
   ]
 
   // construct list of metrics
