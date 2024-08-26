@@ -8,4 +8,4 @@ on:
 
 jobs:
   build:
-    uses: openproblems-bio/actions/.github/workflows/test.yml@main
+    uses: viash-io/viash-actions/.github/workflows/test.yaml@v6
