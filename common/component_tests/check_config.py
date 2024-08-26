@@ -8,6 +8,17 @@ meta = {
 }
 ## VIASH END
 
+# TODO: check whether arguments have:
+#  - label
+#  - summary
+#  - description (optional)
+#  - example
+# If defined, check whether these are in the right format:
+#  - info.file_format
+#  - info.file_format.file_type
+#  - slots, columns, depending on the file_type
+
+## CONSTANTS AND HELPER FUNCTIONS
 NAME_MAXLEN = 50
 LABEL_MAXLEN = 50
 SUMMARY_MAXLEN = 400
@@ -36,8 +47,8 @@ def check_url(url: str) -> bool:
     else:
         return False
 
-def load_config() -> Dict:
-    with open(meta["config"], "r") as file:
+def load_config(config_path: str) -> Dict:
+    with open(config_path, "r") as file:
         config = yaml.safe_load(file)
 
     def process_argument(argument: dict) -> dict:
@@ -71,67 +82,72 @@ def check_references(references: Dict[str, Union[str, List[str]]]) -> None:
         for b in bibtex:
             assert re.match(r"^@.*{.*", b), f"Invalid bibtex format: {b}"
 
-def check_info(this_info: Dict) -> None:
+def check_info(this_info: Dict, this_config: Dict, comp_type: str) -> None:
+    # check label, summary, description, name
     metadata_field_lengths = {
+        "name": NAME_MAXLEN,
         "label": LABEL_MAXLEN,
         "summary": SUMMARY_MAXLEN,
         "description": DESCRIPTION_MAXLEN
     }
     
-    if comp_type == "metric":
-        metadata_field_lengths["name"] = NAME_MAXLEN
-    
     for field, max_length in metadata_field_lengths.items():
         value = this_info.get(field)
         if comp_type != "metric":
-            value = config.get(field) or value
-        assert value, f".info.{field} is not defined"
-        assert "FILL IN:" not in value, f".info.{field} not filled in"
-        assert len(value) <= max_length, f".info.{field} should not exceed {max_length} characters"
+            value = this_config.get(field) or value
+        assert value, f"Metadata field '{field}' is not defined"
+        assert "FILL IN:" not in value, f"Metadata field '{field}' not filled in"
+        assert len(value) <= max_length, f"Metadata field '{field}' should not exceed {max_length} characters"
 
+    # check documentation_url and repository_url
     documentation_url = this_info.get("documentation_url")
     if comp_type == "method" or documentation_url:
-        assert documentation_url, ".info.documentation_url is not defined"
-        assert check_url(documentation_url), f".info.documentation_url '{documentation_url}' is not reachable"
+        assert documentation_url, "Metadata field 'documentation_url' is not defined"
+        assert check_url(documentation_url), f"Metadata field 'documentation_url' URL '{documentation_url}' is not reachable"
 
     repository_url = this_info.get("repository_url")
     if comp_type == "method" or repository_url:
-        assert repository_url, ".info.repository_url is not defined"
-        assert check_url(repository_url), f".info.repository_url '{repository_url}' is not reachable"
+        assert repository_url, "Metadata field 'repository_url' is not defined"
+        assert check_url(repository_url), f"Metadata field 'repository_url' URL '{repository_url}' is not reachable"
 
+    # check references
     references = this_info.get("references", {})
     if comp_type != "metric":
-        references = config.get("references", {}) or references
+        references = this_config.get("references", {}) or references
     if comp_type != "control_method" or references:
         print("Check references fields", flush=True)
         check_references(references)
 
+## UNIT TEST CHECKS
 print("Load config data", flush=True)
-config = load_config()
-
-print("Check config name and namespace", flush=True)
-assert len(config["name"]) <= NAME_MAXLEN, f".name should not exceed {NAME_MAXLEN} characters"
-assert config.get("namespace"), ".namespace is not defined"
-
-print("Check .info.type field", flush=True)
+config = load_config(meta["config"])
 info = config.get("info", {})
 comp_type = info.get("type")
 
+print("Check .namespace", flush=True)
+assert config.get("namespace"), ".namespace is not defined"
+
+print("Check .info.type", flush=True)
 expected_types = ["method", "control_method", "metric"]
 assert comp_type in expected_types, ".info.type should be equal to 'method' or 'control_method'"
 
-print("Check info metadata", flush=True)
+print("Check component metadata", flush=True)
 if comp_type == "metric":
     metric_infos = info.get("metrics", [])
     assert metric_infos, ".info.metrics is not defined"
 
     for metric_info in metric_infos:
-        check_info(metric_info)
+        check_info(metric_info, config, comp_type=comp_type)
 else:
-    check_info(info)
+    check_info(info, config, comp_type=comp_type)
 
-print("Processing arguments", flush=True)
+if "preferred_normalization" in info:
+    print("Checking contents of .info.preferred_normalization", flush=True)
+    norm_methods = ["log_cpm", "log_cp10k", "counts", "log_scran_pooling", "sqrt_cpm", "sqrt_cp10k", "l1_sqrt"]
+    assert info["preferred_normalization"] in norm_methods, ".info['preferred_normalization'] not one of '" + "', '".join(norm_methods) + "'."
+
 if "variants" in info:
+    print("Checking contents of .info.variants", flush=True)
     arg_names = [arg["name"] for arg in config["all_arguments"]] + ["preferred_normalization"]
 
     for paramset_id, paramset in info["variants"].items():
@@ -139,15 +155,14 @@ if "variants" in info:
             for arg_id in paramset:
                 assert arg_id in arg_names, f"Argument '{arg_id}' in `.info.variants['{paramset_id}']` is not an argument in `.arguments`."
 
-if "preferred_normalization" in info:
-    norm_methods = ["log_cpm", "log_cp10k", "counts", "log_scran_pooling", "sqrt_cpm", "sqrt_cp10k", "l1_sqrt"]
-    assert info["preferred_normalization"] in norm_methods, ".info['preferred_normalization'] not one of '" + "', '".join(norm_methods) + "'."
-
-print("Check runners fields", flush=True)
+# Check runners
 runners = config.get("runners", [])
-for runner in runners:
-    if runner["type"] == "nextflow":
-        nextflow_runner = runner
+
+print("Check Nextflow runner", flush=True)
+nextflow_runner = next(
+    (runner for runner in runners if runner["type"] == "nextflow"),
+    None
+)
 
 assert nextflow_runner, ".runners does not contain a nextflow runner"
 assert nextflow_runner.get("directives"), "directives not a field in nextflow runner"
