@@ -1,0 +1,21 @@
+__merge__: ../../../api/comp_method_predict.yaml
+name: simplemlp_predict
+resources:
+  - type: python_script
+    path: script.py
+  - path: ../resources/
+engines:
+  - type: docker
+    image: openproblems/base_pytorch_nvidia:1.0.0
+    # run_args: ["--gpus all --ipc=host"]
+    setup:
+      - type: python
+        pypi:
+          - scikit-learn
+          - scanpy
+          - pytorch-lightning
+engines:
+  - type: executable
+  - type: nextflow
+    directives:
+      label: [highmem, hightime, midcpu, gpu, highsharedmem]
