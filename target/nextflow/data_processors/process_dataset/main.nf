@@ -3185,7 +3185,7 @@ meta = [
             }
           },
           "example" : [
-            "resources_test/predict_modality/openproblems_neurips2021/bmmc_cite/swap/train_mod1.h5ad"
+            "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/train_mod1.h5ad"
           ],
           "must_exist" : true,
           "create_parent" : true,
@@ -3293,7 +3293,7 @@ meta = [
             }
           },
           "example" : [
-            "resources_test/predict_modality/openproblems_neurips2021/bmmc_cite/swap/train_mod2.h5ad"
+            "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/train_mod2.h5ad"
           ],
           "must_exist" : true,
           "create_parent" : true,
@@ -3431,7 +3431,7 @@ meta = [
             }
           },
           "example" : [
-            "resources_test/predict_modality/openproblems_neurips2021/bmmc_cite/swap/test_mod1.h5ad"
+            "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/test_mod1.h5ad"
           ],
           "must_exist" : true,
           "create_parent" : true,
@@ -3563,7 +3563,7 @@ meta = [
             }
           },
           "example" : [
-            "resources_test/predict_modality/openproblems_neurips2021/bmmc_cite/swap/test_mod2.h5ad"
+            "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/test_mod2.h5ad"
           ],
           "must_exist" : true,
           "create_parent" : true,
@@ -3627,6 +3627,13 @@ meta = [
       "name" : "openproblems_v2",
       "repo" : "openproblems-bio/openproblems-v2",
       "tag" : "main_build"
+    },
+    {
+      "type" : "github",
+      "name" : "core",
+      "repo" : "openproblems-bio/core",
+      "tag" : "build/add_common_components",
+      "path" : "viash/core"
     }
   ],
   "license" : "MIT",
@@ -3689,7 +3696,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/data_processors/process_dataset",
     "viash_version" : "0.9.0-RC7",
-    "git_commit" : "da30b86e6f39fe9ebdebe2be3290684ea2be8a00",
+    "git_commit" : "75cedc829e32ba19e50c1dc21c21733944b2ab0c",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3708,8 +3715,8 @@ meta = [
         },
         {
           "type" : "s3",
-          "path" : "s3://openproblems-data/resources_test/predict_modality/",
-          "dest" : "resources_test/predict_modality"
+          "path" : "s3://openproblems-data/resources_test/task_predict_modality/",
+          "dest" : "resources_test/task_predict_modality"
         }
       ]
     },
@@ -3719,6 +3726,13 @@ meta = [
         "name" : "openproblems_v2",
         "repo" : "openproblems-bio/openproblems-v2",
         "tag" : "main_build"
+      },
+      {
+        "type" : "github",
+        "name" : "core",
+        "repo" : "openproblems-bio/core",
+        "tag" : "build/add_common_components",
+        "path" : "viash/core"
       }
     ],
     "viash_version" : "0.9.0-RC7",

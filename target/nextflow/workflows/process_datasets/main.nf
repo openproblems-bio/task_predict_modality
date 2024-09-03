@@ -3180,7 +3180,7 @@ meta = [
             }
           },
           "example" : [
-            "resources_test/predict_modality/openproblems_neurips2021/bmmc_cite/swap/train_mod1.h5ad"
+            "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/train_mod1.h5ad"
           ],
           "must_exist" : true,
           "create_parent" : true,
@@ -3288,7 +3288,7 @@ meta = [
             }
           },
           "example" : [
-            "resources_test/predict_modality/openproblems_neurips2021/bmmc_cite/swap/train_mod2.h5ad"
+            "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/train_mod2.h5ad"
           ],
           "must_exist" : true,
           "create_parent" : true,
@@ -3426,7 +3426,7 @@ meta = [
             }
           },
           "example" : [
-            "resources_test/predict_modality/openproblems_neurips2021/bmmc_cite/swap/test_mod1.h5ad"
+            "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/test_mod1.h5ad"
           ],
           "must_exist" : true,
           "create_parent" : true,
@@ -3558,7 +3558,7 @@ meta = [
             }
           },
           "example" : [
-            "resources_test/predict_modality/openproblems_neurips2021/bmmc_cite/swap/test_mod2.h5ad"
+            "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/test_mod2.h5ad"
           ],
           "must_exist" : true,
           "create_parent" : true,
@@ -3605,19 +3605,21 @@ meta = [
   "status" : "enabled",
   "dependencies" : [
     {
-      "name" : "common/check_dataset_schema",
+      "name" : "schema/verify_data_structure",
       "repository" : {
         "type" : "github",
-        "repo" : "openproblems-bio/openproblems-v2",
-        "tag" : "main_build"
+        "repo" : "openproblems-bio/core",
+        "tag" : "build/add_common_components",
+        "path" : "viash/core"
       }
     },
     {
-      "name" : "common/extract_metadata",
+      "name" : "h5ad/extract_uns_metadata",
       "repository" : {
         "type" : "github",
-        "repo" : "openproblems-bio/openproblems-v2",
-        "tag" : "main_build"
+        "repo" : "openproblems-bio/core",
+        "tag" : "build/add_common_components",
+        "path" : "viash/core"
       }
     },
     {
@@ -3633,6 +3635,13 @@ meta = [
       "name" : "openproblems_v2",
       "repo" : "openproblems-bio/openproblems-v2",
       "tag" : "main_build"
+    },
+    {
+      "type" : "github",
+      "name" : "core",
+      "repo" : "openproblems-bio/core",
+      "tag" : "build/add_common_components",
+      "path" : "viash/core"
     }
   ],
   "license" : "MIT",
@@ -3683,7 +3692,7 @@ meta = [
     "engine" : "native",
     "output" : "target/nextflow/workflows/process_datasets",
     "viash_version" : "0.9.0-RC7",
-    "git_commit" : "da30b86e6f39fe9ebdebe2be3290684ea2be8a00",
+    "git_commit" : "75cedc829e32ba19e50c1dc21c21733944b2ab0c",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3702,8 +3711,8 @@ meta = [
         },
         {
           "type" : "s3",
-          "path" : "s3://openproblems-data/resources_test/predict_modality/",
-          "dest" : "resources_test/predict_modality"
+          "path" : "s3://openproblems-data/resources_test/task_predict_modality/",
+          "dest" : "resources_test/task_predict_modality"
         }
       ]
     },
@@ -3713,6 +3722,13 @@ meta = [
         "name" : "openproblems_v2",
         "repo" : "openproblems-bio/openproblems-v2",
         "tag" : "main_build"
+      },
+      {
+        "type" : "github",
+        "name" : "core",
+        "repo" : "openproblems-bio/core",
+        "tag" : "build/add_common_components",
+        "path" : "viash/core"
       }
     ],
     "viash_version" : "0.9.0-RC7",
@@ -3825,8 +3841,8 @@ meta = [
 
 // resolve dependencies dependencies (if any)
 meta["root_dir"] = getRootDir()
-include { check_dataset_schema } from "${meta.root_dir}/dependencies/github/openproblems-bio/openproblems-v2/main_build/nextflow/common/check_dataset_schema/main.nf"
-include { extract_metadata } from "${meta.root_dir}/dependencies/github/openproblems-bio/openproblems-v2/main_build/nextflow/common/extract_metadata/main.nf"
+include { verify_data_structure } from "${meta.root_dir}/dependencies/github/openproblems-bio/core/build/add_common_components/nextflow/schema/verify_data_structure/main.nf"
+include { extract_uns_metadata } from "${meta.root_dir}/dependencies/github/openproblems-bio/core/build/add_common_components/nextflow/h5ad/extract_uns_metadata/main.nf"
 include { process_dataset } from "${meta.resources_dir}/../../../nextflow/data_processors/process_dataset/main.nf"
 
 // inner workflow
@@ -3849,8 +3865,8 @@ workflow run_wf {
   output_ch = input_ch
   
     // Check if the input datasets match the desired format --------------------------------
-    | check_dataset_schema.run(
-      key: "check_dataset_schema_mod1",
+    | verify_data_structure.run(
+      key: "verify_data_structure_mod1",
       fromState: { id, state ->
         def schema = findArgumentSchema(meta.config, "input_mod1")
         def schemaYaml = tempFile("schema.yaml")
@@ -3869,8 +3885,8 @@ workflow run_wf {
       }
     )
 
-    | check_dataset_schema.run(
-      key: "check_dataset_schema_mod2",
+    | verify_data_structure.run(
+      key: "verify_data_structure_mod2",
       fromState: { id, state ->
         def schema = findArgumentSchema(meta.config, "input_mod2")
         def schemaYaml = tempFile("schema.yaml")
@@ -3888,8 +3904,6 @@ workflow run_wf {
         ]
       }
     )
-    | view{"test: ${it}"}
-
     // remove datasets which didn't pass the schema check
     | filter { id, state ->
       state.dataset_mod1 != null &&
@@ -3898,8 +3912,8 @@ workflow run_wf {
 
     // Use datasets in both directions (mod1 -> mod2 and mod2 -> mod1) ---------------------
     // extract the dataset metadata
-    | extract_metadata.run(
-      key: "extract_metadata",
+    | extract_uns_metadata.run(
+      key: "extract_uns_metadata",
       fromState: [input: "dataset_mod1"],
       toState: { id, output, state ->
         def uns = readYaml(output.output).uns

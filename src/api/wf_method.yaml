@@ -1,0 +1,30 @@
+# this is only meant for workflows that
+# combine multiple components.
+namespace: "methods"
+info:
+  type: method
+  type_info:
+    label: Method
+    summary: A regression method.
+    description: |
+      A regression method to predict the expression of one modality from another.
+arguments:
+  - name: "--input_train_mod1"
+    __merge__: file_train_mod1.yaml
+    direction: input
+    required: true
+  - name: "--input_train_mod2"
+    __merge__: file_train_mod2.yaml
+    direction: input
+    required: true
+  - name: "--input_test_mod1"
+    __merge__: file_test_mod1.yaml
+    direction: input
+    required: true
+  - name: "--output"
+    __merge__: file_prediction.yaml
+    direction: output
+    required: true
+test_resources:
+  - type: python_script
+    path: /common/component_tests/check_config.py

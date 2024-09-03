@@ -68,12 +68,18 @@ info:
       path: s3://openproblems-data/resources_test/common/
       dest: resources_test/common
     - type: s3
-      path: s3://openproblems-data/resources_test/predict_modality/
-      dest: resources_test/predict_modality
+      path: s3://openproblems-data/resources_test/task_predict_modality/
+      dest: resources_test/task_predict_modality
 repositories:
   - name: openproblems_v2
     type: github
     repo: openproblems-bio/openproblems-v2
     tag: main_build
+  - name: core
+    type: github
+    repo: openproblems-bio/core
+    # tag: build/main
+    tag: build/add_common_components
+    path: viash/core
 config_mods: |
   .runners[.type == "nextflow"].config.labels := { lowmem : "memory = 20.Gb", midmem : "memory = 50.Gb", highmem : "memory = 100.Gb", lowcpu : "cpus = 5", midcpu : "cpus = 15", highcpu : "cpus = 30", lowtime : "time = 1.h", midtime : "time = 4.h", hightime : "time = 8.h", veryhightime : "time = 24.h" }

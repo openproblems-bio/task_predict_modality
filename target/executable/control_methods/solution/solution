@@ -179,27 +179,27 @@ function ViashHelp {
   echo "    --input_train_mod1"
   echo "        type: file, required parameter, file must exist"
   echo "        example:"
-  echo "resources_test/predict_modality/openproblems_neurips2021/bmmc_cite/swap/train_mod1.h5ad"
+  echo "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/train_mod1.h5ad"
   echo ""
   echo "    --input_train_mod2"
   echo "        type: file, required parameter, file must exist"
   echo "        example:"
-  echo "resources_test/predict_modality/openproblems_neurips2021/bmmc_cite/swap/train_mod2.h5ad"
+  echo "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/train_mod2.h5ad"
   echo ""
   echo "    --input_test_mod1"
   echo "        type: file, required parameter, file must exist"
   echo "        example:"
-  echo "resources_test/predict_modality/openproblems_neurips2021/bmmc_cite/swap/test_mod1.h5ad"
+  echo "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/test_mod1.h5ad"
   echo ""
   echo "    --input_test_mod2"
   echo "        type: file, required parameter, file must exist"
   echo "        example:"
-  echo "resources_test/predict_modality/openproblems_neurips2021/bmmc_cite/swap/test_mod2.h5ad"
+  echo "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/test_mod2.h5ad"
   echo ""
   echo "    --output"
   echo "        type: file, required parameter, output, file must exist"
   echo "        example:"
-  echo "resources_test/predict_modality/openproblems_neurips2021/bmmc_cite/swap/prediction.h5ad"
+  echo "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/prediction.h5ad"
 }
 
 # initialise variables
@@ -478,9 +478,9 @@ function ViashDockerfile {
 FROM openproblems/base_r:1.0.0
 ENTRYPOINT []
 LABEL org.opencontainers.image.description="Companion container for running component control_methods solution"
-LABEL org.opencontainers.image.created="2024-08-26T22:03:00Z"
+LABEL org.opencontainers.image.created="2024-09-03T11:51:31Z"
 LABEL org.opencontainers.image.source="https://github.com/openproblems-bio/task_predict_modality"
-LABEL org.opencontainers.image.revision="da30b86e6f39fe9ebdebe2be3290684ea2be8a00"
+LABEL org.opencontainers.image.revision="75cedc829e32ba19e50c1dc21c21733944b2ab0c"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER
