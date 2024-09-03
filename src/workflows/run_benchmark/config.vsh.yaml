@@ -60,10 +60,8 @@ resources:
   - type: file
     path: /_viash.yaml
 dependencies:
-  - name: common/check_dataset_schema
-    repository: openproblems_v2
-  - name: common/extract_metadata
-    repository: openproblems_v2
+  - name: h5ad/extract_uns_metadata
+    repository: core
   - name: control_methods/mean_per_gene
   - name: control_methods/random_predict
   - name: control_methods/zeros

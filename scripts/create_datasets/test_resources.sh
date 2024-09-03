@@ -8,8 +8,10 @@ cd "$REPO_ROOT"
 
 set -e
 
-DATASETS_DIR="resources_test/common"
-OUTPUT_DIR="resources_test/predict_modality"
+RAW_DATA=resources_test/common
+OUTPUT_DIR=resources_test/task_predict_modality
+
+mkdir -p $OUTPUT_DIR
 
 export NXF_VER=22.04.5
 
@@ -50,3 +52,8 @@ viash run src/methods/knnr_py/config.vsh.yaml -- \
   --input_train_mod2 $OUTPUT_DIR/openproblems_neurips2021/bmmc_multiome/swap/train_mod2.h5ad \
   --input_test_mod1 $OUTPUT_DIR/openproblems_neurips2021/bmmc_multiome/swap/test_mod1.h5ad \
   --output $OUTPUT_DIR/openproblems_neurips2021/bmmc_multiome/swap/prediction.h5ad
+
+# only run this if you have access to the openproblems-data bucket
+aws s3 sync --profile op \
+  "$DATASET_DIR" s3://openproblems-data/resources_test/task_predict_modality \
+  --delete --dryrun

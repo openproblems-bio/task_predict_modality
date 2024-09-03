@@ -16,8 +16,8 @@ workflow run_wf {
   output_ch = input_ch
   
     // Check if the input datasets match the desired format --------------------------------
-    | check_dataset_schema.run(
-      key: "check_dataset_schema_mod1",
+    | verify_data_structure.run(
+      key: "verify_data_structure_mod1",
       fromState: { id, state ->
         def schema = findArgumentSchema(meta.config, "input_mod1")
         def schemaYaml = tempFile("schema.yaml")
@@ -36,8 +36,8 @@ workflow run_wf {
       }
     )
 
-    | check_dataset_schema.run(
-      key: "check_dataset_schema_mod2",
+    | verify_data_structure.run(
+      key: "verify_data_structure_mod2",
       fromState: { id, state ->
         def schema = findArgumentSchema(meta.config, "input_mod2")
         def schemaYaml = tempFile("schema.yaml")
@@ -55,8 +55,6 @@ workflow run_wf {
         ]
       }
     )
-    | view{"test: ${it}"}
-
     // remove datasets which didn't pass the schema check
     | filter { id, state ->
       state.dataset_mod1 != null &&
@@ -65,8 +63,8 @@ workflow run_wf {
 
     // Use datasets in both directions (mod1 -> mod2 and mod2 -> mod1) ---------------------
     // extract the dataset metadata
-    | extract_metadata.run(
-      key: "extract_metadata",
+    | extract_uns_metadata.run(
+      key: "extract_uns_metadata",
       fromState: [input: "dataset_mod1"],
       toState: { id, output, state ->
         def uns = readYaml(output.output).uns

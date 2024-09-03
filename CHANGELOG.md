@@ -1,4 +1,4 @@
-# task_template x.y.z
+# task_predict_modality x.y.z
 
 ## BREAKING CHANGES
 

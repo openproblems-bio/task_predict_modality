@@ -40,6 +40,8 @@ data shows that this is not trivial.
 | Kaiwen Deng        | contributor        |
 | Louise Deconinck   | author             |
 | Robrecht Cannoodt  | author, maintainer |
+| Xueer Chen         | contributor        |
+| Jiwei Liu          | contributor        |
 
 ## API
 
@@ -161,7 +163,7 @@ Arguments:
 The mod1 expression values of the test cells.
 
 Example file:
-`resources_test/predict_modality/openproblems_neurips2021/bmmc_cite/swap/test_mod1.h5ad`
+`resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/test_mod1.h5ad`
 
 Format:
 
@@ -208,7 +210,7 @@ Data structure:
 The mod2 expression values of the test cells.
 
 Example file:
-`resources_test/predict_modality/openproblems_neurips2021/bmmc_cite/swap/test_mod2.h5ad`
+`resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/test_mod2.h5ad`
 
 Format:
 
@@ -254,7 +256,7 @@ Data structure:
 The mod1 expression values of the train cells.
 
 Example file:
-`resources_test/predict_modality/openproblems_neurips2021/bmmc_cite/swap/train_mod1.h5ad`
+`resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/train_mod1.h5ad`
 
 Format:
 
@@ -296,7 +298,7 @@ Data structure:
 The mod2 expression values of the train cells.
 
 Example file:
-`resources_test/predict_modality/openproblems_neurips2021/bmmc_cite/swap/train_mod2.h5ad`
+`resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/train_mod2.h5ad`
 
 Format:
 
@@ -424,7 +426,7 @@ Arguments:
 A prediction of the mod2 expression values of the test cells
 
 Example file:
-`resources_test/predict_modality/openproblems_neurips2021/bmmc_cite/swap/prediction.h5ad`
+`resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/prediction.h5ad`
 
 Format:
 
@@ -458,7 +460,7 @@ another.
 Metric score file
 
 Example file:
-`resources_test/predict_modality/openproblems_neurips2021/bmmc_cite/swap/score.h5ad`
+`resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/score.h5ad`
 
 Format:
 
