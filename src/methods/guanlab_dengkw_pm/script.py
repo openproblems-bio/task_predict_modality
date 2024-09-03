@@ -7,9 +7,9 @@ from sklearn.kernel_ridge import KernelRidge
 
 ## VIASH START
 par = {
-    'input_train_mod1': 'resources_test/predict_modality/openproblems_neurips2021/bmmc_multiome/normal/train_mod1.h5ad',
-    'input_train_mod2': 'resources_test/predict_modality/openproblems_neurips2021/bmmc_multiome/normal/train_mod2.h5ad',
-    'input_test_mod1': 'resources_test/predict_modality/openproblems_neurips2021/bmmc_multiome/normal/test_mod1.h5ad',
+    'input_train_mod1': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/normal/train_mod1.h5ad',
+    'input_train_mod2': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/normal/train_mod2.h5ad',
+    'input_test_mod1': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/normal/test_mod1.h5ad',
     'output': 'output.h5ad', 
     'distance_method': 'minkowski', 
     'n_pcs': 50

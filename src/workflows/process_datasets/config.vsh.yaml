@@ -7,10 +7,10 @@ resources:
     entrypoint: run_wf
   - path: /common/nextflow_helpers/helper.nf
 dependencies:
-  - name: common/check_dataset_schema
-    repository: openproblems_v2
-  - name: common/extract_metadata
-    repository: openproblems_v2
+  - name: schema/verify_data_structure
+    repository: core
+  - name: h5ad/extract_uns_metadata
+    repository: core
   - name: data_processors/process_dataset
 runners:
   - type: nextflow
