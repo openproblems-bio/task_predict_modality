@@ -4,7 +4,7 @@ requireNamespace("pbapply", quietly = TRUE)
 library(Matrix, warn.conflicts = FALSE, quietly = TRUE)
 
 ## VIASH START
-path <- "resources_test/predict_modality/openproblems_neurips2021/bmmc_multiome/normal/"
+path <- "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/normal/"
 par <- list(
   input_train_mod1 = paste0(path, "train_mod1.h5ad"),
   input_test_mod1 = paste0(path, "test_mod1.h5ad"),
