@@ -1,4 +1,4 @@
-__merge__: ../../../api/comp_method_train.yaml
+__merge__: /src/api/comp_method_train.yaml
 name: simplemlp_train
 resources:
   - type: python_script
@@ -7,7 +7,6 @@ resources:
 engines:
   - type: docker
     image: openproblems/base_pytorch_nvidia:1.0.0
-    # run_args: ["--gpus all --ipc=host"]
     setup:
       - type: python
         pypi:
@@ -16,6 +15,7 @@ engines:
           - pytorch-lightning
 runners:
   - type: executable
+    # docker_run_args: ["--gpus all --ipc=host"]
   - type: nextflow
     directives:
       label: [highmem, hightime, midcpu, gpu, highsharedmem]

@@ -6,7 +6,10 @@ import torch.nn.functional as F
 class MLP(pl.LightningModule):
     def __init__(self,in_dim,out_dim,ymean,config):
         super(MLP, self).__init__()
-        self.ymean = ymean.cuda()
+        if torch.cuda.is_available():
+            self.ymean = ymean.cuda()
+        else:
+            self.ymean = ymean
         H1 = config.H1
         H2 = config.H2
         p = config.dropout

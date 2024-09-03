@@ -8,14 +8,15 @@ from torch.utils.data import TensorDataset,DataLoader
 
 ## VIASH START
 par = {
-    'input_train_mod1': 'resources_test/predict_modality/openproblems_neurips2021/bmmc_multiome/swap/train_mod1.h5ad',
-    'input_train_mod2': 'resources_test/predict_modality/openproblems_neurips2021/bmmc_multiome/swap/train_mod2.h5ad',
-    'input_test_mod1': 'resources_test/predict_modality/openproblems_neurips2021/bmmc_multiome/swap/test_mod1.h5ad',
+    'input_train_mod1': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap/train_mod1.h5ad',
+    'input_train_mod2': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap/train_mod2.h5ad',
+    'input_test_mod1': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap/test_mod1.h5ad',
     'input_model': 'output/model',
     'output': 'output/prediction'
 }
 meta = {
-    'resources_dir': 'src/tasks/predict_modality/methods/simple_mlp',
+    'config': 'target/executable/methods/simplemlp_predict/.config.vsh.yaml',
+    'resources_dir': 'target/executable/methods/simplemlp_predict',
     'cpus': 10
 }
 ## VIASH END
@@ -26,15 +27,22 @@ from models import MLP
 import utils
 
 def _predict(model,dl):
-  model = model.cuda()
-  model.eval()
-  yps = []
-  for x in dl:
-    with torch.no_grad():
-      yp = model(x[0].cuda())
-      yps.append(yp.detach().cpu().numpy())
-  yp = np.vstack(yps)
-  return yp
+    if torch.cuda.is_available():
+        model = model.cuda()
+    else:
+        model = model.cpu()
+    model.eval()
+    yps = []
+    for x in dl:
+        with torch.no_grad():
+            if torch.cuda.is_available():
+                x0 = x[0].cuda()
+            else:
+                x0 = x[0].cpu()
+            yp = model(x0)
+            yps.append(yp.detach().cpu().numpy())
+    yp = np.vstack(yps)
+    return yp
 
 
 print('Load data', flush=True)

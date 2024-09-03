@@ -1,4 +1,4 @@
-__merge__: ../../../api/comp_method_train.yaml
+__merge__: /src/api/wf_method.yaml
 name: simple_mlp
 label: Simple MLP
 summary: Ensemble of MLPs trained on different sites (team AXX)
