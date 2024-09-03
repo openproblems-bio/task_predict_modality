@@ -1,3 +1,5 @@
+# this is only meant for workflows that
+# combine multiple components.
 namespace: "methods"
 info:
   type: method
@@ -25,6 +27,4 @@ arguments:
     required: true
 test_resources:
   - type: python_script
-    path: /common/component_tests/run_and_check_output.py
-  - path: /resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap
-    dest: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap
+    path: /common/component_tests/check_config.py

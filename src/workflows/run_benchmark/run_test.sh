@@ -8,7 +8,7 @@ cd "$REPO_ROOT"
 
 set -e
 
-DATASETS_DIR="resources_test/predict_modality/openproblems_neurips2021"
+DATASETS_DIR="resources_test/task_predict_modality/openproblems_neurips2021"
 OUTPUT_DIR="output/predict_modality"
 
 if [ ! -d "$OUTPUT_DIR" ]; then

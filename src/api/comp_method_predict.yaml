@@ -27,3 +27,8 @@ arguments:
     __merge__: file_prediction.yaml
     direction: output
     required: true
+test_resources:
+  - type: python_script
+    path: /common/component_tests/run_and_check_output.py
+  - path: /resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap
+    dest: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap
