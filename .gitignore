@@ -1,5 +1,5 @@
-resources
-resources_test
+/resources
+/resources_test
 work
 .nextflow*
 target
