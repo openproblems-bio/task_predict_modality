@@ -73,7 +73,7 @@ out <- anndata::AnnData(
   shape = dim(pred),
   uns = list(
     dataset_id = dataset_id,
-    method_id = meta$functionality_name
+    method_id = meta$name
   )
 )
 

@@ -11,7 +11,7 @@ par = {
 }
 
 meta = {
-    "functionality_name": "foo"
+    "name": "foo"
 }
 # VIASH END
 
@@ -31,7 +31,7 @@ out = ad.AnnData(
     var=input_train_mod2.var,
     uns={
         "dataset_id": input_test_mod1.uns["dataset_id"],
-        "method_id": meta["functionality_name"],
+        "method_id": meta["name"],
     }
 )
 out.write_h5ad(par["output"], compression="gzip")

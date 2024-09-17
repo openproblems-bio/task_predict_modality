@@ -12,7 +12,7 @@ par <- list(
   output = "output.h5ad",
   n_pcs = 4L
 )
-meta <- list(functionality_name = "foo")
+meta <- list(name = "foo")
 ## VIASH END
 
 n_cores <- parallel::detectCores(all.tests = FALSE, logical = TRUE)
@@ -66,7 +66,7 @@ out <- anndata::AnnData(
   shape = dim(prediction),
   uns = list(
     dataset_id = input_train_mod1$uns[["dataset_id"]],
-    method_id = meta$functionality_name
+    method_id = meta$name
   )
 )
 

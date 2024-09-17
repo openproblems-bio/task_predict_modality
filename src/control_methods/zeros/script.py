@@ -11,7 +11,7 @@ par = {
 }
 
 meta = {
-    "functionality_name": "foo"
+    "name": "foo"
 }
 # VIASH END
 
@@ -29,7 +29,7 @@ out = anndata.AnnData(
     var=ad_mod2.var,
     uns={
         "dataset_id": ad_mod2.uns["dataset_id"],
-        "method_id": meta["functionality_name"],
+        "method_id": meta["name"],
     }
 )
 

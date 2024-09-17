@@ -9,7 +9,7 @@ par <- list(
   input_train_mod2 = "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/train_mod2.h5ad",
   output = "output.h5ad"
 )
-meta <- list(functionality_name = "foo")
+meta <- list(name = "foo")
 ## VIASH END
 
 cat("Reading h5ad files\n")
@@ -26,7 +26,7 @@ out <- anndata::AnnData(
   shape = dim(prediction),
   uns = list(
     dataset_id = input_train_mod2$uns[["dataset_id"]],
-    method_id = meta[["functionality_name"]]
+    method_id = meta[["name"]]
   )
 )
 
