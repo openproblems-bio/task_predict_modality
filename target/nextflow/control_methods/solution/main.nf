@@ -3454,7 +3454,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/control_methods/solution",
     "viash_version" : "0.9.0",
-    "git_commit" : "b5cb001397ef96545726154f4ec8978a9b05c3eb",
+    "git_commit" : "754b791bb4004bcffd204a01e85c093f83d55ae6",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3658,7 +3658,7 @@ rm(.viash_orig_warn)
 
 cat("Reading h5ad files\\\\n")
 ad2_test <- anndata::read_h5ad(par\\$input_test_mod2)
-ad2_test\\$uns[["method_id"]] <- meta\\$functionality_name
+ad2_test\\$uns[["method_id"]] <- meta\\$name
 
 cat("Writing predictions to file\\\\n")
 zzz <- ad2_test\\$write_h5ad(par\\$output, compression = "gzip")

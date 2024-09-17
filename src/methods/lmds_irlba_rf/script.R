@@ -13,7 +13,7 @@ par <- list(
   n_pcs = 20L,
   n_trees = 50L
 )
-meta <- list(functionality_name = "foo")
+meta <- list(name = "foo")
 ## VIASH END
 
 n_cores <- parallel::detectCores(all.tests = FALSE, logical = TRUE)
@@ -84,7 +84,7 @@ out <- anndata::AnnData(
   shape = dim(prediction),
   uns = list(
     dataset_id = dataset_id,
-    method_id = meta$functionality_name
+    method_id = meta$name
   )
 )
 

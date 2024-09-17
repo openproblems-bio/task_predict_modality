@@ -492,9 +492,9 @@ RUN Rscript -e 'if (!requireNamespace("remotes", quietly = TRUE)) install.packag
   Rscript -e 'remotes::install_cran(c("lmds", "FNN", "proxyC"), repos = "https://cran.rstudio.com")'
 
 LABEL org.opencontainers.image.description="Companion container for running component methods knnr_r"
-LABEL org.opencontainers.image.created="2024-09-04T04:59:20Z"
+LABEL org.opencontainers.image.created="2024-09-17T20:04:24Z"
 LABEL org.opencontainers.image.source="https://github.com/openproblems-bio/task_predict_modality"
-LABEL org.opencontainers.image.revision="b5cb001397ef96545726154f4ec8978a9b05c3eb"
+LABEL org.opencontainers.image.revision="754b791bb4004bcffd204a01e85c093f83d55ae6"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER
@@ -1232,7 +1232,7 @@ out <- anndata::AnnData(
   shape = dim(pred),
   uns = list(
     dataset_id = dataset_id,
-    method_id = meta\$functionality_name
+    method_id = meta\$name
   )
 )
 

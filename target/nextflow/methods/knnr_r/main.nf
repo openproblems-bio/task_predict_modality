@@ -3371,7 +3371,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/knnr_r",
     "viash_version" : "0.9.0",
-    "git_commit" : "b5cb001397ef96545726154f4ec8978a9b05c3eb",
+    "git_commit" : "754b791bb4004bcffd204a01e85c093f83d55ae6",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3634,7 +3634,7 @@ out <- anndata::AnnData(
   shape = dim(pred),
   uns = list(
     dataset_id = dataset_id,
-    method_id = meta\\$functionality_name
+    method_id = meta\\$name
   )
 )
 

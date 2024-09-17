@@ -489,9 +489,9 @@ function ViashDockerfile {
 FROM openproblems/base_python:1.0.0
 ENTRYPOINT []
 LABEL org.opencontainers.image.description="Companion container for running component methods knnr_py"
-LABEL org.opencontainers.image.created="2024-09-04T04:59:21Z"
+LABEL org.opencontainers.image.created="2024-09-17T20:04:25Z"
 LABEL org.opencontainers.image.source="https://github.com/openproblems-bio/task_predict_modality"
-LABEL org.opencontainers.image.revision="b5cb001397ef96545726154f4ec8978a9b05c3eb"
+LABEL org.opencontainers.image.revision="754b791bb4004bcffd204a01e85c093f83d55ae6"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER
@@ -1207,7 +1207,7 @@ adata = ad.AnnData(
     var=input_train_mod2.var,
     uns={
         'dataset_id': input_train_mod1.uns['dataset_id'],
-        'method_id': meta["functionality_name"],
+        'method_id': meta["name"],
     },
 )
 

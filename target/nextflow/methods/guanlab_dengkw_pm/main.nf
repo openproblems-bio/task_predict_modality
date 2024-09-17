@@ -3365,7 +3365,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/guanlab_dengkw_pm",
     "viash_version" : "0.9.0",
-    "git_commit" : "b5cb001397ef96545726154f4ec8978a9b05c3eb",
+    "git_commit" : "754b791bb4004bcffd204a01e85c093f83d55ae6",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3675,7 +3675,7 @@ output = ad.AnnData(
   var = input_train_mod2.var[[]],
   uns = {
     'dataset_id': input_train_mod1.uns['dataset_id'],
-    'method_id': meta['functionality_name']
+    'method_id': meta['name']
   }
 )
 output.write_h5ad(par['output'], compression='gzip')
