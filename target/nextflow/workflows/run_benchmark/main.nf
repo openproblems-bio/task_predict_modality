@@ -3538,7 +3538,7 @@ meta = [
     "engine" : "native",
     "output" : "target/nextflow/workflows/run_benchmark",
     "viash_version" : "0.9.0",
-    "git_commit" : "754b791bb4004bcffd204a01e85c093f83d55ae6",
+    "git_commit" : "0bd597e201b39fbcbc1fcd7047f7654a9713a197",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3864,7 +3864,7 @@ workflow run_wf {
   // TODO: can we store everything below in a separate helper function?
 
   // extract the dataset metadata
-  dataset_meta_ch = dataset_ch
+  meta_ch = dataset_ch
     // only keep one of the normalization methods
     | filter{ id, state ->
       state.rna_norm == "log_cp10k"
@@ -3908,7 +3908,7 @@ workflow run_wf {
 
   // merge all of the output data 
   output_ch = score_ch
-    | mix(dataset_meta_ch)
+    | mix(meta_ch)
     | joinStates{ ids, states ->
       def mergedStates = states.inject([:]) { acc, m -> acc + m }
       [ids[0], mergedStates]

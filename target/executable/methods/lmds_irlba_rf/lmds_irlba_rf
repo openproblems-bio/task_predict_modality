@@ -493,9 +493,9 @@ RUN Rscript -e 'if (!requireNamespace("remotes", quietly = TRUE)) install.packag
   Rscript -e 'remotes::install_cran(c("lmds", "ranger", "pbapply", "irlba"), repos = "https://cran.rstudio.com")'
 
 LABEL org.opencontainers.image.description="Companion container for running component methods lmds_irlba_rf"
-LABEL org.opencontainers.image.created="2024-09-17T20:04:24Z"
+LABEL org.opencontainers.image.created="2024-09-20T13:38:44Z"
 LABEL org.opencontainers.image.source="https://github.com/openproblems-bio/task_predict_modality"
-LABEL org.opencontainers.image.revision="754b791bb4004bcffd204a01e85c093f83d55ae6"
+LABEL org.opencontainers.image.revision="0bd597e201b39fbcbc1fcd7047f7654a9713a197"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER
