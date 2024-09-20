@@ -160,7 +160,7 @@ workflow run_wf {
   // TODO: can we store everything below in a separate helper function?
 
   // extract the dataset metadata
-  dataset_meta_ch = dataset_ch
+  meta_ch = dataset_ch
     // only keep one of the normalization methods
     | filter{ id, state ->
       state.rna_norm == "log_cp10k"
@@ -204,7 +204,7 @@ workflow run_wf {
 
   // merge all of the output data 
   output_ch = score_ch
-    | mix(dataset_meta_ch)
+    | mix(meta_ch)
     | joinStates{ ids, states ->
       def mergedStates = states.inject([:]) { acc, m -> acc + m }
       [ids[0], mergedStates]
