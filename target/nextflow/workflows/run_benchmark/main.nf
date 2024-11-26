@@ -3400,12 +3400,11 @@ meta = [
   "status" : "enabled",
   "dependencies" : [
     {
-      "name" : "h5ad/extract_uns_metadata",
+      "name" : "utils/extract_uns_metadata",
       "repository" : {
         "type" : "github",
-        "repo" : "openproblems-bio/core",
-        "tag" : "build/add_common_components",
-        "path" : "viash/core"
+        "repo" : "openproblems-bio/openproblems",
+        "tag" : "build/main"
       }
     },
     {
@@ -3478,16 +3477,9 @@ meta = [
   "repositories" : [
     {
       "type" : "github",
-      "name" : "openproblems_v2",
-      "repo" : "openproblems-bio/openproblems-v2",
-      "tag" : "main_build"
-    },
-    {
-      "type" : "github",
-      "name" : "core",
-      "repo" : "openproblems-bio/core",
-      "tag" : "build/add_common_components",
-      "path" : "viash/core"
+      "name" : "openproblems",
+      "repo" : "openproblems-bio/openproblems",
+      "tag" : "build/main"
     }
   ],
   "license" : "MIT",
@@ -3538,7 +3530,7 @@ meta = [
     "engine" : "native",
     "output" : "target/nextflow/workflows/run_benchmark",
     "viash_version" : "0.9.0",
-    "git_commit" : "0bd597e201b39fbcbc1fcd7047f7654a9713a197",
+    "git_commit" : "059173d42aeba34d2c55f8232d5cf8c7d9781a0e",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3565,16 +3557,9 @@ meta = [
     "repositories" : [
       {
         "type" : "github",
-        "name" : "openproblems_v2",
-        "repo" : "openproblems-bio/openproblems-v2",
-        "tag" : "main_build"
-      },
-      {
-        "type" : "github",
-        "name" : "core",
-        "repo" : "openproblems-bio/core",
-        "tag" : "build/add_common_components",
-        "path" : "viash/core"
+        "name" : "openproblems",
+        "repo" : "openproblems-bio/openproblems",
+        "tag" : "build/main"
       }
     ],
     "viash_version" : "0.9.0",
@@ -3687,7 +3672,7 @@ meta = [
 
 // resolve dependencies dependencies (if any)
 meta["root_dir"] = getRootDir()
-include { extract_uns_metadata } from "${meta.root_dir}/dependencies/github/openproblems-bio/core/build/add_common_components/nextflow/h5ad/extract_uns_metadata/main.nf"
+include { extract_uns_metadata } from "${meta.root_dir}/dependencies/github/openproblems-bio/openproblems/build/main/nextflow/utils/extract_uns_metadata/main.nf"
 include { mean_per_gene } from "${meta.resources_dir}/../../../nextflow/control_methods/mean_per_gene/main.nf"
 include { random_predict } from "${meta.resources_dir}/../../../nextflow/control_methods/random_predict/main.nf"
 include { zeros } from "${meta.resources_dir}/../../../nextflow/control_methods/zeros/main.nf"

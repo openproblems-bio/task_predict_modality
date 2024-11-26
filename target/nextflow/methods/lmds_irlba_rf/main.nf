@@ -3283,16 +3283,9 @@ meta = [
   "repositories" : [
     {
       "type" : "github",
-      "name" : "openproblems_v2",
-      "repo" : "openproblems-bio/openproblems-v2",
-      "tag" : "main_build"
-    },
-    {
-      "type" : "github",
-      "name" : "core",
-      "repo" : "openproblems-bio/core",
-      "tag" : "build/add_common_components",
-      "path" : "viash/core"
+      "name" : "openproblems",
+      "repo" : "openproblems-bio/openproblems",
+      "tag" : "build/main"
     }
   ],
   "license" : "MIT",
@@ -3372,7 +3365,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/lmds_irlba_rf",
     "viash_version" : "0.9.0",
-    "git_commit" : "0bd597e201b39fbcbc1fcd7047f7654a9713a197",
+    "git_commit" : "059173d42aeba34d2c55f8232d5cf8c7d9781a0e",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3399,16 +3392,9 @@ meta = [
     "repositories" : [
       {
         "type" : "github",
-        "name" : "openproblems_v2",
-        "repo" : "openproblems-bio/openproblems-v2",
-        "tag" : "main_build"
-      },
-      {
-        "type" : "github",
-        "name" : "core",
-        "repo" : "openproblems-bio/core",
-        "tag" : "build/add_common_components",
-        "path" : "viash/core"
+        "name" : "openproblems",
+        "repo" : "openproblems-bio/openproblems",
+        "tag" : "build/main"
       }
     ],
     "viash_version" : "0.9.0",

@@ -3611,21 +3611,19 @@ meta = [
   "status" : "enabled",
   "dependencies" : [
     {
-      "name" : "schema/verify_data_structure",
+      "name" : "validation/check_dataset_with_schema",
       "repository" : {
         "type" : "github",
-        "repo" : "openproblems-bio/core",
-        "tag" : "build/add_common_components",
-        "path" : "viash/core"
+        "repo" : "openproblems-bio/openproblems",
+        "tag" : "build/main"
       }
     },
     {
-      "name" : "h5ad/extract_uns_metadata",
+      "name" : "utils/extract_uns_metadata",
       "repository" : {
         "type" : "github",
-        "repo" : "openproblems-bio/core",
-        "tag" : "build/add_common_components",
-        "path" : "viash/core"
+        "repo" : "openproblems-bio/openproblems",
+        "tag" : "build/main"
       }
     },
     {
@@ -3638,16 +3636,9 @@ meta = [
   "repositories" : [
     {
       "type" : "github",
-      "name" : "openproblems_v2",
-      "repo" : "openproblems-bio/openproblems-v2",
-      "tag" : "main_build"
-    },
-    {
-      "type" : "github",
-      "name" : "core",
-      "repo" : "openproblems-bio/core",
-      "tag" : "build/add_common_components",
-      "path" : "viash/core"
+      "name" : "openproblems",
+      "repo" : "openproblems-bio/openproblems",
+      "tag" : "build/main"
     }
   ],
   "license" : "MIT",
@@ -3698,7 +3689,7 @@ meta = [
     "engine" : "native",
     "output" : "target/nextflow/workflows/process_datasets",
     "viash_version" : "0.9.0",
-    "git_commit" : "0bd597e201b39fbcbc1fcd7047f7654a9713a197",
+    "git_commit" : "059173d42aeba34d2c55f8232d5cf8c7d9781a0e",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3725,16 +3716,9 @@ meta = [
     "repositories" : [
       {
         "type" : "github",
-        "name" : "openproblems_v2",
-        "repo" : "openproblems-bio/openproblems-v2",
-        "tag" : "main_build"
-      },
-      {
-        "type" : "github",
-        "name" : "core",
-        "repo" : "openproblems-bio/core",
-        "tag" : "build/add_common_components",
-        "path" : "viash/core"
+        "name" : "openproblems",
+        "repo" : "openproblems-bio/openproblems",
+        "tag" : "build/main"
       }
     ],
     "viash_version" : "0.9.0",
@@ -3847,8 +3831,8 @@ meta = [
 
 // resolve dependencies dependencies (if any)
 meta["root_dir"] = getRootDir()
-include { verify_data_structure } from "${meta.root_dir}/dependencies/github/openproblems-bio/core/build/add_common_components/nextflow/schema/verify_data_structure/main.nf"
-include { extract_uns_metadata } from "${meta.root_dir}/dependencies/github/openproblems-bio/core/build/add_common_components/nextflow/h5ad/extract_uns_metadata/main.nf"
+include { check_dataset_with_schema } from "${meta.root_dir}/dependencies/github/openproblems-bio/openproblems/build/main/nextflow/validation/check_dataset_with_schema/main.nf"
+include { extract_uns_metadata } from "${meta.root_dir}/dependencies/github/openproblems-bio/openproblems/build/main/nextflow/utils/extract_uns_metadata/main.nf"
 include { process_dataset } from "${meta.resources_dir}/../../../nextflow/data_processors/process_dataset/main.nf"
 
 // inner workflow
@@ -3871,8 +3855,8 @@ workflow run_wf {
   output_ch = input_ch
   
     // Check if the input datasets match the desired format --------------------------------
-    | verify_data_structure.run(
-      key: "verify_data_structure_mod1",
+    | check_dataset_with_schema.run(
+      key: "check_dataset_with_schema_mod1",
       fromState: { id, state ->
         def schema = findArgumentSchema(meta.config, "input_mod1")
         def schemaYaml = tempFile("schema.yaml")
@@ -3891,8 +3875,8 @@ workflow run_wf {
       }
     )
 
-    | verify_data_structure.run(
-      key: "verify_data_structure_mod2",
+    | check_dataset_with_schema.run(
+      key: "check_dataset_with_schema_mod2",
       fromState: { id, state ->
         def schema = findArgumentSchema(meta.config, "input_mod2")
         def schemaYaml = tempFile("schema.yaml")

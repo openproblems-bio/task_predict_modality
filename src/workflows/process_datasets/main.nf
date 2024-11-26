@@ -16,8 +16,8 @@ workflow run_wf {
   output_ch = input_ch
   
     // Check if the input datasets match the desired format --------------------------------
-    | verify_data_structure.run(
-      key: "verify_data_structure_mod1",
+    | check_dataset_with_schema.run(
+      key: "check_dataset_with_schema_mod1",
       fromState: { id, state ->
         def schema = findArgumentSchema(meta.config, "input_mod1")
         def schemaYaml = tempFile("schema.yaml")
@@ -36,8 +36,8 @@ workflow run_wf {
       }
     )
 
-    | verify_data_structure.run(
-      key: "verify_data_structure_mod2",
+    | check_dataset_with_schema.run(
+      key: "check_dataset_with_schema_mod2",
       fromState: { id, state ->
         def schema = findArgumentSchema(meta.config, "input_mod2")
         def schemaYaml = tempFile("schema.yaml")
