@@ -5,31 +5,30 @@ workflow auto {
     )
 }
 
+// construct list of methods
+methods = [
+  mean_per_gene,
+  random_predict,
+  zeros,
+  solution,
+  knnr_py,
+  knnr_r,
+  lm,
+  guanlab_dengkw_pm,
+  novel
+]
+
+// construct list of metrics
+metrics = [
+  correlation,
+  mse
+]
+
 workflow run_wf {
   take:
   input_ch
 
   main:
-
-  // construct list of methods
-  methods = [
-    mean_per_gene,
-    random_predict,
-    zeros,
-    solution,
-    knnr_py,
-    knnr_r,
-    lm,
-    lmds_irlba_rf,
-    guanlab_dengkw_pm,
-    novel
-  ]
-
-  // construct list of metrics
-  metrics = [
-    correlation,
-    mse
-  ]
 
   /****************************
    * EXTRACT DATASET METADATA *
@@ -42,7 +41,7 @@ workflow run_wf {
     }
 
     // extract the dataset metadata
-    | extract_metadata.run(
+    | extract_uns_metadata.run(
       key: "metadata_mod1",
       fromState: [input: "input_train_mod1"],
       toState: { id, output, state ->
@@ -52,7 +51,7 @@ workflow run_wf {
       }
     )
 
-    | extract_metadata.run(
+    | extract_uns_metadata.run(
       key: "metadata_mod2",
       fromState: [input: "input_test_mod2"],
       toState: { id, output, state ->
@@ -134,6 +133,26 @@ workflow run_wf {
         ]
       }
     )
+    // extract the scores
+    | extract_uns_metadata.run(
+      key: "extract_scores",
+      fromState: [input: "metric_output"],
+      toState: { id, output, state ->
+        state + [
+          score_uns: readYaml(output.output).uns
+        ]
+      }
+    )
+
+    | joinStates { ids, states ->
+      // store the scores in a file
+      def score_uns = states.collect{it.score_uns}
+      def score_uns_yaml_blob = toYamlBlob(score_uns)
+      def score_uns_file = tempFile("score_uns.yaml")
+      score_uns_file.write(score_uns_yaml_blob)
+      
+      ["output", [output_scores: score_uns_file]]
+    }
 
   /******************************
    * GENERATE OUTPUT YAML FILES *
@@ -141,7 +160,7 @@ workflow run_wf {
   // TODO: can we store everything below in a separate helper function?
 
   // extract the dataset metadata
-  dataset_meta_ch = dataset_ch
+  meta_ch = dataset_ch
     // only keep one of the normalization methods
     | filter{ id, state ->
       state.rna_norm == "log_cp10k"
@@ -157,23 +176,6 @@ workflow run_wf {
       def dataset_uns_file = tempFile("dataset_uns.yaml")
       dataset_uns_file.write(dataset_uns_yaml_blob)
 
-      ["output", [output_dataset_info: dataset_uns_file]]
-    }
-
-  output_ch = score_ch
-
-    // extract the scores
-    | extract_metadata.run(
-      key: "extract_scores",
-      fromState: [input: "metric_output"],
-      toState: { id, output, state ->
-        state + [
-          score_uns: readYaml(output.output).uns
-        ]
-      }
-    )
-
-    | joinStates { ids, states ->
       // store the method configs in a file
       def method_configs = methods.collect{it.config}
       def method_configs_yaml_blob = toYamlBlob(method_configs)
@@ -186,27 +188,23 @@ workflow run_wf {
       def metric_configs_file = tempFile("metric_configs.yaml")
       metric_configs_file.write(metric_configs_yaml_blob)
 
-      def task_info_file = meta.resources_dir.resolve("task_info.yaml")
+      def task_info_file = meta.resources_dir.resolve("_viash.yaml")
 
-      // store the scores in a file
-      def score_uns = states.collect{it.score_uns}
-      def score_uns_yaml_blob = toYamlBlob(score_uns)
-      def score_uns_file = tempFile("score_uns.yaml")
-      score_uns_file.write(score_uns_yaml_blob)
-
+      // create output
       def new_state = [
         output_method_configs: method_configs_file,
         output_metric_configs: metric_configs_file,
         output_task_info: task_info_file,
-        output_scores: score_uns_file,
+        output_dataset_info: dataset_uns_file,
         _meta: states[0]._meta
       ]
       
       ["output", new_state]
     }
 
-    // merge all of the output data 
-    | mix(dataset_meta_ch)
+  // merge all of the output data 
+  output_ch = score_ch
+    | mix(meta_ch)
     | joinStates{ ids, states ->
       def mergedStates = states.inject([:]) { acc, m -> acc + m }
       [ids[0], mergedStates]

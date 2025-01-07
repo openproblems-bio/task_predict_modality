@@ -60,8 +60,8 @@ resources:
   - type: file
     path: /_viash.yaml
 dependencies:
-  - name: h5ad/extract_uns_metadata
-    repository: core
+  - name: utils/extract_uns_metadata
+    repository: openproblems
   - name: control_methods/mean_per_gene
   - name: control_methods/random_predict
   - name: control_methods/zeros
@@ -69,7 +69,6 @@ dependencies:
   - name: methods/knnr_py
   - name: methods/knnr_r
   - name: methods/lm
-  - name: methods/lmds_irlba_rf
   - name: methods/guanlab_dengkw_pm
   - name: methods/novel
   - name: metrics/correlation

@@ -8,13 +8,13 @@ par <- list(
 )
 
 meta <- list(
-  functionality_name = "foo"
+  name = "foo"
 )
 ## VIASH END
 
 cat("Reading h5ad files\n")
 ad2_test <- anndata::read_h5ad(par$input_test_mod2)
-ad2_test$uns[["method_id"]] <- meta$functionality_name
+ad2_test$uns[["method_id"]] <- meta$name
 
 cat("Writing predictions to file\n")
 zzz <- ad2_test$write_h5ad(par$output, compression = "gzip")
