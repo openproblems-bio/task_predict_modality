@@ -69,7 +69,6 @@ dependencies:
   - name: methods/knnr_py
   - name: methods/knnr_r
   - name: methods/lm
-  - name: methods/lmds_irlba_rf
   - name: methods/guanlab_dengkw_pm
   - name: metrics/correlation
   - name: metrics/mse
