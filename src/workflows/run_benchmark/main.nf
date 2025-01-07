@@ -14,7 +14,6 @@ methods = [
   knnr_py,
   knnr_r,
   lm,
-  lmds_irlba_rf,
   guanlab_dengkw_pm
 ]
 

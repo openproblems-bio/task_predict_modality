@@ -3450,12 +3450,6 @@ meta = [
       }
     },
     {
-      "name" : "methods/lmds_irlba_rf",
-      "repository" : {
-        "type" : "local"
-      }
-    },
-    {
       "name" : "methods/guanlab_dengkw_pm",
       "repository" : {
         "type" : "local"
@@ -3530,7 +3524,7 @@ meta = [
     "engine" : "native",
     "output" : "target/nextflow/workflows/run_benchmark",
     "viash_version" : "0.9.0",
-    "git_commit" : "059173d42aeba34d2c55f8232d5cf8c7d9781a0e",
+    "git_commit" : "abc3434fec7eae1866617a24700d559cfd07fa81",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3680,7 +3674,6 @@ include { solution } from "${meta.resources_dir}/../../../nextflow/control_metho
 include { knnr_py } from "${meta.resources_dir}/../../../nextflow/methods/knnr_py/main.nf"
 include { knnr_r } from "${meta.resources_dir}/../../../nextflow/methods/knnr_r/main.nf"
 include { lm } from "${meta.resources_dir}/../../../nextflow/methods/lm/main.nf"
-include { lmds_irlba_rf } from "${meta.resources_dir}/../../../nextflow/methods/lmds_irlba_rf/main.nf"
 include { guanlab_dengkw_pm } from "${meta.resources_dir}/../../../nextflow/methods/guanlab_dengkw_pm/main.nf"
 include { correlation } from "${meta.resources_dir}/../../../nextflow/metrics/correlation/main.nf"
 include { mse } from "${meta.resources_dir}/../../../nextflow/metrics/mse/main.nf"
@@ -3703,7 +3696,6 @@ methods = [
   knnr_py,
   knnr_r,
   lm,
-  lmds_irlba_rf,
   guanlab_dengkw_pm
 ]
 

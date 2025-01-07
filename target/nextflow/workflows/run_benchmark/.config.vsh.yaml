@@ -441,9 +441,6 @@ dependencies:
 - name: "methods/lm"
   repository:
     type: "local"
-- name: "methods/lmds_irlba_rf"
-  repository:
-    type: "local"
 - name: "methods/guanlab_dengkw_pm"
   repository:
     type: "local"
@@ -493,7 +490,7 @@ build_info:
   output: "target/nextflow/workflows/run_benchmark"
   executable: "target/nextflow/workflows/run_benchmark/main.nf"
   viash_version: "0.9.0"
-  git_commit: "059173d42aeba34d2c55f8232d5cf8c7d9781a0e"
+  git_commit: "abc3434fec7eae1866617a24700d559cfd07fa81"
   git_remote: "https://github.com/openproblems-bio/task_predict_modality"
   dependencies:
   - "target/dependencies/github/openproblems-bio/openproblems/build/main/nextflow/utils/extract_uns_metadata"
@@ -504,7 +501,6 @@ build_info:
   - "target/nextflow/methods/knnr_py"
   - "target/nextflow/methods/knnr_r"
   - "target/nextflow/methods/lm"
-  - "target/nextflow/methods/lmds_irlba_rf"
   - "target/nextflow/methods/guanlab_dengkw_pm"
   - "target/nextflow/metrics/correlation"
   - "target/nextflow/metrics/mse"
