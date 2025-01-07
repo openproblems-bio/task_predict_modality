@@ -1,0 +1,57 @@
+name: "process_dataset"
+namespace: "data_processors"
+argument_groups:
+  - name: Inputs
+    arguments:
+      - name: "--input_mod1"
+        __merge__: "/src/api/file_common_dataset_mod1.yaml"
+        required: true
+        direction: input
+      - name: "--input_mod2"
+        __merge__: "/src/api/file_common_dataset_mod2.yaml"
+        direction: input
+        required: true
+  - name: Outputs
+    arguments:
+      - name: "--output_train_mod1"
+        __merge__: /src/api/file_train_mod1.yaml
+        direction: output
+        required: true
+      - name: "--output_train_mod2"
+        __merge__: /src/api/file_train_mod2.yaml
+        direction: output
+        required: true
+      - name: "--output_test_mod1"
+        __merge__: /src/api/file_test_mod1.yaml
+        direction: "output"
+        required: true
+      - name: "--output_test_mod2"
+        __merge__: /src/api/file_test_mod2.yaml
+        direction: output
+        required: true
+  - name: Parameters
+    arguments:
+      - name: "--dataset_id"
+        type: "string"
+        description: "New dataset ID"
+        required: false
+      - name: "--swap"
+        type: "boolean"
+        description: "Swap mod1 and mod2"
+        default: false
+resources:
+  - type: r_script
+    path: script.R
+engines:
+  - type: docker
+    image: openproblems/base_r:1.0.0
+runners:
+  - type: executable
+  - type: nextflow
+    directives:
+      label: [hightime, highmem, highcpu]
+test_resources:
+  - type: python_script
+    path: /common/component_tests/run_and_check_output.py
+  - path: /resources_test/common/openproblems_neurips2021/bmmc_cite
+    dest: resources_test/common/openproblems_neurips2021/bmmc_cite

@@ -1,0 +1,16 @@
+__merge__: ../../api/comp_control_method.yaml
+name: solution
+label: Solution
+summary: Returns the ground-truth solution.
+description: Returns the ground-truth solution.
+resources:
+  - type: r_script
+    path: script.R
+engines:
+  - type: docker
+    image: openproblems/base_r:1.0.0
+runners:
+  - type: executable
+  - type: nextflow
+    directives:
+      label: [midtime, midmem, lowcpu]
