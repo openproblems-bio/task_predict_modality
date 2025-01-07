@@ -13,7 +13,7 @@ par = {
     'n_pcs': 4,
     'n_neighbors': 5,
 }
-meta = { 'functionality_name': 'foo' }
+meta = { 'name': 'foo' }
 ## VIASH END
 
 print('Reading `h5ad` files...', flush=True)
@@ -59,7 +59,7 @@ adata = ad.AnnData(
     var=input_train_mod2.var,
     uns={
         'dataset_id': input_train_mod1.uns['dataset_id'],
-        'method_id': meta["functionality_name"],
+        'method_id': meta["name"],
     },
 )
 

@@ -1,10 +1,11 @@
 /resources
 /resources_test
-work
-.nextflow*
-target
-.vscode
+/work
+/.nextflow*
+/target
+/.vscode
 .DS_Store
-output
+/output
 trace-*
 .ipynb_checkpoints
+/temp
