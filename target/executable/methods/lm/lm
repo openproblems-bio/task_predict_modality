@@ -487,9 +487,9 @@ RUN Rscript -e 'if (!requireNamespace("remotes", quietly = TRUE)) install.packag
   Rscript -e 'remotes::install_cran(c("lmds", "RcppArmadillo", "pbapply"), repos = "https://cran.rstudio.com")'
 
 LABEL org.opencontainers.image.description="Companion container for running component methods lm"
-LABEL org.opencontainers.image.created="2025-01-07T13:16:15Z"
+LABEL org.opencontainers.image.created="2025-01-07T19:28:26Z"
 LABEL org.opencontainers.image.source="https://github.com/openproblems-bio/task_predict_modality"
-LABEL org.opencontainers.image.revision="abc3434fec7eae1866617a24700d559cfd07fa81"
+LABEL org.opencontainers.image.revision="ee77cda803fd20c17d6d52d3d716bb5368088bcd"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER
