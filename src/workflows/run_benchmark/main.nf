@@ -14,7 +14,8 @@ methods = [
   knnr_py,
   knnr_r,
   lm,
-  guanlab_dengkw_pm
+  guanlab_dengkw_pm,
+  simple_mlp
 ]
 
 // construct list of metrics

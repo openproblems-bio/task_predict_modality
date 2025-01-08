@@ -1,3 +1,9 @@
+# task_predict_modality 0.1.1
+
+## NEW FUNCTIONALITY
+
+* Added Simple MLP method (PR #3).
+
 # task_predict_modality 0.1.0
 
 Initial release after migrating the codebase.
