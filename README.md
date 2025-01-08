@@ -40,28 +40,27 @@ data shows that this is not trivial.
 | Kaiwen Deng        | contributor        |
 | Louise Deconinck   | author             |
 | Robrecht Cannoodt  | author, maintainer |
-| Xueer Chen         | contributor        |
-| Jiwei Liu          | contributor        |
+| Christopher Lance  | author             |
 
 ## API
 
 ``` mermaid
-flowchart LR
-  file_common_dataset_mod1("Raw dataset RNA")
-  comp_process_datasets[/"Process Dataset"/]
-  file_test_mod1("Test mod1")
-  file_test_mod2("Test mod2")
-  file_train_mod1("Train mod1")
-  file_train_mod2("Train mod2")
-  comp_control_method[/"Control method"/]
-  comp_method_predict[/"Predict"/]
-  comp_method_train[/"Train"/]
-  comp_method[/"Method"/]
-  comp_metric[/"Metric"/]
-  file_prediction("Prediction")
-  file_pretrained_model("Pretrained model")
-  file_score("Score")
-  file_common_dataset_mod2("Raw dataset mod2")
+flowchart TB
+  file_common_dataset_mod1("<a href='https://github.com/openproblems-bio/task_predict_modality#file-format-raw-dataset-rna'>Raw dataset RNA</a>")
+  comp_process_datasets[/"<a href='https://github.com/openproblems-bio/task_predict_modality#component-type-process-dataset'>Process Dataset</a>"/]
+  file_test_mod1("<a href='https://github.com/openproblems-bio/task_predict_modality#file-format-test-mod1'>Test mod1</a>")
+  file_test_mod2("<a href='https://github.com/openproblems-bio/task_predict_modality#file-format-test-mod2'>Test mod2</a>")
+  file_train_mod1("<a href='https://github.com/openproblems-bio/task_predict_modality#file-format-train-mod1'>Train mod1</a>")
+  file_train_mod2("<a href='https://github.com/openproblems-bio/task_predict_modality#file-format-train-mod2'>Train mod2</a>")
+  comp_control_method[/"<a href='https://github.com/openproblems-bio/task_predict_modality#component-type-control-method'>Control method</a>"/]
+  comp_method_predict[/"<a href='https://github.com/openproblems-bio/task_predict_modality#component-type-predict'>Predict</a>"/]
+  comp_method_train[/"<a href='https://github.com/openproblems-bio/task_predict_modality#component-type-train'>Train</a>"/]
+  comp_method[/"<a href='https://github.com/openproblems-bio/task_predict_modality#component-type-method'>Method</a>"/]
+  comp_metric[/"<a href='https://github.com/openproblems-bio/task_predict_modality#component-type-metric'>Metric</a>"/]
+  file_prediction("<a href='https://github.com/openproblems-bio/task_predict_modality#file-format-prediction'>Prediction</a>")
+  file_pretrained_model("<a href='https://github.com/openproblems-bio/task_predict_modality#file-format-pretrained-model'>Pretrained model</a>")
+  file_score("<a href='https://github.com/openproblems-bio/task_predict_modality#file-format-score'>Score</a>")
+  file_common_dataset_mod2("<a href='https://github.com/openproblems-bio/task_predict_modality#file-format-raw-dataset-mod2'>Raw dataset mod2</a>")
   file_common_dataset_mod1---comp_process_datasets
   comp_process_datasets-->file_test_mod1
   comp_process_datasets-->file_test_mod2
@@ -69,16 +68,16 @@ flowchart LR
   comp_process_datasets-->file_train_mod2
   file_test_mod1---comp_control_method
   file_test_mod1---comp_method_predict
-  file_test_mod1---comp_method_train
+  file_test_mod1-.-comp_method_train
   file_test_mod1---comp_method
   file_test_mod2---comp_control_method
   file_test_mod2---comp_metric
   file_train_mod1---comp_control_method
-  file_train_mod1---comp_method_predict
+  file_train_mod1-.-comp_method_predict
   file_train_mod1---comp_method_train
   file_train_mod1---comp_method
   file_train_mod2---comp_control_method
-  file_train_mod2---comp_method_predict
+  file_train_mod2-.-comp_method_predict
   file_train_mod2---comp_method_train
   file_train_mod2---comp_method
   comp_control_method-->file_prediction
