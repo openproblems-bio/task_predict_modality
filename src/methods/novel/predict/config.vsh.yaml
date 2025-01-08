@@ -1,0 +1,26 @@
+__merge__: ../../../api/comp_method_predict.yaml
+name: novel_predict
+
+info:
+  test_setup:
+    with_model:
+      input_model: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/models/novel
+
+resources:
+  - type: python_script
+    path: script.py
+  - path: ../helper_functions.py
+engines:
+  - type: docker
+    image: openproblems/base_pytorch_nvidia:1.0.0
+    setup:
+      - type: python
+        packages:
+          - scikit-learn
+          - networkx
+runners:
+  - type: executable
+  - type: nextflow
+    directives:
+      label: [highmem, hightime, midcpu, highsharedmem, gpu]
+

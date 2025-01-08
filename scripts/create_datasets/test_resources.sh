@@ -30,20 +30,31 @@ nextflow run . \
 echo "Run one method"
 
 for name in bmmc_cite/normal bmmc_cite/swap bmmc_multiome/normal bmmc_multiome/swap; do
+  echo "Run KNN on $name"
   viash run src/methods/knnr_py/config.vsh.yaml -- \
     --input_train_mod1 $OUTPUT_DIR/openproblems_neurips2021/$name/train_mod1.h5ad \
     --input_train_mod2 $OUTPUT_DIR/openproblems_neurips2021/$name/train_mod2.h5ad \
     --input_test_mod1 $OUTPUT_DIR/openproblems_neurips2021/$name/test_mod1.h5ad \
     --output $OUTPUT_DIR/openproblems_neurips2021/$name/prediction.h5ad
 
-  # pre-train simple_mlp
-  rm -r $OUTPUT_DIR/openproblems_neurips2021/$name/models/simple_mlp/
+  echo "pre-train simple_mlp on $name"
+  [ -d $OUTPUT_DIR/openproblems_neurips2021/$name/models/simple_mlp/ ] && rm -r $OUTPUT_DIR/openproblems_neurips2021/$name/models/simple_mlp/
   mkdir -p $OUTPUT_DIR/openproblems_neurips2021/$name/models/simple_mlp/
   viash run src/methods/simple_mlp/train/config.vsh.yaml -- \
     --input_train_mod1 $OUTPUT_DIR/openproblems_neurips2021/$name/train_mod1.h5ad \
     --input_train_mod2 $OUTPUT_DIR/openproblems_neurips2021/$name/train_mod2.h5ad \
     --input_test_mod1 $OUTPUT_DIR/openproblems_neurips2021/$name/test_mod1.h5ad \
     --output $OUTPUT_DIR/openproblems_neurips2021/$name/models/simple_mlp/
+
+  echo "pre-train novel on $name"
+  [ -d $OUTPUT_DIR/openproblems_neurips2021/$name/models/novel/ ] && rm -r $OUTPUT_DIR/openproblems_neurips2021/$name/models/novel/
+  mkdir -p $OUTPUT_DIR/openproblems_neurips2021/$name/models/novel/
+  viash run src/methods/novel/train/config.vsh.yaml -- \
+    --input_train_mod1 $OUTPUT_DIR/openproblems_neurips2021/$name/train_mod1.h5ad \
+    --input_train_mod2 $OUTPUT_DIR/openproblems_neurips2021/$name/train_mod2.h5ad \
+    --input_test_mod1 $OUTPUT_DIR/openproblems_neurips2021/$name/test_mod1.h5ad \
+    --output $OUTPUT_DIR/openproblems_neurips2021/$name/models/novel
+
 done
 
 # only run this if you have access to the openproblems-data bucket
