@@ -4,7 +4,7 @@ name: simplemlp_predict
 info:
   test_setup:
     with_model:
-      input_model: "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/model_simple_mlp"
+      input_model: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/models/simple_mlp
 
 resources:
   - type: python_script

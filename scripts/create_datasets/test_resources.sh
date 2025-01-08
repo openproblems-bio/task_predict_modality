@@ -29,31 +29,25 @@ nextflow run . \
 
 echo "Run one method"
 
-viash run src/methods/knnr_py/config.vsh.yaml -- \
-  --input_train_mod1 $OUTPUT_DIR/openproblems_neurips2021/bmmc_cite/normal/train_mod1.h5ad \
-  --input_train_mod2 $OUTPUT_DIR/openproblems_neurips2021/bmmc_cite/normal/train_mod2.h5ad \
-  --input_test_mod1 $OUTPUT_DIR/openproblems_neurips2021/bmmc_cite/normal/test_mod1.h5ad \
-  --output $OUTPUT_DIR/openproblems_neurips2021/bmmc_cite/normal/prediction.h5ad
+for name in bmmc_cite/normal bmmc_cite/swap bmmc_multiome/normal bmmc_multiome/swap; do
+  viash run src/methods/knnr_py/config.vsh.yaml -- \
+    --input_train_mod1 $OUTPUT_DIR/openproblems_neurips2021/$name/train_mod1.h5ad \
+    --input_train_mod2 $OUTPUT_DIR/openproblems_neurips2021/$name/train_mod2.h5ad \
+    --input_test_mod1 $OUTPUT_DIR/openproblems_neurips2021/$name/test_mod1.h5ad \
+    --output $OUTPUT_DIR/openproblems_neurips2021/$name/prediction.h5ad
 
-viash run src/methods/knnr_py/config.vsh.yaml -- \
-  --input_train_mod1 $OUTPUT_DIR//openproblems_neurips2021/bmmc_cite/swap/train_mod1.h5ad \
-  --input_train_mod2 $OUTPUT_DIR//openproblems_neurips2021/bmmc_cite/swap/train_mod2.h5ad \
-  --input_test_mod1 $OUTPUT_DIR//openproblems_neurips2021/bmmc_cite/swap/test_mod1.h5ad \
-  --output $OUTPUT_DIR//openproblems_neurips2021/bmmc_cite/swap/prediction.h5ad
-
-viash run src/methods/knnr_py/config.vsh.yaml -- \
-  --input_train_mod1 $OUTPUT_DIR/openproblems_neurips2021/bmmc_multiome/normal/train_mod1.h5ad \
-  --input_train_mod2 $OUTPUT_DIR/openproblems_neurips2021/bmmc_multiome/normal/train_mod2.h5ad \
-  --input_test_mod1 $OUTPUT_DIR/openproblems_neurips2021/bmmc_multiome/normal/test_mod1.h5ad \
-  --output $OUTPUT_DIR/openproblems_neurips2021/bmmc_multiome/normal/prediction.h5ad
-
-viash run src/methods/knnr_py/config.vsh.yaml -- \
-  --input_train_mod1 $OUTPUT_DIR/openproblems_neurips2021/bmmc_multiome/swap/train_mod1.h5ad \
-  --input_train_mod2 $OUTPUT_DIR/openproblems_neurips2021/bmmc_multiome/swap/train_mod2.h5ad \
-  --input_test_mod1 $OUTPUT_DIR/openproblems_neurips2021/bmmc_multiome/swap/test_mod1.h5ad \
-  --output $OUTPUT_DIR/openproblems_neurips2021/bmmc_multiome/swap/prediction.h5ad
+  # pre-train simple_mlp
+  rm -r $OUTPUT_DIR/openproblems_neurips2021/$name/models/simple_mlp/
+  mkdir -p $OUTPUT_DIR/openproblems_neurips2021/$name/models/simple_mlp/
+  viash run src/methods/simple_mlp/train/config.vsh.yaml -- \
+    --input_train_mod1 $OUTPUT_DIR/openproblems_neurips2021/$name/train_mod1.h5ad \
+    --input_train_mod2 $OUTPUT_DIR/openproblems_neurips2021/$name/train_mod2.h5ad \
+    --input_test_mod1 $OUTPUT_DIR/openproblems_neurips2021/$name/test_mod1.h5ad \
+    --output $OUTPUT_DIR/openproblems_neurips2021/$name/models/simple_mlp/
+done
 
 # only run this if you have access to the openproblems-data bucket
 aws s3 sync --profile op \
-  "$DATASET_DIR" s3://openproblems-data/resources_test/task_predict_modality \
+  resources_test/task_predict_modality \
+  s3://openproblems-data/resources_test/task_predict_modality \
   --delete --dryrun
