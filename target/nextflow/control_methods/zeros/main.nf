@@ -3447,7 +3447,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/control_methods/zeros",
     "viash_version" : "0.9.0",
-    "git_commit" : "ee77cda803fd20c17d6d52d3d716bb5368088bcd",
+    "git_commit" : "339c965f6c855802269c8bda80cb2aecdde0e0b7",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3511,6 +3511,16 @@ meta = [
         ],
         "info" : {
           "github" : "Pseudomanifold"
+        }
+      },
+      {
+        "name" : "Christopher Lance",
+        "roles" : [
+          "author"
+        ],
+        "info" : {
+          "github" : "xlancelottx",
+          "orcid" : "0000-0002-1275-9802"
         }
       },
       {
