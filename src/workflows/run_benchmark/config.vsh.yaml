@@ -70,6 +70,7 @@ dependencies:
   - name: methods/knnr_r
   - name: methods/lm
   - name: methods/guanlab_dengkw_pm
+  - name: methods/simple_mlp
   - name: metrics/correlation
   - name: metrics/mse
 runners:

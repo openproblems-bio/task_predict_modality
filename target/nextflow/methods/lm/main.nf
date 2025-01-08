@@ -3352,7 +3352,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/lm",
     "viash_version" : "0.9.0",
-    "git_commit" : "339c965f6c855802269c8bda80cb2aecdde0e0b7",
+    "git_commit" : "39f5cec523065b8efa940655ceec1c01221e8ee3",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3366,8 +3366,8 @@ meta = [
       "test_resources" : [
         {
           "type" : "s3",
-          "path" : "s3://openproblems-data/resources_test/common/",
-          "dest" : "resources_test/common"
+          "path" : "s3://openproblems-data/resources_test/common/openproblems_neurips2021",
+          "dest" : "resources_test/common/openproblems_neurips2021"
         },
         {
           "type" : "s3",
@@ -3475,6 +3475,27 @@ meta = [
         "info" : {
           "github" : "rcannood",
           "orcid" : "0000-0003-3641-729X"
+        }
+      },
+      {
+        "name" : "Xueer Chen",
+        "roles" : [
+          "contributor"
+        ],
+        "info" : {
+          "github" : "xuerchen",
+          "email" : "xc2579@columbia.edu"
+        }
+      },
+      {
+        "name" : "Jiwei Liu",
+        "roles" : [
+          "contributor"
+        ],
+        "info" : {
+          "github" : "daxiongshu",
+          "email" : "jiweil@nvidia.com",
+          "orcid" : "0000-0002-8799-9763"
         }
       }
     ],
