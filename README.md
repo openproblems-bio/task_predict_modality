@@ -41,6 +41,8 @@ data shows that this is not trivial.
 | Kaiwen Deng        | contributor        |
 | Louise Deconinck   | author             |
 | Robrecht Cannoodt  | author, maintainer |
+| Xueer Chen         | contributor        |
+| Jiwei Liu          | contributor        |
 
 ## API
 

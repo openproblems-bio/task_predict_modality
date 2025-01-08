@@ -73,7 +73,18 @@ authors:
     info:
       github: rcannood
       orcid: "0000-0003-3641-729X"
-    
+  - name: Xueer Chen
+    roles: [ contributor ]
+    info:
+      github: xuerchen
+      email: xc2579@columbia.edu
+  - name: Jiwei Liu
+    roles: [ contributor ]
+    info:
+      github: daxiongshu
+      email: jiweil@nvidia.com
+      orcid: "0000-0002-8799-9763"
+
 links:
   issue_tracker: https://github.com/openproblems-bio/task_predict_modality/issues
   repository: https://github.com/openproblems-bio/task_predict_modality
@@ -84,8 +95,8 @@ info:
 
   test_resources:
     - type: s3
-      path: s3://openproblems-data/resources_test/common/
-      dest: resources_test/common
+      path: s3://openproblems-data/resources_test/common/openproblems_neurips2021
+      dest: resources_test/common/openproblems_neurips2021
     - type: s3
       path: s3://openproblems-data/resources_test/task_predict_modality/
       dest: resources_test/task_predict_modality

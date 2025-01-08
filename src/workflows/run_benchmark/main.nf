@@ -15,7 +15,8 @@ methods = [
   knnr_r,
   lm,
   guanlab_dengkw_pm,
-  novel
+  novel,
+  simple_mlp
 ]
 
 // construct list of metrics
