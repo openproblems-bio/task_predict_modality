@@ -1,11 +1,11 @@
 __merge__: ../../../api/comp_method_predict.yaml
 name: novel_predict
-arguments:
-  - name: "--input_transform"
-    type: file
-    direction: input
-    required: false
-    example: "lsi_transformer.pickle"
+
+info:
+  test_setup:
+    with_model:
+      input_model: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/models/novel
+
 resources:
   - type: python_script
     path: script.py

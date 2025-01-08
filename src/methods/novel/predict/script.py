@@ -17,26 +17,27 @@ else:
 
 
 ## VIASH START
-
 par = {
     'input_train_mod2': 'resources_test/predict_modality/openproblems_neurips2021/bmmc_cite/normal/train_mod2.h5ad',
     'input_test_mod1': 'resources_test/predict_modality/openproblems_neurips2021/bmmc_cite/normal/test_mod1.h5ad',
     'input_model': 'resources_test/predict_modality/neurips2021_bmmc_cite/model.pt',
-    'input_transform': 'transformer.pickle'
 }
 meta = {
     'resources_dir': 'src/tasks/predict_modality/methods/novel',
-    'functionality_name': '171129'
 }
 ## VIASH END
 
 sys.path.append(meta['resources_dir'])
 from helper_functions import ModelRegressionAtac2Gex, ModelRegressionAdt2Gex, ModelRegressionGex2Adt, ModelRegressionGex2Atac, ModalityMatchingDataset
 
+input_model = f"{par['input_model']}/tensor.pt"
+input_transform = f"{par['input_model']}/transform.pkl"
+input_h5ad = f"{par['input_model']}/train_mod2.h5ad"
+
 print("Load data", flush=True)
 
 input_test_mod1 = ad.read_h5ad(par['input_test_mod1'])
-input_train_mod2 = ad.read_h5ad(par['input_train_mod2'])
+input_train_mod2 = ad.read_h5ad(input_h5ad)
 
 mod1 = input_test_mod1.uns['modality']
 mod2 = input_train_mod2.uns['modality']
@@ -46,7 +47,7 @@ n_vars_mod2 = input_train_mod2.uns["model_dim"]["mod2"]
 
 input_test_mod1.X = input_test_mod1.layers['normalized'].tocsr()
 
-# Remove vars that were removed from training set. Mostlyy only applicable for testing.
+# Remove vars that were removed from training set. Mostly only applicable for testing.
 if input_train_mod2.uns.get("removed_vars"):
   rem_var = input_train_mod2.uns["removed_vars"]
   input_test_mod1 = input_test_mod1[:, ~input_test_mod1.var_names.isin(rem_var)]
@@ -54,14 +55,12 @@ if input_train_mod2.uns.get("removed_vars"):
 del input_train_mod2
 
 
-model_fp = par['input_model']
-
 print("Start predict", flush=True)
 
 if mod1 == 'GEX' and mod2 == 'ADT':
   model = ModelRegressionGex2Adt(n_vars_mod1,n_vars_mod2)   
-  weight = torch.load(model_fp, map_location='cpu')    
-  with open(par['input_transform'], 'rb') as f:
+  weight = torch.load(input_model, map_location='cpu')    
+  with open(input_transform, 'rb') as f:
     lsi_transformer_gex = pickle.load(f)
 
   model.load_state_dict(weight)    
@@ -69,8 +68,8 @@ if mod1 == 'GEX' and mod2 == 'ADT':
 
 elif mod1 == 'GEX' and mod2 == 'ATAC':
   model = ModelRegressionGex2Atac(n_vars_mod1,n_vars_mod2)   
-  weight = torch.load(model_fp, map_location='cpu')
-  with open(par['input_transform'], 'rb') as f:
+  weight = torch.load(input_model, map_location='cpu')
+  with open(input_transform, 'rb') as f:
     lsi_transformer_gex = pickle.load(f)
 
   model.load_state_dict(weight)    
@@ -78,8 +77,8 @@ elif mod1 == 'GEX' and mod2 == 'ATAC':
 
 elif mod1 == 'ATAC' and mod2 == 'GEX':
   model = ModelRegressionAtac2Gex(n_vars_mod1,n_vars_mod2)   
-  weight = torch.load(model_fp, map_location='cpu')
-  with open(par['input_transform'], 'rb') as f:
+  weight = torch.load(input_model, map_location='cpu')
+  with open(input_transform, 'rb') as f:
     lsi_transformer_gex = pickle.load(f)
 
   model.load_state_dict(weight)    
@@ -87,7 +86,7 @@ elif mod1 == 'ATAC' and mod2 == 'GEX':
 
 elif mod1 == 'ADT' and mod2 == 'GEX':
     model = ModelRegressionAdt2Gex(n_vars_mod1,n_vars_mod2)   
-    weight = torch.load(model_fp, map_location='cpu')
+    weight = torch.load(input_model, map_location='cpu')
 
     model.load_state_dict(weight)    
     input_test_mod1_ = input_test_mod1.to_df()
@@ -111,7 +110,7 @@ adata = ad.AnnData(
     shape=outputs.shape,
     uns={
         'dataset_id': input_test_mod1.uns['dataset_id'],
-        'method_id': meta['functionality_name'],
+        'method_id': meta['name'],
     },
 )
 adata.write_h5ad(par['output'], compression = "gzip")

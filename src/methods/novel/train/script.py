@@ -1,4 +1,7 @@
 import sys
+import os
+import math
+import numpy as np
 
 import torch
 from torch.utils.data import DataLoader
@@ -17,26 +20,21 @@ else:
 
 
 ## VIASH START
-
 par = {
-  'input_train_mod1': 'resources_test/predict_modality/openproblems_neurips2021/bmmc_cite/normal/train_mod1.h5ad',
-  'input_train_mod2': 'resources_test/predict_modality/openproblems_neurips2021/bmmc_cite/normal/train_mod2.h5ad',
-  'output_train_mod2': 'train_mod2.h5ad',
-  'output': 'model.pt'
+  'input_train_mod1': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/normal/train_mod1.h5ad',
+  'input_train_mod2': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/normal/train_mod2.h5ad',
+  'output': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/normal/models/novel'
 }
-
 meta = {
-   'resources_dir': 'src/tasks/predict_modality/methods/novel',
+  'resources_dir': 'src/methods/novel',
 }
 ## VIASH END
-
 
 sys.path.append(meta['resources_dir'])
 from helper_functions import train_and_valid, lsiTransformer, ModalityMatchingDataset
 from helper_functions import ModelRegressionAtac2Gex, ModelRegressionAdt2Gex, ModelRegressionGex2Adt, ModelRegressionGex2Atac
 
 print('Load data', flush=True)
-
 input_train_mod1 = ad.read_h5ad(par['input_train_mod1'])
 input_train_mod2 = ad.read_h5ad(par['input_train_mod2'])
 
@@ -53,8 +51,6 @@ input_train_mod2_df = input_train_mod2.to_df()
 del input_train_mod2
 
 print('Start train', flush=True)
-
-
 # Check for zero divide
 zero_row = input_train_mod1.X.sum(axis=0) == 0
 
@@ -75,8 +71,13 @@ else:
 
 # reproduce train/test split from phase 1
 batch = input_train_mod1.obs["batch"]
-train_ix = [ k for k,v in enumerate(batch) if v not in {'s1d2', 's3d7'} ]
-test_ix = [ k for k,v in enumerate(batch) if v in {'s1d2', 's3d7'} ]
+test_batches = {'s1d2', 's3d7'}
+# if none of phase1_batch is in batch, sample 25% of batch categories rounded up
+if len(test_batches.intersection(set(batch))) == 0:
+  all_batches = batch.cat.categories.tolist()
+  test_batches = set(np.random.choice(all_batches, math.ceil(len(all_batches) * 0.25), replace=False))
+train_ix = [ k for k,v in enumerate(batch) if v not in test_batches ]
+test_ix = [ k for k,v in enumerate(batch) if v in test_batches ]
 
 train_mod1 = input_train_mod1_df.iloc[train_ix, :]
 train_mod2 = input_train_mod2_df.iloc[train_ix, :]
@@ -134,14 +135,24 @@ elif mod1 == 'GEX' and mod2 == 'ATAC':
   optimizer = torch.optim.AdamW(model.parameters(), lr=0.00001806762345275399, weight_decay=0.0004084171379280058)
 
 loss_fn = torch.nn.MSELoss()
-train_and_valid(model, optimizer, loss_fn, dataloader_train, dataloader_test, par['output'], device)
+
+# create dir for par['output']
+os.makedirs(par['output'], exist_ok=True)
+
+# determine filenames
+output_model = f"{par['output']}/tensor.pt"
+output_h5ad = f"{par['output']}/train_mod2.h5ad"
+output_transform = f"{par['output']}/transform.pkl"
+
+# train model
+train_and_valid(model, optimizer, loss_fn, dataloader_train, dataloader_test, output_model, device)
 
 # Add model dim for use in predict part
 adata.uns["model_dim"] = {"mod1": n_vars_mod1, "mod2": n_vars_mod2}
-if rem_var:
+if rem_var is not None:
   adata.uns["removed_vars"] = [rem_var[0]]
-adata.write_h5ad(par['output_train_mod2'], compression="gzip")
+adata.write_h5ad(output_h5ad, compression="gzip")
 
 if mod1 != 'ADT':
-    with open(par['output_transform'], 'wb') as f:
+    with open(output_transform, 'wb') as f:
         pickle.dump(lsi_transformer_gex, f)
