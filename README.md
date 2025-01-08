@@ -35,12 +35,12 @@ data shows that this is not trivial.
 | Alejandro Granados | author             |
 | Alex Tong          | author             |
 | Bastian Rieck      | author             |
+| Christopher Lance  | author             |
 | Daniel Burkhardt   | author             |
 | Kai Waldrant       | contributor        |
 | Kaiwen Deng        | contributor        |
 | Louise Deconinck   | author             |
 | Robrecht Cannoodt  | author, maintainer |
-| Christopher Lance  | author             |
 
 ## API
 
