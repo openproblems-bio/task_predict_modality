@@ -3456,6 +3456,12 @@ meta = [
       }
     },
     {
+      "name" : "methods/novel",
+      "repository" : {
+        "type" : "local"
+      }
+    },
+    {
       "name" : "methods/simple_mlp",
       "repository" : {
         "type" : "local"
@@ -3530,7 +3536,7 @@ meta = [
     "engine" : "native",
     "output" : "target/nextflow/workflows/run_benchmark",
     "viash_version" : "0.9.0",
-    "git_commit" : "39f5cec523065b8efa940655ceec1c01221e8ee3",
+    "git_commit" : "44c8829a18607a6c7a22ac584103c206fbe77a70",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3712,6 +3718,7 @@ include { knnr_py } from "${meta.resources_dir}/../../../nextflow/methods/knnr_p
 include { knnr_r } from "${meta.resources_dir}/../../../nextflow/methods/knnr_r/main.nf"
 include { lm } from "${meta.resources_dir}/../../../nextflow/methods/lm/main.nf"
 include { guanlab_dengkw_pm } from "${meta.resources_dir}/../../../nextflow/methods/guanlab_dengkw_pm/main.nf"
+include { novel } from "${meta.resources_dir}/../../../nextflow/methods/novel/main.nf"
 include { simple_mlp } from "${meta.resources_dir}/../../../nextflow/methods/simple_mlp/main.nf"
 include { correlation } from "${meta.resources_dir}/../../../nextflow/metrics/correlation/main.nf"
 include { mse } from "${meta.resources_dir}/../../../nextflow/metrics/mse/main.nf"
@@ -3735,6 +3742,7 @@ methods = [
   knnr_r,
   lm,
   guanlab_dengkw_pm,
+  novel,
   simple_mlp
 ]
 

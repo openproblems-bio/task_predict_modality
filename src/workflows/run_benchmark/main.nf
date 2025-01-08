@@ -15,6 +15,7 @@ methods = [
   knnr_r,
   lm,
   guanlab_dengkw_pm,
+  novel,
   simple_mlp
 ]
 

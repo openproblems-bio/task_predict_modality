@@ -1,0 +1,19 @@
+__merge__: ../../../api/comp_method_train.yaml
+name: novel_train
+resources:
+  - path: script.py
+    type: python_script
+  - path: ../helper_functions.py
+engines:
+  - type: docker
+    image: openproblems/base_pytorch_nvidia:1.0.0
+    setup:
+      - type: python
+        packages:
+          - scikit-learn
+          - networkx
+runners:
+  - type: executable
+  - type: nextflow
+    directives:
+      label: [highmem, hightime, midcpu, highsharedmem, gpu] 
