@@ -45,6 +45,11 @@ authors:
     roles: [ author ]
     info:
       github: Pseudomanifold
+  - name: Christopher Lance
+    roles: [ author ]
+    info:
+      github: xlancelottx
+      orcid: "0000-0002-1275-9802"
   - name: Daniel Burkhardt
     roles: [ author ]
     info:
