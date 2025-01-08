@@ -1,24 +1,15 @@
-# task_predict_modality x.y.z
+# task_predict_modality 0.1.0
 
-## BREAKING CHANGES
-
-<!-- * Restructured `src` directory (PR #3). -->
+Initial release after migrating the codebase.
 
 ## NEW FUNCTIONALITY
 
-* Added `control_methods/true_labels` component (PR #5).
+* Control methods: Solution, Mean per gene, Random Predictions, Zeros.
 
-* Added `methods/logistic_regression` component (PR #5).
+* Methods: Guanlab-dengkw, KNNR, Linear Model
 
-* Added `metrics/accuracy` component (PR #5).
+* Metrics: MAE, Mean pearson / spearman, RMSE
 
 ## MAJOR CHANGES
 
-* Updated `api` files (PR #5).
-
-## MINOR CHANGES
-
-* Updated `README.md` (PR #5).
-
-## BUGFIXES
-
+* Refactored the API schema.
