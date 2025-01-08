@@ -1,0 +1,28 @@
+__merge__: /src/api/comp_method_predict.yaml
+name: simplemlp_predict
+
+info:
+  test_setup:
+    with_model:
+      input_model: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/models/simple_mlp
+
+resources:
+  - type: python_script
+    path: script.py
+  - path: ../resources/
+
+engines:
+  - type: docker
+    image: openproblems/base_pytorch_nvidia:1.0.0
+    # run_args: ["--gpus all --ipc=host"]
+    setup:
+      - type: python
+        pypi:
+          - scikit-learn
+          - scanpy
+          - pytorch-lightning
+runners:
+  - type: executable
+  - type: nextflow
+    directives:
+      label: [highmem, hightime, midcpu, gpu, highsharedmem]
