@@ -21,7 +21,7 @@ resources:
     type: nextflow_script
     entrypoint: run_wf
 dependencies:
-  - name: methods/simplemlp_train
-  - name: methods/simplemlp_predict
+  - name: methods/simple_mlp_train
+  - name: methods/simple_mlp_predict
 runners:
   - type: nextflow

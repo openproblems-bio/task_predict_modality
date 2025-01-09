@@ -1,5 +1,5 @@
 __merge__: /src/api/comp_method_predict.yaml
-name: simplemlp_predict
+name: simple_mlp_predict
 
 info:
   test_setup:

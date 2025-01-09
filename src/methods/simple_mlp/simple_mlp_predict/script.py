@@ -15,8 +15,8 @@ par = {
     'output': 'output/prediction'
 }
 meta = {
-    'config': 'target/executable/methods/simplemlp_predict/.config.vsh.yaml',
-    'resources_dir': 'target/executable/methods/simplemlp_predict',
+    'config': 'target/executable/methods/simple_mlp_predict/.config.vsh.yaml',
+    'resources_dir': 'target/executable/methods/simple_mlp_predict',
     'cpus': 10
 }
 ## VIASH END
