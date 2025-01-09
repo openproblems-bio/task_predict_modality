@@ -3241,13 +3241,13 @@ meta = [
   "status" : "enabled",
   "dependencies" : [
     {
-      "name" : "methods/simplemlp_train",
+      "name" : "methods/simple_mlp_train",
       "repository" : {
         "type" : "local"
       }
     },
     {
-      "name" : "methods/simplemlp_predict",
+      "name" : "methods/simple_mlp_predict",
       "repository" : {
         "type" : "local"
       }
@@ -3310,12 +3310,12 @@ meta = [
     }
   ],
   "build_info" : {
-    "config" : "/home/runner/work/task_predict_modality/task_predict_modality/src/methods/simple_mlp/run/config.vsh.yaml",
+    "config" : "/home/runner/work/task_predict_modality/task_predict_modality/src/methods/simple_mlp/simple_mlp/config.vsh.yaml",
     "runner" : "nextflow",
     "engine" : "native",
     "output" : "target/nextflow/methods/simple_mlp",
     "viash_version" : "0.9.0",
-    "git_commit" : "44c8829a18607a6c7a22ac584103c206fbe77a70",
+    "git_commit" : "b333268bf19de5c7b9003f69a864bda48ae827a1",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3488,8 +3488,8 @@ meta = [
 
 // resolve dependencies dependencies (if any)
 meta["root_dir"] = getRootDir()
-include { simplemlp_train } from "${meta.resources_dir}/../../../nextflow/methods/simplemlp_train/main.nf"
-include { simplemlp_predict } from "${meta.resources_dir}/../../../nextflow/methods/simplemlp_predict/main.nf"
+include { simple_mlp_train } from "${meta.resources_dir}/../../../nextflow/methods/simple_mlp_train/main.nf"
+include { simple_mlp_predict } from "${meta.resources_dir}/../../../nextflow/methods/simple_mlp_predict/main.nf"
 
 // inner workflow
 // user-provided Nextflow code
@@ -3498,12 +3498,12 @@ workflow run_wf {
   main:
   output_ch = input_ch
 
-    | simplemlp_train.run(
+    | simple_mlp_train.run(
       fromState: ["input_train_mod1", "input_train_mod2"],
       toState: ["input_model": "output"]
     )
 
-    | simplemlp_predict.run(
+    | simple_mlp_predict.run(
       fromState: ["input_train_mod2", "input_test_mod1", "input_model", "input_transform"],
       toState: ["output": "output"]
     )

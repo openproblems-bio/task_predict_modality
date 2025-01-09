@@ -1,4 +1,4 @@
-name: "simplemlp_predict"
+name: "simple_mlp_train"
 namespace: "methods"
 version: "build_main"
 argument_groups:
@@ -74,7 +74,7 @@ argument_groups:
     - "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/train_mod1.h5ad"
     must_exist: true
     create_parent: true
-    required: false
+    required: true
     direction: "input"
     multiple: false
     multiple_sep: ";"
@@ -148,7 +148,7 @@ argument_groups:
     - "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/train_mod2.h5ad"
     must_exist: true
     create_parent: true
-    required: false
+    required: true
     direction: "input"
     multiple: false
     multiple_sep: ";"
@@ -242,45 +242,16 @@ argument_groups:
     - "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/test_mod1.h5ad"
     must_exist: true
     create_parent: true
-    required: true
-    direction: "input"
-    multiple: false
-    multiple_sep: ";"
-  - type: "file"
-    name: "--input_model"
-    label: "Pretrained model"
-    summary: "A pretrained model for predicting the expression of one modality from\
-      \ another."
-    info: null
-    must_exist: true
-    create_parent: true
-    required: true
+    required: false
     direction: "input"
     multiple: false
     multiple_sep: ";"
   - type: "file"
     name: "--output"
-    label: "Prediction"
-    summary: "A prediction of the mod2 expression values of the test cells"
-    info:
-      format:
-        type: "h5ad"
-        layers:
-        - type: "double"
-          name: "normalized"
-          description: "Predicted normalized expression values"
-          required: true
-        uns:
-        - type: "string"
-          name: "dataset_id"
-          description: "A unique identifier for the dataset"
-          required: true
-        - type: "string"
-          name: "method_id"
-          description: "A unique identifier for the method"
-          required: true
-    example:
-    - "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/prediction.h5ad"
+    label: "Pretrained model"
+    summary: "A pretrained model for predicting the expression of one modality from\
+      \ another."
+    info: null
     must_exist: true
     create_parent: true
     required: true
@@ -301,14 +272,12 @@ test_resources:
   path: "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap"
   dest: "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap"
 info:
-  test_setup:
-    with_model:
-      input_model: "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/models/simple_mlp"
-  type: "method_predict"
+  type: "method_train"
   type_info:
-    label: "Predict"
-    summary: "Make predictions using a trained model."
-    description: "This method makes predictions using a trained model.\n"
+    label: "Train"
+    summary: "Train a model to predict the expression of one modality from another."
+    description: "This method trains a model to predict the expression of one modality\
+      \ from another.\n"
 status: "enabled"
 repositories:
 - type: "github"
@@ -368,13 +337,13 @@ engines:
   entrypoint: []
   cmd: null
 build_info:
-  config: "src/methods/simple_mlp/predict/config.vsh.yaml"
-  runner: "nextflow"
+  config: "src/methods/simple_mlp/simple_mlp_train/config.vsh.yaml"
+  runner: "executable"
   engine: "docker"
-  output: "target/nextflow/methods/simplemlp_predict"
-  executable: "target/nextflow/methods/simplemlp_predict/main.nf"
+  output: "target/executable/methods/simple_mlp_train"
+  executable: "target/executable/methods/simple_mlp_train/simple_mlp_train"
   viash_version: "0.9.0"
-  git_commit: "44c8829a18607a6c7a22ac584103c206fbe77a70"
+  git_commit: "b333268bf19de5c7b9003f69a864bda48ae827a1"
   git_remote: "https://github.com/openproblems-bio/task_predict_modality"
 package_config:
   name: "task_predict_modality"

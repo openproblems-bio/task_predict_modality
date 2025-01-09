@@ -3,12 +3,12 @@ workflow run_wf {
   main:
   output_ch = input_ch
 
-    | simplemlp_train.run(
+    | simple_mlp_train.run(
       fromState: ["input_train_mod1", "input_train_mod2"],
       toState: ["input_model": "output"]
     )
 
-    | simplemlp_predict.run(
+    | simple_mlp_predict.run(
       fromState: ["input_train_mod2", "input_test_mod1", "input_model", "input_transform"],
       toState: ["output": "output"]
     )
