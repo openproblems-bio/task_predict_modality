@@ -1,5 +1,5 @@
 __merge__: /src/api/comp_method_train.yaml
-name: simplemlp_train
+name: simple_mlp_train
 resources:
   - type: python_script
     path: script.py
