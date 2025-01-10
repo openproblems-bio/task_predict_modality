@@ -3340,7 +3340,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/novel_predict",
     "viash_version" : "0.9.0",
-    "git_commit" : "b333268bf19de5c7b9003f69a864bda48ae827a1",
+    "git_commit" : "cbd7afa809ff90112b5d476bcc43dbbcb394db3d",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3656,7 +3656,7 @@ adata = ad.AnnData(
     shape=outputs.shape,
     uns={
         'dataset_id': input_test_mod1.uns['dataset_id'],
-        'method_id': meta['name'],
+        'method_id': "novel",
     },
 )
 adata.write_h5ad(par['output'], compression = "gzip")

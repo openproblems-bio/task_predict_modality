@@ -477,9 +477,9 @@ RUN pip install --upgrade pip && \
   pip install --upgrade --no-cache-dir "scikit-learn" "networkx"
 
 LABEL org.opencontainers.image.description="Companion container for running component methods novel_predict"
-LABEL org.opencontainers.image.created="2025-01-09T15:05:05Z"
+LABEL org.opencontainers.image.created="2025-01-10T09:04:58Z"
 LABEL org.opencontainers.image.source="https://github.com/openproblems-bio/task_predict_modality"
-LABEL org.opencontainers.image.revision="b333268bf19de5c7b9003f69a864bda48ae827a1"
+LABEL org.opencontainers.image.revision="cbd7afa809ff90112b5d476bcc43dbbcb394db3d"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER
@@ -1205,7 +1205,7 @@ adata = ad.AnnData(
     shape=outputs.shape,
     uns={
         'dataset_id': input_test_mod1.uns['dataset_id'],
-        'method_id': meta['name'],
+        'method_id': "novel",
     },
 )
 adata.write_h5ad(par['output'], compression = "gzip")
