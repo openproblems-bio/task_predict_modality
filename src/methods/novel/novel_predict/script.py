@@ -110,7 +110,7 @@ adata = ad.AnnData(
     shape=outputs.shape,
     uns={
         'dataset_id': input_test_mod1.uns['dataset_id'],
-        'method_id': meta['name'],
+        'method_id': "novel",
     },
 )
 adata.write_h5ad(par['output'], compression = "gzip")
