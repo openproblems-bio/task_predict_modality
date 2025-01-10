@@ -104,7 +104,7 @@ adata = ad.AnnData(
     shape=y_pred.shape,
     uns={
         'dataset_id': input_test_mod1.uns['dataset_id'],
-        'method_id': meta['functionality_name'],
+        'method_id': "simple_mlp",
     },
 )
 
