@@ -13,7 +13,7 @@ resources:
 
 engines:
   - type: docker
-    image: openproblems/base_pytorch_nvidia:1.0.0
+    image: openproblems/base_pytorch_nvidia:1
     # run_args: ["--gpus all --ipc=host"]
     setup:
       - type: python

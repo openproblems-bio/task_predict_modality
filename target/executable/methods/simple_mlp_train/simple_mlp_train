@@ -466,15 +466,15 @@ function ViashDockerfile {
 
   if [[ "$engine_id" == "docker" ]]; then
     cat << 'VIASHDOCKER'
-FROM openproblems/base_pytorch_nvidia:1.0.0
+FROM openproblems/base_pytorch_nvidia:1
 ENTRYPOINT []
 RUN pip install --upgrade pip && \
   pip install --upgrade --no-cache-dir "scikit-learn" "scanpy" "pytorch-lightning"
 
 LABEL org.opencontainers.image.description="Companion container for running component methods simple_mlp_train"
-LABEL org.opencontainers.image.created="2025-01-13T18:28:40Z"
+LABEL org.opencontainers.image.created="2025-06-11T11:41:16Z"
 LABEL org.opencontainers.image.source="https://github.com/openproblems-bio/task_predict_modality"
-LABEL org.opencontainers.image.revision="61a47a56ec2bc209a78732a539bd2198acd61517"
+LABEL org.opencontainers.image.revision="99fb09ae51950ce9eb6cc036683e3661a0bf2dec"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER

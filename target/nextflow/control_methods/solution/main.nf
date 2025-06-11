@@ -3437,7 +3437,7 @@ meta = [
     {
       "type" : "docker",
       "id" : "docker",
-      "image" : "openproblems/base_r:1.0.0",
+      "image" : "openproblems/base_r:1",
       "namespace_separator" : "/"
     }
   ],
@@ -3447,7 +3447,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/control_methods/solution",
     "viash_version" : "0.9.0",
-    "git_commit" : "61a47a56ec2bc209a78732a539bd2198acd61517",
+    "git_commit" : "99fb09ae51950ce9eb6cc036683e3661a0bf2dec",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
