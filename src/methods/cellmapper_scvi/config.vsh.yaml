@@ -4,7 +4,11 @@ label: CellMapper+scVI
 summary: "Modality prediction in an scVI latent space using CellMapper"
 description: |
   CellMapper is a general framework for k-NN based mapping tasks in single-cell and spatial genomics.
-  This variant uses CellMapper to project modalities from a reference dataset (train) onto a query dataset (test) in an scVI latent space.
+  This variant uses CellMapper to project modalities from a reference dataset (train) onto a query dataset 
+  (test) in a modality-specific latent space computed with suitable scvi-tools models. For gene expression data, 
+  we use the scVI model on raw counts (nb likelihood), for ADT data, we use the scVI models on normalized counts 
+  (gaussian likelihood), and for ATAC data, we use the PeakVI model on raw counts. The actual CellMapper pipeline is 
+  modality-agnostic. 
 references:
   doi: 
     - 10.5281/zenodo.15683594

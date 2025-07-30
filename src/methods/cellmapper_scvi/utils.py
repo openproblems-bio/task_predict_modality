@@ -54,8 +54,9 @@ def get_representation(adata: ad.AnnData, modality: Literal["GEX", "ADT", "ATAC"
         raise ValueError(f"Unknown modality: {modality}")
     
     example_data = adata.layers[layer].data if issparse(adata.layers[layer]) else adata.layers[layer]
-    print(f"Set up AnnData for modality: {modality}, layer={layer}", flush=True)
+    print(f"Set up AnnData for modality: '{modality}' using layer: '{layer}'", flush=True)
     print(f"Data looks like this: {example_data}", flush=True)
+    print(model, flush=True)
 
     # Train the model
     model.train(early_stopping=True)
