@@ -30,13 +30,11 @@ print('Prepare the data', flush=True)
 input_train_mod1.X = input_train_mod1.layers["normalized"].copy()
 input_test_mod1.X = input_test_mod1.layers["normalized"].copy()
 
-# set up query and reference AnnData objects
-query = input_test_mod1
-reference = input_train_mod1
-reference.obsm["mod2"] = input_train_mod2.layers["normalized"] # could use mudata here as well
+# could use mudata here as well
+input_train_mod1.obsm["mod2"] = input_train_mod2.layers["normalized"] 
 
 print("Set up and prepare Cellmapper", flush=True)
-cmap = cm.CellMapper(query=query, reference=reference)
+cmap = cm.CellMapper(query=input_test_mod1, reference=input_train_mod1)
 cmap.compute_neighbors(
     use_rep=None,
     fallback_representation=par['fallback_representation'],
