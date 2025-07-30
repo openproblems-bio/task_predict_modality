@@ -30,7 +30,7 @@ print('Prepare the data', flush=True)
 input_train_mod1.X = input_train_mod1.layers["normalized"].copy()
 input_test_mod1.X = input_test_mod1.layers["normalized"].copy()
 
-# could use mudata here as well
+# copy the normalized layer to obsm for mod2
 input_train_mod1.obsm["mod2"] = input_train_mod2.layers["normalized"] 
 
 print("Set up and prepare Cellmapper", flush=True)

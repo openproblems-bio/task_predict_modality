@@ -16,17 +16,17 @@ info:
   variants: 
     cellmapper_hnoca_hvg:
       kernel_method: hnoca
-      num_hvg: 2000
+      use_hvg: true
     cellmapper_hnoca_all_genes:
       kernel_method: hnoca
-      num_hvg: None
+      use_hvg: false
     cellmapper_gauss_hvg:
       kernel_method: gauss
-      num_hvg: 2000
+      use_hvg: true
     cellmapper_gauss_all_genes:
       kernel_method: gauss
-      num_hvg: None
-    
+      use_hvg: false
+
 arguments:
   - name: "--kernel_method"
     type: "string"
@@ -37,21 +37,10 @@ arguments:
     type: "integer"
     default: 30
     description: Number of neighbors to consider for k-NN graph construction (CellMapper parameter).
-  - name: "--num_hvg"
-    type: integer
-    description: "The number of HVG genes to subset to (Generic analysis parameter). "
-  - name: "--n_latent"
-    type: integer
-    default: 30
-    description: Number of latent dimensions (scVI parameter).
-  - name: "--n_hidden"
-    type: integer
-    default: 128
-    description: Number of hidden units (scVI parameter).
-  - name: "--n_layers"
-    type: integer
-    default: 2
-    description: Number of layers (scVI parameter).
+  - name: "--use_hvg"
+    type: boolean
+    default: true
+    description: Whether to use highly variable genes (HVG) for the mapping (Generic analysis parameter).
 resources:
   - type: python_script
     path: script.py
