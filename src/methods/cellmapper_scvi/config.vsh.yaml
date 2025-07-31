@@ -58,6 +58,10 @@ arguments:
     choices: ["clr", "log_cp10k"]
     default: "clr"
     description: Normalization method for ADT data, clr = centered log ratio. 
+  - name: "--plot_umap"
+    type: boolean
+    default: false
+    description: Whether to plot the UMAP embedding of the latent space (for diagnoscic purposes)
 resources:
   - type: python_script
     path: script.py

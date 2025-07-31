@@ -3,10 +3,16 @@ import anndata as ad
 import scvi 
 from scipy.sparse import issparse, csr_matrix, csc_matrix
 import muon
+import scanpy as sc
 
 
 def get_representation(
-        adata: ad.AnnData, modality: Literal["GEX", "ADT", "ATAC"], use_hvg: bool = True, adt_normalization: Literal["clr", "log_cp10k"] = "clr") -> ad.AnnData:
+        adata: ad.AnnData, 
+        modality: Literal["GEX", "ADT", "ATAC"], 
+        use_hvg: bool = True, 
+        adt_normalization: Literal["clr", "log_cp10k"] = "clr",
+        plot_umap: bool = False,
+    ) -> ad.AnnData:
     """
     Get a joint latent space representation of the data based on the modality.
     
@@ -29,6 +35,9 @@ def get_representation(
         Normalization method for ADT data. Options are:
          - "clr" (centered log-ratio transformation)
          - "log_cp10k" (normalization to 10k counts per cell and logarithm transformation)
+    plot_umap
+        Purely for diagnostic purposes, to see whether the data integration looks ok, this optionally computes 
+        a UMAP in shared latent space and stores a plot. 
 
     Returns
     -------
@@ -46,8 +55,9 @@ def get_representation(
     # Setup the AnnData object for scVI
     if modality == "GEX":
         layer = "counts"
-        scvi.model.SCVI.setup_anndata(adata, batch_key="batch", layer=layer)
-        model = scvi.model.SCVI(adata, gene_likelihood="nb", n_layers=2, n_latent=30)
+        scvi.model.SCVI.setup_anndata(adata, layer=layer, categorical_covariate_keys=["split", "batch"])
+        model = scvi.model.SCVI(adata)
+
     elif modality == "ADT":
         print(f"Normalizing the ADT data using method '{adt_normalization}'")
         if adt_normalization == "clr":
@@ -60,11 +70,11 @@ def get_representation(
             raise ValueError(f"Unknown ADT normalization method: {adt_normalization}")
         
         layer = "adt_normalized"
-        scvi.model.SCVI.setup_anndata(adata, batch_key="batch", layer=layer)
+        scvi.model.SCVI.setup_anndata(adata, layer=layer, categorical_covariate_keys=["split", "batch"])
         model = scvi.model.SCVI(adata, gene_likelihood="normal", n_layers=1, n_latent=10)
     elif modality == "ATAC":
         layer = "counts"
-        scvi.model.PEAKVI.setup_anndata(adata, batch_key="batch", layer=layer)
+        scvi.model.PEAKVI.setup_anndata(adata, layer=layer, categorical_covariate_keys=["split", "batch"])
         model = scvi.model.PEAKVI(adata)
     else:
         raise ValueError(f"Unknown modality: {modality}")
@@ -79,5 +89,12 @@ def get_representation(
 
     # Get the latent representation
     adata.obsm["X_scvi"] = model.get_latent_representation()
+
+    if plot_umap:
+        sc.pp.neighbors(adata, use_rep="X_scvi")
+        sc.tl.umap(adata)
+
+        plot_name = f"_{modality}_{adt_normalization}_use_hvg_{use_hvg}.png"
+        sc.pl.embedding(adata, basis="umap", color=["batch", "split"], show=False, save=plot_name)
 
     return adata
