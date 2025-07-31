@@ -21,15 +21,23 @@ info:
     cellmapper_hnoca_hvg:
       kernel_method: hnoca
       use_hvg: true
+      adt_normalization: clr
     cellmapper_hnoca_all_genes:
       kernel_method: hnoca
       use_hvg: false
+      adt_normalization: clr
     cellmapper_gauss_hvg:
       kernel_method: gauss
       use_hvg: true
+      adt_normalization: clr
+    cellmapper_gauss_hvg_log_cp10k:
+      kernel_method: gauss
+      use_hvg: true
+      adt_normalization: log_cp10k
     cellmapper_gauss_all_genes:
       kernel_method: gauss
       use_hvg: false
+      adt_normalization: clr
 
 arguments:
   - name: "--kernel_method"
@@ -45,6 +53,11 @@ arguments:
     type: boolean
     default: true
     description: Whether to use highly variable genes (HVG) for the mapping (Generic analysis parameter).
+  - name: "--adt_normalization"
+    type: "string"
+    choices: ["clr", "log_cp10k"]
+    default: "clr"
+    description: Normalization method for ADT data, clr = centered log ratio. 
 resources:
   - type: python_script
     path: script.py
@@ -56,6 +69,7 @@ engines:
         packages: 
           - cellmapper>=0.2.2
           - scvi-tools>=1.3.0
+          - muon>=0.1.6
 
 runners:
   - type: executable

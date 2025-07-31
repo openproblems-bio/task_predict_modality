@@ -1,10 +1,12 @@
 from typing import Literal
 import anndata as ad
 import scvi 
-from scipy.sparse import issparse
+from scipy.sparse import issparse, csr_matrix, csc_matrix
+import muon
 
 
-def get_representation(adata: ad.AnnData, modality: Literal["GEX", "ADT", "ATAC"], use_hvg: bool = True) -> ad.AnnData:
+def get_representation(
+        adata: ad.AnnData, modality: Literal["GEX", "ADT", "ATAC"], use_hvg: bool = True, adt_normalization: Literal["clr", "log_cp10k"] = "clr") -> ad.AnnData:
     """
     Get a joint latent space representation of the data based on the modality.
     
@@ -23,6 +25,10 @@ def get_representation(adata: ad.AnnData, modality: Literal["GEX", "ADT", "ATAC"
         (e.g. UMI counts for GEX and peak counts for ATAC), and the normalized data in the `normalized` layer.
     use_hvg
         Whether to subset the data to highly variable genes (HVGs) before training the model
+    adt_normalization
+        Normalization method for ADT data. Options are:
+         - "clr" (centered log-ratio transformation)
+         - "log_cp10k" (normalization to 10k counts per cell and logarithm transformation)
 
     Returns
     -------
@@ -43,7 +49,17 @@ def get_representation(adata: ad.AnnData, modality: Literal["GEX", "ADT", "ATAC"
         scvi.model.SCVI.setup_anndata(adata, batch_key="batch", layer=layer)
         model = scvi.model.SCVI(adata, gene_likelihood="nb", n_layers=2, n_latent=30)
     elif modality == "ADT":
-        layer = "normalized"
+        print(f"Normalizing the ADT data using method '{adt_normalization}'")
+        if adt_normalization == "clr":
+            adata.X = csc_matrix(adata.layers["counts"]) # Use raw counts for ADT
+            muon.prot.pp.clr(adata)
+            adata.layers["adt_normalized"] = csr_matrix(adata.X)
+        elif adt_normalization == "log_cp10k":
+            adata.layers["adt_normalized"] = adata.layers["normalized"]
+        else:
+            raise ValueError(f"Unknown ADT normalization method: {adt_normalization}")
+        
+        layer = "adt_normalized"
         scvi.model.SCVI.setup_anndata(adata, batch_key="batch", layer=layer)
         model = scvi.model.SCVI(adata, gene_likelihood="normal", n_layers=1, n_latent=10)
     elif modality == "ATAC":
