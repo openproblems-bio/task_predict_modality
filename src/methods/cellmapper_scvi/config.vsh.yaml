@@ -65,6 +65,8 @@ arguments:
 resources:
   - type: python_script
     path: script.py
+  - path: utils.py
+    dest: utils.py 
 engines:
   - type: docker
     image: openproblems/base_pytorch_nvidia:1.0.0
