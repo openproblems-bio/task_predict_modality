@@ -13,6 +13,8 @@ methods = [
   solution,
   knnr_py,
   knnr_r,
+  cellmapper_linear,
+  cellmapper_scvi,
   lm,
   guanlab_dengkw_pm,
   novel,

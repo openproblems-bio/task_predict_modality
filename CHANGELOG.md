@@ -2,6 +2,8 @@
 
 ## NEW FUNCTIONALITY
 
+* Added CellMapper method (two variants: simple PCA/CCA fallback and modality-specific scvi-tools models for joint mod1 representation) (PR #10)
+
 * Added Novel method (PR #2).
 
 * Added Simple MLP method (PR #3).
