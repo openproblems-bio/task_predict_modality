@@ -1,0 +1,585 @@
+name: "cellmapper_scvi"
+namespace: "methods"
+version: "build_main"
+argument_groups:
+- name: "Arguments"
+  arguments:
+  - type: "file"
+    name: "--input_train_mod1"
+    label: "Train mod1"
+    summary: "The mod1 expression values of the train cells."
+    info:
+      format:
+        type: "h5ad"
+        layers:
+        - type: "integer"
+          name: "counts"
+          description: "Raw counts"
+          required: true
+        - type: "double"
+          name: "normalized"
+          description: "Normalized expression values"
+          required: true
+        obs:
+        - type: "string"
+          name: "batch"
+          description: "Batch information"
+          required: true
+        - type: "double"
+          name: "size_factors"
+          description: "The size factors of the cells prior to normalization."
+          required: false
+        var:
+        - type: "string"
+          name: "gene_ids"
+          description: "The gene identifiers (if available)"
+          required: false
+        - type: "boolean"
+          name: "hvg"
+          description: "Whether or not the feature is considered to be a 'highly variable\
+            \ gene'"
+          required: true
+        - type: "double"
+          name: "hvg_score"
+          description: "A score for the feature indicating how highly variable it\
+            \ is."
+          required: true
+        uns:
+        - type: "string"
+          name: "dataset_id"
+          description: "A unique identifier for the dataset"
+          required: true
+        - type: "string"
+          name: "common_dataset_id"
+          description: "A common identifier for the dataset"
+          required: false
+        - name: "dataset_organism"
+          type: "string"
+          description: "The organism of the sample in the dataset."
+          required: false
+        - name: "normalization_id"
+          type: "string"
+          description: "The unique identifier of the normalization method used."
+          required: true
+        - type: "string"
+          name: "gene_activity_var_names"
+          description: "Names of the gene activity matrix"
+          required: false
+        obsm:
+        - type: "double"
+          name: "gene_activity"
+          description: "ATAC gene activity"
+          required: false
+    example:
+    - "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/train_mod1.h5ad"
+    must_exist: true
+    create_parent: true
+    required: true
+    direction: "input"
+    multiple: false
+    multiple_sep: ";"
+  - type: "file"
+    name: "--input_train_mod2"
+    label: "Train mod2"
+    summary: "The mod2 expression values of the train cells."
+    info:
+      format:
+        type: "h5ad"
+        layers:
+        - type: "integer"
+          name: "counts"
+          description: "Raw counts"
+          required: true
+        - type: "double"
+          name: "normalized"
+          description: "Normalized expression values"
+          required: true
+        obs:
+        - type: "string"
+          name: "batch"
+          description: "Batch information"
+          required: true
+        - type: "double"
+          name: "size_factors"
+          description: "The size factors of the cells prior to normalization."
+          required: false
+        var:
+        - type: "string"
+          name: "gene_ids"
+          description: "The gene identifiers (if available)"
+          required: false
+        - type: "boolean"
+          name: "hvg"
+          description: "Whether or not the feature is considered to be a 'highly variable\
+            \ gene'"
+          required: true
+        - type: "double"
+          name: "hvg_score"
+          description: "A score for the feature indicating how highly variable it\
+            \ is."
+          required: true
+        uns:
+        - type: "string"
+          name: "dataset_id"
+          description: "A unique identifier for the dataset"
+          required: true
+        - type: "string"
+          name: "common_dataset_id"
+          description: "A common identifier for the dataset"
+          required: false
+        - name: "dataset_organism"
+          type: "string"
+          description: "The organism of the sample in the dataset."
+          required: false
+        - name: "normalization_id"
+          type: "string"
+          description: "The unique identifier of the normalization method used."
+          required: true
+        - type: "string"
+          name: "gene_activity_var_names"
+          description: "Names of the gene activity matrix"
+          required: false
+        obsm:
+        - type: "double"
+          name: "gene_activity"
+          description: "ATAC gene activity"
+          required: false
+    example:
+    - "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/train_mod2.h5ad"
+    must_exist: true
+    create_parent: true
+    required: true
+    direction: "input"
+    multiple: false
+    multiple_sep: ";"
+  - type: "file"
+    name: "--input_test_mod1"
+    label: "Test mod1"
+    summary: "The mod1 expression values of the test cells."
+    info:
+      format:
+        type: "h5ad"
+        layers:
+        - type: "integer"
+          name: "counts"
+          description: "Raw counts"
+          required: true
+        - type: "double"
+          name: "normalized"
+          description: "Normalized expression values"
+          required: true
+        obs:
+        - type: "string"
+          name: "batch"
+          description: "Batch information"
+          required: true
+        - type: "double"
+          name: "size_factors"
+          description: "The size factors of the cells prior to normalization."
+          required: false
+        var:
+        - type: "string"
+          name: "gene_ids"
+          description: "The gene identifiers (if available)"
+          required: false
+        - type: "boolean"
+          name: "hvg"
+          description: "Whether or not the feature is considered to be a 'highly variable\
+            \ gene'"
+          required: true
+        - type: "double"
+          name: "hvg_score"
+          description: "A score for the feature indicating how highly variable it\
+            \ is."
+          required: true
+        uns:
+        - type: "string"
+          name: "dataset_id"
+          description: "A unique identifier for the dataset"
+          required: true
+        - type: "string"
+          name: "common_dataset_id"
+          description: "A common identifier for the dataset"
+          required: false
+        - name: "dataset_name"
+          type: "string"
+          description: "Nicely formatted name."
+          required: true
+        - type: "string"
+          name: "dataset_url"
+          description: "Link to the original source of the dataset."
+          required: false
+        - name: "dataset_reference"
+          type: "string"
+          description: "Bibtex reference of the paper in which the dataset was published."
+          required: false
+        - name: "dataset_summary"
+          type: "string"
+          description: "Short description of the dataset."
+          required: true
+        - name: "dataset_description"
+          type: "string"
+          description: "Long description of the dataset."
+          required: true
+        - name: "dataset_organism"
+          type: "string"
+          description: "The organism of the sample in the dataset."
+          required: false
+        - name: "normalization_id"
+          type: "string"
+          description: "The unique identifier of the normalization method used."
+          required: true
+        - type: "string"
+          name: "gene_activity_var_names"
+          description: "Names of the gene activity matrix"
+          required: false
+        obsm:
+        - type: "double"
+          name: "gene_activity"
+          description: "ATAC gene activity"
+          required: false
+    example:
+    - "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/test_mod1.h5ad"
+    must_exist: true
+    create_parent: true
+    required: true
+    direction: "input"
+    multiple: false
+    multiple_sep: ";"
+  - type: "file"
+    name: "--output"
+    label: "Prediction"
+    summary: "A prediction of the mod2 expression values of the test cells"
+    info:
+      format:
+        type: "h5ad"
+        layers:
+        - type: "double"
+          name: "normalized"
+          description: "Predicted normalized expression values"
+          required: true
+        uns:
+        - type: "string"
+          name: "dataset_id"
+          description: "A unique identifier for the dataset"
+          required: true
+        - type: "string"
+          name: "method_id"
+          description: "A unique identifier for the method"
+          required: true
+    example:
+    - "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/prediction.h5ad"
+    must_exist: true
+    create_parent: true
+    required: true
+    direction: "output"
+    multiple: false
+    multiple_sep: ";"
+  - type: "string"
+    name: "--kernel_method"
+    description: "Kernel function to compute k-NN edge weights (CellMapper parameter)."
+    info: null
+    default:
+    - "hnoca"
+    required: false
+    choices:
+    - "hnoca"
+    - "gauss"
+    direction: "input"
+    multiple: false
+    multiple_sep: ";"
+  - type: "integer"
+    name: "--n_neighbors"
+    description: "Number of neighbors to consider for k-NN graph construction (CellMapper\
+      \ parameter)."
+    info: null
+    default:
+    - 30
+    required: false
+    direction: "input"
+    multiple: false
+    multiple_sep: ";"
+  - type: "boolean"
+    name: "--use_hvg"
+    description: "Whether to use highly variable genes (HVG) for the mapping (Generic\
+      \ analysis parameter)."
+    info: null
+    default:
+    - true
+    required: false
+    direction: "input"
+    multiple: false
+    multiple_sep: ";"
+  - type: "string"
+    name: "--adt_normalization"
+    description: "Normalization method for ADT data, clr = centered log ratio."
+    info: null
+    default:
+    - "clr"
+    required: false
+    choices:
+    - "clr"
+    - "log_cp10k"
+    direction: "input"
+    multiple: false
+    multiple_sep: ";"
+  - type: "boolean"
+    name: "--plot_umap"
+    description: "Whether to plot the UMAP embedding of the latent space (for diagnoscic\
+      \ purposes)"
+    info: null
+    default:
+    - false
+    required: false
+    direction: "input"
+    multiple: false
+    multiple_sep: ";"
+resources:
+- type: "python_script"
+  path: "script.py"
+  is_executable: true
+- type: "file"
+  path: "utils.py"
+  dest: "utils.py"
+label: "CellMapper+scVI"
+summary: "Modality prediction in an scVI latent space using CellMapper"
+description: "CellMapper is a general framework for k-NN based mapping tasks in single-cell\
+  \ and spatial genomics.\nThis variant uses CellMapper to project modalities from\
+  \ a reference dataset (train) onto a query dataset \n(test) in a modality-specific\
+  \ latent space computed with suitable scvi-tools models. For gene expression data,\
+  \ \nwe use the scVI model on raw counts (nb likelihood), for ADT data, we use the\
+  \ scVI models on normalized counts \n(gaussian likelihood), and for ATAC data, we\
+  \ use the PeakVI model on raw counts. The actual CellMapper pipeline is \nmodality-agnostic.\
+  \ \n"
+test_resources:
+- type: "python_script"
+  path: "run_and_check_output.py"
+  is_executable: true
+- type: "file"
+  path: "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap"
+  dest: "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap"
+info:
+  preferred_normalization: "log_cp10k"
+  variants:
+    cellmapper_hnoca_hvg:
+      kernel_method: "hnoca"
+      use_hvg: true
+      adt_normalization: "clr"
+    cellmapper_hnoca_all_genes:
+      kernel_method: "hnoca"
+      use_hvg: false
+      adt_normalization: "clr"
+    cellmapper_gauss_hvg:
+      kernel_method: "gauss"
+      use_hvg: true
+      adt_normalization: "clr"
+    cellmapper_gauss_hvg_log_cp10k:
+      kernel_method: "gauss"
+      use_hvg: true
+      adt_normalization: "log_cp10k"
+    cellmapper_gauss_all_genes:
+      kernel_method: "gauss"
+      use_hvg: false
+      adt_normalization: "clr"
+  type: "method"
+  type_info:
+    label: "Method"
+    summary: "A regression method."
+    description: "A regression method to predict the expression of one modality from\
+      \ another.\n"
+status: "enabled"
+repositories:
+- type: "github"
+  name: "openproblems"
+  repo: "openproblems-bio/openproblems"
+  tag: "build/main"
+license: "MIT"
+references:
+  doi:
+  - "10.5281/zenodo.15683594"
+links:
+  repository: "https://github.com/quadbio/cellmapper"
+  docker_registry: "ghcr.io"
+  documentation: "https://cellmapper.readthedocs.io/en/latest/"
+runners:
+- type: "executable"
+  id: "executable"
+  docker_setup_strategy: "ifneedbepullelsecachedbuild"
+- type: "nextflow"
+  id: "nextflow"
+  directives:
+    label:
+    - "midtime"
+    - "midmem"
+    - "midcpu"
+    - "gpu"
+    tag: "$id"
+  auto:
+    simplifyInput: true
+    simplifyOutput: false
+    transcript: false
+    publish: false
+  config:
+    labels:
+      lowmem: "memory = 20.Gb"
+      midmem: "memory = 50.Gb"
+      highmem: "memory = 100.Gb"
+      lowcpu: "cpus = 5"
+      midcpu: "cpus = 15"
+      highcpu: "cpus = 30"
+      lowtime: "time = 1.h"
+      midtime: "time = 4.h"
+      hightime: "time = 8.h"
+      veryhightime: "time = 24.h"
+  debug: false
+  container: "docker"
+engines:
+- type: "docker"
+  id: "docker"
+  image: "openproblems/base_pytorch_nvidia:1.0.0"
+  namespace_separator: "/"
+  setup:
+  - type: "python"
+    user: false
+    packages:
+    - "cellmapper>=0.2.2"
+    - "scvi-tools>=1.3.0"
+    - "muon>=0.1.6"
+    upgrade: true
+  entrypoint: []
+  cmd: null
+build_info:
+  config: "src/methods/cellmapper_scvi/config.vsh.yaml"
+  runner: "nextflow"
+  engine: "docker"
+  output: "target/nextflow/methods/cellmapper_scvi"
+  executable: "target/nextflow/methods/cellmapper_scvi/main.nf"
+  viash_version: "0.9.0"
+  git_commit: "11beedc73fa7a046871dedb44bb5f1a57da6cf2e"
+  git_remote: "https://github.com/openproblems-bio/task_predict_modality"
+package_config:
+  name: "task_predict_modality"
+  version: "build_main"
+  label: "Predict Modality"
+  summary: "Predicting the profiles of one modality (e.g. protein abundance) from\
+    \ another (e.g. mRNA expression)."
+  description: "Experimental techniques to measure multiple modalities within the\
+    \ same single cell are increasingly becoming available. \nThe demand for these\
+    \ measurements is driven by the promise to provide a deeper insight into the state\
+    \ of a cell. \nYet, the modalities are also intrinsically linked. We know that\
+    \ DNA must be accessible (ATAC data) to produce mRNA \n(expression data), and\
+    \ mRNA in turn is used as a template to produce protein (protein abundance). These\
+    \ processes \nare regulated often by the same molecules that they produce: for\
+    \ example, a protein may bind DNA to prevent the production \nof more mRNA. Understanding\
+    \ these regulatory processes would be transformative for synthetic biology and\
+    \ drug target discovery. \nAny method that can predict a modality from another\
+    \ must have accounted for these regulatory processes, but the demand for \nmulti-modal\
+    \ data shows that this is not trivial.\n"
+  info:
+    image: "thumbnail.svg"
+    test_resources:
+    - type: "s3"
+      path: "s3://openproblems-data/resources_test/common/openproblems_neurips2021"
+      dest: "resources_test/common/openproblems_neurips2021"
+    - type: "s3"
+      path: "s3://openproblems-data/resources_test/task_predict_modality/"
+      dest: "resources_test/task_predict_modality"
+  repositories:
+  - type: "github"
+    name: "openproblems"
+    repo: "openproblems-bio/openproblems"
+    tag: "build/main"
+  viash_version: "0.9.0"
+  source: "src"
+  target: "target"
+  config_mods:
+  - ".runners[.type == \"nextflow\"].config.labels := { lowmem : \"memory = 20.Gb\"\
+    , midmem : \"memory = 50.Gb\", highmem : \"memory = 100.Gb\", lowcpu : \"cpus\
+    \ = 5\", midcpu : \"cpus = 15\", highcpu : \"cpus = 30\", lowtime : \"time = 1.h\"\
+    , midtime : \"time = 4.h\", hightime : \"time = 8.h\", veryhightime : \"time =\
+    \ 24.h\" }"
+  authors:
+  - name: "Alejandro Granados"
+    roles:
+    - "author"
+    info:
+      github: "agranado"
+  - name: "Alex Tong"
+    roles:
+    - "author"
+    info:
+      github: "atong01"
+  - name: "Bastian Rieck"
+    roles:
+    - "author"
+    info:
+      github: "Pseudomanifold"
+  - name: "Christopher Lance"
+    roles:
+    - "author"
+    info:
+      github: "xlancelottx"
+      orcid: "0000-0002-1275-9802"
+  - name: "Daniel Burkhardt"
+    roles:
+    - "author"
+    info:
+      github: "dburkhardt"
+  - name: "Kai Waldrant"
+    roles:
+    - "contributor"
+    info:
+      github: "KaiWaldrant"
+      orcid: "0009-0003-8555-1361"
+  - name: "Kaiwen Deng"
+    roles:
+    - "contributor"
+    info:
+      email: "dengkw@umich.edu"
+      github: "nonztalk"
+  - name: "Louise Deconinck"
+    roles:
+    - "author"
+    info:
+      github: "LouiseDck"
+  - name: "Robrecht Cannoodt"
+    roles:
+    - "author"
+    - "maintainer"
+    info:
+      github: "rcannood"
+      orcid: "0000-0003-3641-729X"
+  - name: "Xueer Chen"
+    roles:
+    - "contributor"
+    info:
+      github: "xuerchen"
+      email: "xc2579@columbia.edu"
+  - name: "Jiwei Liu"
+    roles:
+    - "contributor"
+    info:
+      github: "daxiongshu"
+      email: "jiweil@nvidia.com"
+      orcid: "0000-0002-8799-9763"
+  keywords:
+  - "multi-omics"
+  - "regression"
+  - "single-cell"
+  license: "MIT"
+  organization: "openproblems-bio"
+  references:
+    doi:
+    - "10.1101/2022.04.11.487796"
+    bibtex:
+    - "@inproceedings{luecken2021sandbox,\n  title={A sandbox for prediction and integration\
+      \ of DNA, RNA, and proteins in single cells},\n  author={Luecken, Malte D and\
+      \ Burkhardt, Daniel Bernard and Cannoodt, Robrecht and Lance, Christopher and\
+      \ Agrawal, Aditi and Aliee, Hananeh and Chen, Ann T and Deconinck, Louise and\
+      \ Detweiler, Angela M and Granados, Alejandro A and others},\n  booktitle={Thirty-fifth\
+      \ conference on neural information processing systems datasets and benchmarks\
+      \ track (Round 2)},\n  year={2021}\n}\n"
+  links:
+    repository: "https://github.com/openproblems-bio/task_predict_modality"
+    docker_registry: "ghcr.io"
+    issue_tracker: "https://github.com/openproblems-bio/task_predict_modality/issues"

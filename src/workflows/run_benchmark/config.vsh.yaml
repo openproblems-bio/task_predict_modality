@@ -68,6 +68,8 @@ dependencies:
   - name: control_methods/solution
   - name: methods/knnr_py
   - name: methods/knnr_r
+  - name: methods/cellmapper_linear
+  - name: methods/cellmapper_scvi
   - name: methods/lm
   - name: methods/guanlab_dengkw_pm
   - name: methods/novel

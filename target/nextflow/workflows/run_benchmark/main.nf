@@ -3444,6 +3444,18 @@ meta = [
       }
     },
     {
+      "name" : "methods/cellmapper_linear",
+      "repository" : {
+        "type" : "local"
+      }
+    },
+    {
+      "name" : "methods/cellmapper_scvi",
+      "repository" : {
+        "type" : "local"
+      }
+    },
+    {
       "name" : "methods/lm",
       "repository" : {
         "type" : "local"
@@ -3536,7 +3548,7 @@ meta = [
     "engine" : "native",
     "output" : "target/nextflow/workflows/run_benchmark",
     "viash_version" : "0.9.0",
-    "git_commit" : "99fb09ae51950ce9eb6cc036683e3661a0bf2dec",
+    "git_commit" : "11beedc73fa7a046871dedb44bb5f1a57da6cf2e",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3716,6 +3728,8 @@ include { zeros } from "${meta.resources_dir}/../../../nextflow/control_methods/
 include { solution } from "${meta.resources_dir}/../../../nextflow/control_methods/solution/main.nf"
 include { knnr_py } from "${meta.resources_dir}/../../../nextflow/methods/knnr_py/main.nf"
 include { knnr_r } from "${meta.resources_dir}/../../../nextflow/methods/knnr_r/main.nf"
+include { cellmapper_linear } from "${meta.resources_dir}/../../../nextflow/methods/cellmapper_linear/main.nf"
+include { cellmapper_scvi } from "${meta.resources_dir}/../../../nextflow/methods/cellmapper_scvi/main.nf"
 include { lm } from "${meta.resources_dir}/../../../nextflow/methods/lm/main.nf"
 include { guanlab_dengkw_pm } from "${meta.resources_dir}/../../../nextflow/methods/guanlab_dengkw_pm/main.nf"
 include { novel } from "${meta.resources_dir}/../../../nextflow/methods/novel/main.nf"
@@ -3740,6 +3754,8 @@ methods = [
   solution,
   knnr_py,
   knnr_r,
+  cellmapper_linear,
+  cellmapper_scvi,
   lm,
   guanlab_dengkw_pm,
   novel,
