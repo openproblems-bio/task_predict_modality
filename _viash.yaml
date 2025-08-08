@@ -84,6 +84,11 @@ authors:
       github: daxiongshu
       email: jiweil@nvidia.com
       orcid: "0000-0002-8799-9763"
+  - name: Marius Lange
+    roles: [contributor]
+    info:
+      github: marius1311
+      orcid: 0000-0002-4846-1266
 
 links:
   issue_tracker: https://github.com/openproblems-bio/task_predict_modality/issues
