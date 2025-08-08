@@ -1,6 +1,7 @@
 import anndata as ad
 import logging
 import numpy as np
+import scipy.sparse as sparse
 
 ## VIASH START
 par = {
@@ -26,6 +27,10 @@ if ad_sol.shape != ad_pred.shape:
 logging.info("Computing MSE metrics")
 
 tmp = ad_sol.layers["normalized"] - ad_pred.layers["normalized"]
+
+if not sparse.issparse(tmp):
+  tmp = sparse.csc_matrix(tmp)
+
 rmse = np.sqrt(tmp.power(2).mean())
 mae = np.abs(tmp).mean()
 
