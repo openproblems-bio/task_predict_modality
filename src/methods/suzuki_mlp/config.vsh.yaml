@@ -1,0 +1,100 @@
+__merge__: ../../api/comp_method.yaml
+name: suzuki_mlp
+label: Suzuki MLP
+summary: Shuji Suzuki's winning neural network solution for multimodal single-cell integration.
+description: |
+  A hierarchical neural network encoder-decoder model based on Shuji Suzuki's 1st place solution
+  in the Open Problems Multimodal Single-Cell Integration competition. The model uses task-specific
+  preprocessing, SVD dimensionality reduction, and hierarchical MLP blocks with residual connections
+  for learning cross-modal mappings.
+references:
+  doi: 10.1038/s41592-022-01652-z
+info:
+  documentation_url: https://github.com/shu65/open-problems-multimodal
+  repository_url: https://github.com/shu65/open-problems-multimodal
+  preferred_normalization: log_cp10k
+arguments:
+  # Task configuration
+  - name: "--task_type"
+    type: "string"
+    default: "auto"
+    description: Task type - 'auto' for automatic detection, 'cite' for CITE-seq, 'multi' for multiome.
+  
+  # Preprocessing arguments
+  - name: "--inputs_n_components"
+    type: "integer"
+    default: 128
+    description: Number of SVD components for input modality dimensionality reduction.
+  - name: "--targets_n_components"
+    type: "integer"
+    default: 128
+    description: Number of SVD components for target modality dimensionality reduction.
+  
+  # Model architecture arguments
+  - name: "--encoder_h_dim"
+    type: "integer"
+    default: 512
+    description: Hidden dimension size for the encoder.
+  - name: "--decoder_h_dim"
+    type: "integer"
+    default: 512
+    description: Hidden dimension size for the decoder.
+  - name: "--n_encoder_block"
+    type: "integer"
+    default: 3
+    description: Number of encoder blocks.
+  - name: "--n_decoder_block"
+    type: "integer"
+    default: 3
+    description: Number of decoder blocks.
+  - name: "--dropout_p"
+    type: "double"
+    default: 0.1
+    description: Dropout probability.
+  - name: "--activation"
+    type: "string"
+    default: "relu"
+    description: Activation function (relu or gelu).
+  - name: "--norm"
+    type: "string"
+    default: "layer_norm"
+    description: Normalization type (layer_norm or batch_norm).
+  - name: "--use_skip_connections"
+    type: "boolean"
+    default: true
+    description: Whether to use skip connections in blocks.
+  
+  # Training arguments
+  - name: "--learning_rate"
+    type: "double"
+    default: 1e-4
+    description: Learning rate for training.
+  - name: "--weight_decay"
+    type: "double"
+    default: 1e-6
+    description: Weight decay for regularization.
+  - name: "--epochs"
+    type: "integer"
+    default: 40
+    description: Number of training epochs.
+  - name: "--batch_size"
+    type: "integer"
+    default: 64
+    description: Batch size for training.
+  - name: "--use_residual_connections"
+    type: "boolean"
+    default: true
+    description: Whether to use residual connections for multi task.
+
+resources:
+  - type: python_script
+    path: script.py
+  - path: utils.py
+engines:
+  - type: docker
+    image: openproblems/base_pytorch_nvidia:1.0.0
+runners:
+  - type: executable
+  - type: nextflow
+    directives:
+      label: [hightime, highmem, midcpu, gpu]
