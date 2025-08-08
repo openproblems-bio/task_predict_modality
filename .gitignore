@@ -3,7 +3,6 @@
 /work
 /.nextflow*
 /target
-/.vscode
 .DS_Store
 /output
 trace-*
