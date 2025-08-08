@@ -8,6 +8,12 @@
 
 * Added Simple MLP method (PR #3).
 
+## MINOR CHANGES
+
+* Bump image version for `openproblems/base_*` images to 1 -- a sliding release (PR #9).
+
+* Bump Viash version to 0.9.4 (PR #12).
+
 # task_predict_modality 0.1.0
 
 Initial release after migrating the codebase.
