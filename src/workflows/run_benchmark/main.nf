@@ -18,8 +18,7 @@ methods = [
   lm,
   guanlab_dengkw_pm,
   novel,
-  simple_mlp,
-  suzuki_mlp
+  simple_mlp
 ]
 
 // construct list of metrics

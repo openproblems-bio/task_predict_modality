@@ -74,7 +74,6 @@ dependencies:
   - name: methods/guanlab_dengkw_pm
   - name: methods/novel
   - name: methods/simple_mlp
-  - name: methods/suzuki_mlp
   - name: metrics/correlation
   - name: metrics/mse
 runners:

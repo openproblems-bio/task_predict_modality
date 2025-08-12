@@ -3453,7 +3453,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/metrics/correlation",
     "viash_version" : "0.9.4",
-    "git_commit" : "5f6c0d7134354f4ac8b1f100ace189d2c704b62f",
+    "git_commit" : "76ce9220d922f84f956299466ff569ea3e46c57c",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {

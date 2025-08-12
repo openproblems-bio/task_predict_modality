@@ -3710,12 +3710,6 @@ meta = [
       }
     },
     {
-      "name" : "methods/suzuki_mlp",
-      "repository" : {
-        "type" : "local"
-      }
-    },
-    {
       "name" : "metrics/correlation",
       "repository" : {
         "type" : "local"
@@ -3784,7 +3778,7 @@ meta = [
     "engine" : "native",
     "output" : "target/nextflow/workflows/run_benchmark",
     "viash_version" : "0.9.4",
-    "git_commit" : "5f6c0d7134354f4ac8b1f100ace189d2c704b62f",
+    "git_commit" : "76ce9220d922f84f956299466ff569ea3e46c57c",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3980,7 +3974,6 @@ include { lm } from "${meta.resources_dir}/../../../nextflow/methods/lm/main.nf"
 include { guanlab_dengkw_pm } from "${meta.resources_dir}/../../../nextflow/methods/guanlab_dengkw_pm/main.nf"
 include { novel } from "${meta.resources_dir}/../../../nextflow/methods/novel/main.nf"
 include { simple_mlp } from "${meta.resources_dir}/../../../nextflow/methods/simple_mlp/main.nf"
-include { suzuki_mlp } from "${meta.resources_dir}/../../../nextflow/methods/suzuki_mlp/main.nf"
 include { correlation } from "${meta.resources_dir}/../../../nextflow/metrics/correlation/main.nf"
 include { mse } from "${meta.resources_dir}/../../../nextflow/metrics/mse/main.nf"
 
@@ -4006,8 +3999,7 @@ methods = [
   lm,
   guanlab_dengkw_pm,
   novel,
-  simple_mlp,
-  suzuki_mlp
+  simple_mlp
 ]
 
 // construct list of metrics

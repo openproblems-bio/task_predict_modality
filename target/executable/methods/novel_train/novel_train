@@ -449,9 +449,9 @@ RUN pip install --upgrade pip && \
   pip install --upgrade --no-cache-dir "scikit-learn" "networkx"
 
 LABEL org.opencontainers.image.description="Companion container for running component methods novel_train"
-LABEL org.opencontainers.image.created="2025-08-08T13:56:31Z"
+LABEL org.opencontainers.image.created="2025-08-12T12:33:06Z"
 LABEL org.opencontainers.image.source="https://github.com/openproblems-bio/task_predict_modality"
-LABEL org.opencontainers.image.revision="5f6c0d7134354f4ac8b1f100ace189d2c704b62f"
+LABEL org.opencontainers.image.revision="76ce9220d922f84f956299466ff569ea3e46c57c"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER
