@@ -33,10 +33,15 @@ input_test_mod1.X = input_test_mod1.layers["normalized"].copy()
 # copy the normalized layer to obsm for mod2
 input_train_mod1.obsm["mod2"] = input_train_mod2.layers["normalized"] 
 
+# choose the kNN method based on total cell number
+n_obs = input_test_mod1.n_obs + input_train_mod1.n_obs
+knn_method = "sklearn" if n_obs < 60000 else "pynndescent"
+
 print("Set up and prepare Cellmapper", flush=True)
 cmap = cm.CellMapper(query=input_test_mod1, reference=input_train_mod1)
 cmap.compute_neighbors(
-    use_rep=None,
+    use_rep=None, 
+    knn_method=knn_method,
     fallback_representation=par['fallback_representation'],
     n_neighbors=par['n_neighbors'],
     fallback_kwargs={"mask_var": par['mask_var']},
