@@ -42,7 +42,7 @@ arguments:
   - name: "--fallback_representation"
     type: "string"
     choices: ["joint_pca", "fast_cca"]
-    default: "fast_pca"
+    default: "joint_pca"
     description: Fallback representation to use for k-NN mapping (computed if use_rep is None).
   - name: "--mask_var"
     type: "string"
