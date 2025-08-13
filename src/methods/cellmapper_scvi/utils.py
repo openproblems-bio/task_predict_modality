@@ -4,6 +4,75 @@ import scvi
 from scipy.sparse import issparse, csr_matrix, csc_matrix
 import muon
 import scanpy as sc
+import numpy as np
+
+
+
+def preprocess_features(
+    adata: ad.AnnData,
+    modality: Literal["GEX", "ADT", "ATAC"],
+    use_hvg: bool,
+    min_cells_fraction: float,
+    feature_filter_threshold: int,
+) -> ad.AnnData:
+    """
+    Preprocess features with optional filtering and HVG selection.
+    
+    Parameters
+    ----------
+    adata
+        AnnData object to preprocess
+    modality
+        The modality type, affects filtering strategy
+    use_hvg
+        Whether to apply HVG selection (applies to all modalities if requested)
+    min_cells_fraction
+        Minimum fraction of cells a feature must be detected in to be kept
+    feature_filter_threshold
+        Only apply feature filtering if n_vars > this threshold
+        
+    Returns
+    -------
+    Preprocessed AnnData object
+    """
+    print(f"Starting preprocessing for {modality} with {adata.n_obs} cells and {adata.n_vars} features")
+    
+    # Feature filtering: only apply if we have many features (mainly for ATAC)
+    if adata.n_vars > feature_filter_threshold:
+        min_cells = int(adata.n_obs * min_cells_fraction)
+        print(f"Applying feature filtering: removing features detected in <{min_cells} cells ({min_cells_fraction:.1%} threshold)")
+        
+        n_features_before = adata.n_vars
+        sc.pp.filter_genes(adata, min_cells=min_cells)
+        n_features_after = adata.n_vars
+        
+        print(f"Features after filtering: {n_features_after} (removed {n_features_before - n_features_after})")
+    else:
+        print(f"Skipping feature filtering (only {adata.n_vars} features, threshold is {feature_filter_threshold})")
+    
+    # HVG selection: apply if requested
+    if use_hvg:
+        n_hvg = adata.var["hvg"].sum()
+        print(f"Applying HVG selection: subsetting to {n_hvg} highly variable features ({n_hvg/adata.n_vars:.2%})")
+        adata = adata[:, adata.var["hvg"]].copy()
+    else:
+        print("HVG selection disabled, using all remaining features")
+    
+    # Critical check: ensure no cells have zero counts after filtering
+    cell_counts = np.array(adata.layers['counts'].sum(axis=1)).flatten()
+    zero_count_cells = (cell_counts == 0).sum()
+    
+    if zero_count_cells > 0:
+        raise ValueError(
+            f"After preprocessing, {zero_count_cells} cells have zero counts! "
+            "This would prevent generating latent representations for these cells. "
+            "Consider relaxing filtering parameters or checking data quality."
+        )
+    
+    print(f"Final dataset: {adata.n_obs} cells × {adata.n_vars} features")
+    print(f"Mean counts per cell: {cell_counts.mean():.1f}")
+    
+    return adata
 
 
 def get_representation(
@@ -12,6 +81,8 @@ def get_representation(
         use_hvg: bool = True, 
         adt_normalization: Literal["clr", "log_cp10k"] = "clr",
         plot_umap: bool = False,
+        min_cells_fraction: float = 0.01,
+        feature_filter_threshold: int = 20000,
     ) -> ad.AnnData:
     """
     Get a joint latent space representation of the data based on the modality.
@@ -25,7 +96,7 @@ def get_representation(
 
         - "GEX": scVI model for gene expression data with ZINB likelihood on raw counts. 
         - "ADT": scVI model for ADT data (surface proteins) with Gaussian likelihood on normalized data.
-        - "ATAC": PeakVI model for ATAC data with Bernoulli likelihood on binarized count data. 
+        - "ATAC": PeakVI model for ATAC data with Bernoulli likelihood on count data. 
 
         We assume that regardless of the modality, the raw data will be stored in the `counts` layer 
         (e.g. UMI counts for GEX and peak counts for ATAC), and the normalized data in the `normalized` layer.
@@ -37,20 +108,26 @@ def get_representation(
          - "log_cp10k" (normalization to 10k counts per cell and logarithm transformation)
     plot_umap
         Purely for diagnostic purposes, to see whether the data integration looks ok, this optionally computes 
-        a UMAP in shared latent space and stores a plot. 
+        a UMAP in shared latent space and stores a plot.
+    min_cells_fraction
+        Minimum fraction of cells a feature must be detected in to be kept during filtering.
+    feature_filter_threshold
+        Only apply feature filtering if n_vars > this threshold. This automatically separates
+        ATAC data (many peaks) from other modalities (fewer features).
 
     Returns
     -------
     ad.AnnData
         AnnData object with the latent representation in `obsm["X_scvi"]`, regardless of the modality.
     """
-    # Subset to highly variable features
-    if "hvg" in adata.var.columns and use_hvg:
-        n_hvg = adata.var["hvg"].sum()
-        print(f"Subsetting to {n_hvg} highly variable features ({n_hvg/adata.n_vars:.2%})", flush=True)
-        adata = adata[:, adata.var["hvg"]].copy()
-    else:
-        print("Training on all available features", flush=True)
+    # Preprocess features (filtering and HVG selection)
+    adata = preprocess_features(
+        adata, 
+        modality=modality, 
+        use_hvg=use_hvg,
+        min_cells_fraction=min_cells_fraction,
+        feature_filter_threshold=feature_filter_threshold
+    )
 
     # Setup the AnnData object for scVI
     if modality == "GEX":
@@ -73,9 +150,14 @@ def get_representation(
         scvi.model.SCVI.setup_anndata(adata, layer=layer, categorical_covariate_keys=["split", "batch"])
         model = scvi.model.SCVI(adata, gene_likelihood="normal", n_layers=1, n_latent=10)
     elif modality == "ATAC":
-        layer = "counts"
-        scvi.model.PEAKVI.setup_anndata(adata, layer=layer, categorical_covariate_keys=["split", "batch"])
-        model = scvi.model.PEAKVI(adata)
+
+        print("Converting read counts to fragment counts")
+        scvi.data.reads_to_fragments(adata, read_layer="counts")
+        print(f"One counts: {(adata.layers['fragments'] == 1).sum()}, Two counts: {(adata.layers['fragments'] == 2).sum()}")
+        layer = "fragments"
+
+        scvi.external.POISSONVI.setup_anndata(adata, layer=layer, categorical_covariate_keys=["split", "batch"])
+        model = scvi.external.POISSONVI(adata)
     else:
         raise ValueError(f"Unknown modality: {modality}")
     

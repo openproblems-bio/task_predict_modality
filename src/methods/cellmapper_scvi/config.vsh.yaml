@@ -43,15 +43,15 @@ arguments:
   - name: "--kernel_method"
     type: "string"
     choices: ["hnoca", "gauss"]
-    default: "hnoca"
+    default: "gauss"
     description: Kernel function to compute k-NN edge weights (CellMapper parameter). 
   - name: "--n_neighbors"
     type: "integer"
-    default: 30
+    default: 50
     description: Number of neighbors to consider for k-NN graph construction (CellMapper parameter).
   - name: "--use_hvg"
     type: boolean
-    default: true
+    default: false
     description: Whether to use highly variable genes (HVG) for the mapping (Generic analysis parameter).
   - name: "--adt_normalization"
     type: "string"

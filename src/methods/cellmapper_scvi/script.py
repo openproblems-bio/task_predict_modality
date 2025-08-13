@@ -11,8 +11,8 @@ par = {
     'input_train_mod2': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap/train_mod2.h5ad',
     'input_test_mod1': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap/test_mod1.h5ad',
     'output': 'output.h5ad',
-    'n_neighbors': 30, 
-    'kernel_method': 'hnoca',
+    'n_neighbors': 50,
+    'kernel_method': 'gauss',
     'use_hvg': False,
     'adt_normalization': 'clr',  # Normalization method for ADT data
     'plot_umap': True,
@@ -41,6 +41,7 @@ print("Concatenating train and test data", flush=True)
 adata = ad.concat(
     [input_train_mod1, input_test_mod1], merge = "same", label="split", keys=["train", "test"]
     )
+adata.X = adata.layers["counts"]
 
 # Compute a latent representation using an appropriate model based on the modality
 print("Get latent representation", flush=True)
@@ -55,10 +56,14 @@ input_test_mod1.obsm["X_scvi"] = adata[adata.obs["split"] == "test"].obsm["X_scv
 # copy the normalized layer to obsm for mod2
 input_train_mod1.obsm["mod2"] = input_train_mod2.layers["normalized"] 
 
+# choose the kNN method based on total cell number
+n_obs = input_test_mod1.n_obs + input_train_mod1.n_obs
+
 print('Setup and prepare Cellmapper', flush=True)
 cmap = cm.CellMapper(query=input_test_mod1, reference=input_train_mod1)
 cmap.compute_neighbors(
     use_rep="X_scvi",
+    knn_method="sklearn" if n_obs < 60000 else "pynndescent",
     n_neighbors=par['n_neighbors'], 
     )
 cmap.compute_mapping_matrix(kernel_method=par['kernel_method'])
