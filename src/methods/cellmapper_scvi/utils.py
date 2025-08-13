@@ -11,9 +11,9 @@ import numpy as np
 def preprocess_features(
     adata: ad.AnnData,
     modality: Literal["GEX", "ADT", "ATAC"],
-    use_hvg: bool = True,
-    min_cells_fraction: float = 0.01,
-    feature_filter_threshold: int = 20000,
+    use_hvg: bool,
+    min_cells_fraction: float,
+    feature_filter_threshold: int,
 ) -> ad.AnnData:
     """
     Preprocess features with optional filtering and HVG selection.
@@ -81,7 +81,7 @@ def get_representation(
         use_hvg: bool = True, 
         adt_normalization: Literal["clr", "log_cp10k"] = "clr",
         plot_umap: bool = False,
-        min_cells_fraction: float = 0.05,
+        min_cells_fraction: float = 0.01,
         feature_filter_threshold: int = 20000,
     ) -> ad.AnnData:
     """
