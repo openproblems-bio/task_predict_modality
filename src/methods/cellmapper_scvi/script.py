@@ -13,7 +13,7 @@ par = {
     'output': 'output.h5ad',
     'n_neighbors': 50,
     'kernel_method': 'gauss',
-    'use_hvg': True,
+    'use_hvg': False,
     'adt_normalization': 'clr',  # Normalization method for ADT data
     'plot_umap': True,
 

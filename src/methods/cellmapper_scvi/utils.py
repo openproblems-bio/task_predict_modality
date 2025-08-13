@@ -12,7 +12,7 @@ def preprocess_features(
     adata: ad.AnnData,
     modality: Literal["GEX", "ADT", "ATAC"],
     use_hvg: bool = True,
-    min_cells_fraction: float = 0.05,
+    min_cells_fraction: float = 0.01,
     feature_filter_threshold: int = 20000,
 ) -> ad.AnnData:
     """
@@ -150,9 +150,14 @@ def get_representation(
         scvi.model.SCVI.setup_anndata(adata, layer=layer, categorical_covariate_keys=["split", "batch"])
         model = scvi.model.SCVI(adata, gene_likelihood="normal", n_layers=1, n_latent=10)
     elif modality == "ATAC":
-        layer = "counts"
-        scvi.model.PEAKVI.setup_anndata(adata, layer=layer, categorical_covariate_keys=["split", "batch"])
-        model = scvi.model.PEAKVI(adata)
+
+        print("Converting read counts to fragment counts")
+        scvi.data.reads_to_fragments(adata, read_layer="counts")
+        print(f"One counts: {(adata.layers['fragments'] == 1).sum()}, Two counts: {(adata.layers['fragments'] == 2).sum()}")
+        layer = "fragments"
+
+        scvi.external.POISSONVI.setup_anndata(adata, layer=layer, categorical_covariate_keys=["split", "batch"])
+        model = scvi.external.POISSONVI(adata)
     else:
         raise ValueError(f"Unknown modality: {modality}")
     

@@ -51,7 +51,7 @@ arguments:
     description: Number of neighbors to consider for k-NN graph construction (CellMapper parameter).
   - name: "--use_hvg"
     type: boolean
-    default: true
+    default: false
     description: Whether to use highly variable genes (HVG) for the mapping (Generic analysis parameter).
   - name: "--adt_normalization"
     type: "string"
