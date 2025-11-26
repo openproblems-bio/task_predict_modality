@@ -1,0 +1,40 @@
+__merge__: /src/api/comp_method.yaml
+name: ss_opm
+label: SS-OPM
+summary: "TODO: fill in summary"
+description: |
+  TODO: fill in a longer description that is longer than 50 characters
+references:
+  doi: []
+  # TODO: fill in doi
+  #   - 10.5281/zenodo.15683594
+links:
+  documentation: "TODO: fill in documentation link"
+  repository: "TODO: fill in repository link"
+resources:
+  - type: python_script
+    path: script.py
+engines:
+  - type: docker
+    image: openproblems/base_pytorch_nvidia:1.0.0
+    setup:
+      - type: apt
+        packages:
+          - git
+      - type: docker
+        run: |
+          mkdir -p /opt && \
+          cd /opt && \
+          git clone --depth 1 --filter=blob:none --sparse https://github.com/lueckenlab/OpenProblems2022Analysis && \
+          cd OpenProblems2022Analysis && \
+          git sparse-checkout set code/rank1/open-problems-multimodal && \
+          pip install -e code/rank1/open-problems-multimodal
+      - type: python
+        # TODO: add packages
+        packages: []
+
+runners:
+  - type: executable
+  - type: nextflow
+    directives:
+      label: [midtime,midmem,midcpu,gpu]
