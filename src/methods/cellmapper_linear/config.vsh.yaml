@@ -42,19 +42,20 @@ arguments:
   - name: "--fallback_representation"
     type: "string"
     choices: ["joint_pca", "fast_cca"]
-    default: "fast_cca"
+    default: "joint_pca"
     description: Fallback representation to use for k-NN mapping (computed if use_rep is None).
   - name: "--mask_var"
     type: "string"
+    default: "hvg"
     description: Variable to mask for fallback representation.
   - name: "--kernel_method"
     type: "string"
     choices: ["hnoca", "gauss"]
-    default: "hnoca"
+    default: "gauss"
     description: Kernel function to compute k-NN edge weights. 
   - name: "--n_neighbors"
     type: "integer"
-    default: 30
+    default: 50
     description: Number of neighbors to consider for k-NN graph construction.
 resources:
   - type: python_script
