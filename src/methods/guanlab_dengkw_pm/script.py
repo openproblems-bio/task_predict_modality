@@ -123,7 +123,7 @@ y_pred /= len(batch_subsets)
 ## Changed from csr to csc matrix as this is more supported.
 y_pred = csc_matrix(y_pred)
 
-print("Write output AnnData to file", flush=True)
+ad.settings.allow_write_nullable_strings = True
 output = ad.AnnData(
   layers = { 'normalized': y_pred },
   obs = input_test_mod1.obs[[]],
@@ -133,4 +133,8 @@ output = ad.AnnData(
     'method_id': meta['name']
   }
 )
+
+print("Output AnnData object:", output, flush=True)
+
+print("Write output AnnData to file", flush=True)
 output.write_h5ad(par['output'], compression='gzip')
