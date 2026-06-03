@@ -3438,7 +3438,7 @@ meta = [
           "name" : "--kernel_method",
           "description" : "Kernel function to compute k-NN edge weights (CellMapper parameter).",
           "default" : [
-            "hnoca"
+            "gauss"
           ],
           "required" : false,
           "choices" : [
@@ -3454,7 +3454,7 @@ meta = [
           "name" : "--n_neighbors",
           "description" : "Number of neighbors to consider for k-NN graph construction (CellMapper parameter).",
           "default" : [
-            30
+            50
           ],
           "required" : false,
           "direction" : "input",
@@ -3466,7 +3466,7 @@ meta = [
           "name" : "--use_hvg",
           "description" : "Whether to use highly variable genes (HVG) for the mapping (Generic analysis parameter).",
           "default" : [
-            true
+            false
           ],
           "required" : false,
           "direction" : "input",
@@ -3659,7 +3659,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/cellmapper_scvi",
     "viash_version" : "0.9.4",
-    "git_commit" : "76ce9220d922f84f956299466ff569ea3e46c57c",
+    "git_commit" : "0c7110ad8073909c611ae9275e840d672eb629d5",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3910,6 +3910,7 @@ print("Concatenating train and test data", flush=True)
 adata = ad.concat(
     [input_train_mod1, input_test_mod1], merge = "same", label="split", keys=["train", "test"]
     )
+adata.X = adata.layers["counts"]
 
 # Compute a latent representation using an appropriate model based on the modality
 print("Get latent representation", flush=True)
@@ -3924,10 +3925,14 @@ input_test_mod1.obsm["X_scvi"] = adata[adata.obs["split"] == "test"].obsm["X_scv
 # copy the normalized layer to obsm for mod2
 input_train_mod1.obsm["mod2"] = input_train_mod2.layers["normalized"] 
 
+# choose the kNN method based on total cell number
+n_obs = input_test_mod1.n_obs + input_train_mod1.n_obs
+
 print('Setup and prepare Cellmapper', flush=True)
 cmap = cm.CellMapper(query=input_test_mod1, reference=input_train_mod1)
 cmap.compute_neighbors(
     use_rep="X_scvi",
+    knn_method="sklearn" if n_obs < 60000 else "pynndescent",
     n_neighbors=par['n_neighbors'], 
     )
 cmap.compute_mapping_matrix(kernel_method=par['kernel_method'])

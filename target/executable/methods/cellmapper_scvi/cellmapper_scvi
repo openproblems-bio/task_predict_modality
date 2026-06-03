@@ -449,9 +449,9 @@ RUN pip install --upgrade pip && \
   pip install --upgrade --no-cache-dir "cellmapper>=0.2.2" "scvi-tools>=1.3.0" "muon>=0.1.6"
 
 LABEL org.opencontainers.image.description="Companion container for running component methods cellmapper_scvi"
-LABEL org.opencontainers.image.created="2025-08-12T12:33:05Z"
+LABEL org.opencontainers.image.created="2026-06-03T15:06:12Z"
 LABEL org.opencontainers.image.source="https://github.com/quadbio/cellmapper"
-LABEL org.opencontainers.image.revision="76ce9220d922f84f956299466ff569ea3e46c57c"
+LABEL org.opencontainers.image.revision="0c7110ad8073909c611ae9275e840d672eb629d5"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER
@@ -606,19 +606,19 @@ function ViashHelp {
   echo ""
   echo "    --kernel_method"
   echo "        type: string"
-  echo "        default: hnoca"
+  echo "        default: gauss"
   echo "        choices: [ hnoca, gauss ]"
   echo "        Kernel function to compute k-NN edge weights (CellMapper parameter)."
   echo ""
   echo "    --n_neighbors"
   echo "        type: integer"
-  echo "        default: 30"
+  echo "        default: 50"
   echo "        Number of neighbors to consider for k-NN graph construction (CellMapper"
   echo "        parameter)."
   echo ""
   echo "    --use_hvg"
   echo "        type: boolean"
-  echo "        default: true"
+  echo "        default: false"
   echo "        Whether to use highly variable genes (HVG) for the mapping (Generic"
   echo "        analysis parameter)."
   echo ""
@@ -996,13 +996,13 @@ fi
 
 # filling in defaults
 if [ -z ${VIASH_PAR_KERNEL_METHOD+x} ]; then
-  VIASH_PAR_KERNEL_METHOD="hnoca"
+  VIASH_PAR_KERNEL_METHOD="gauss"
 fi
 if [ -z ${VIASH_PAR_N_NEIGHBORS+x} ]; then
-  VIASH_PAR_N_NEIGHBORS="30"
+  VIASH_PAR_N_NEIGHBORS="50"
 fi
 if [ -z ${VIASH_PAR_USE_HVG+x} ]; then
-  VIASH_PAR_USE_HVG="true"
+  VIASH_PAR_USE_HVG="false"
 fi
 if [ -z ${VIASH_PAR_ADT_NORMALIZATION+x} ]; then
   VIASH_PAR_ADT_NORMALIZATION="clr"
@@ -1295,6 +1295,7 @@ print("Concatenating train and test data", flush=True)
 adata = ad.concat(
     [input_train_mod1, input_test_mod1], merge = "same", label="split", keys=["train", "test"]
     )
+adata.X = adata.layers["counts"]
 
 # Compute a latent representation using an appropriate model based on the modality
 print("Get latent representation", flush=True)
@@ -1309,10 +1310,14 @@ input_test_mod1.obsm["X_scvi"] = adata[adata.obs["split"] == "test"].obsm["X_scv
 # copy the normalized layer to obsm for mod2
 input_train_mod1.obsm["mod2"] = input_train_mod2.layers["normalized"] 
 
+# choose the kNN method based on total cell number
+n_obs = input_test_mod1.n_obs + input_train_mod1.n_obs
+
 print('Setup and prepare Cellmapper', flush=True)
 cmap = cm.CellMapper(query=input_test_mod1, reference=input_train_mod1)
 cmap.compute_neighbors(
     use_rep="X_scvi",
+    knn_method="sklearn" if n_obs < 60000 else "pynndescent",
     n_neighbors=par['n_neighbors'], 
     )
 cmap.compute_mapping_matrix(kernel_method=par['kernel_method'])

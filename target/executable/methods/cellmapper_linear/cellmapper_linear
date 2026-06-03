@@ -449,9 +449,9 @@ RUN pip install --upgrade pip && \
   pip install --upgrade --no-cache-dir "cellmapper>=0.2.2"
 
 LABEL org.opencontainers.image.description="Companion container for running component methods cellmapper_linear"
-LABEL org.opencontainers.image.created="2025-08-12T12:33:05Z"
+LABEL org.opencontainers.image.created="2026-06-03T15:06:11Z"
 LABEL org.opencontainers.image.source="https://github.com/quadbio/cellmapper"
-LABEL org.opencontainers.image.revision="76ce9220d922f84f956299466ff569ea3e46c57c"
+LABEL org.opencontainers.image.revision="0c7110ad8073909c611ae9275e840d672eb629d5"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER
@@ -599,24 +599,25 @@ function ViashHelp {
   echo ""
   echo "    --fallback_representation"
   echo "        type: string"
-  echo "        default: fast_cca"
+  echo "        default: joint_pca"
   echo "        choices: [ joint_pca, fast_cca ]"
   echo "        Fallback representation to use for k-NN mapping (computed if use_rep is"
   echo "        None)."
   echo ""
   echo "    --mask_var"
   echo "        type: string"
+  echo "        default: hvg"
   echo "        Variable to mask for fallback representation."
   echo ""
   echo "    --kernel_method"
   echo "        type: string"
-  echo "        default: hnoca"
+  echo "        default: gauss"
   echo "        choices: [ hnoca, gauss ]"
   echo "        Kernel function to compute k-NN edge weights."
   echo ""
   echo "    --n_neighbors"
   echo "        type: integer"
-  echo "        default: 30"
+  echo "        default: 50"
   echo "        Number of neighbors to consider for k-NN graph construction."
   echo ""
   echo "Viash built in Computational Requirements:"
@@ -970,13 +971,16 @@ fi
 
 # filling in defaults
 if [ -z ${VIASH_PAR_FALLBACK_REPRESENTATION+x} ]; then
-  VIASH_PAR_FALLBACK_REPRESENTATION="fast_cca"
+  VIASH_PAR_FALLBACK_REPRESENTATION="joint_pca"
+fi
+if [ -z ${VIASH_PAR_MASK_VAR+x} ]; then
+  VIASH_PAR_MASK_VAR="hvg"
 fi
 if [ -z ${VIASH_PAR_KERNEL_METHOD+x} ]; then
-  VIASH_PAR_KERNEL_METHOD="hnoca"
+  VIASH_PAR_KERNEL_METHOD="gauss"
 fi
 if [ -z ${VIASH_PAR_N_NEIGHBORS+x} ]; then
-  VIASH_PAR_N_NEIGHBORS="30"
+  VIASH_PAR_N_NEIGHBORS="50"
 fi
 
 # check whether required files exist
@@ -1245,10 +1249,14 @@ input_test_mod1.X = input_test_mod1.layers["normalized"].copy()
 # copy the normalized layer to obsm for mod2
 input_train_mod1.obsm["mod2"] = input_train_mod2.layers["normalized"] 
 
+# choose the kNN method based on total cell number
+n_obs = input_test_mod1.n_obs + input_train_mod1.n_obs
+
 print("Set up and prepare Cellmapper", flush=True)
 cmap = cm.CellMapper(query=input_test_mod1, reference=input_train_mod1)
 cmap.compute_neighbors(
     use_rep=None,
+    knn_method="sklearn" if n_obs < 60000 else "pynndescent",
     fallback_representation=par['fallback_representation'],
     n_neighbors=par['n_neighbors'],
     fallback_kwargs={"mask_var": par['mask_var']},

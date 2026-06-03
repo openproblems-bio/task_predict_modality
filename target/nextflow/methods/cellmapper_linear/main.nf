@@ -3438,7 +3438,7 @@ meta = [
           "name" : "--fallback_representation",
           "description" : "Fallback representation to use for k-NN mapping (computed if use_rep is None).",
           "default" : [
-            "fast_cca"
+            "joint_pca"
           ],
           "required" : false,
           "choices" : [
@@ -3453,6 +3453,9 @@ meta = [
           "type" : "string",
           "name" : "--mask_var",
           "description" : "Variable to mask for fallback representation.",
+          "default" : [
+            "hvg"
+          ],
           "required" : false,
           "direction" : "input",
           "multiple" : false,
@@ -3463,7 +3466,7 @@ meta = [
           "name" : "--kernel_method",
           "description" : "Kernel function to compute k-NN edge weights.",
           "default" : [
-            "hnoca"
+            "gauss"
           ],
           "required" : false,
           "choices" : [
@@ -3479,7 +3482,7 @@ meta = [
           "name" : "--n_neighbors",
           "description" : "Number of neighbors to consider for k-NN graph construction.",
           "default" : [
-            30
+            50
           ],
           "required" : false,
           "direction" : "input",
@@ -3641,7 +3644,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/cellmapper_linear",
     "viash_version" : "0.9.4",
-    "git_commit" : "76ce9220d922f84f956299466ff569ea3e46c57c",
+    "git_commit" : "0c7110ad8073909c611ae9275e840d672eb629d5",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3886,10 +3889,14 @@ input_test_mod1.X = input_test_mod1.layers["normalized"].copy()
 # copy the normalized layer to obsm for mod2
 input_train_mod1.obsm["mod2"] = input_train_mod2.layers["normalized"] 
 
+# choose the kNN method based on total cell number
+n_obs = input_test_mod1.n_obs + input_train_mod1.n_obs
+
 print("Set up and prepare Cellmapper", flush=True)
 cmap = cm.CellMapper(query=input_test_mod1, reference=input_train_mod1)
 cmap.compute_neighbors(
     use_rep=None,
+    knn_method="sklearn" if n_obs < 60000 else "pynndescent",
     fallback_representation=par['fallback_representation'],
     n_neighbors=par['n_neighbors'],
     fallback_kwargs={"mask_var": par['mask_var']},
