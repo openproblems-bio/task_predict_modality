@@ -1,0 +1,20 @@
+__merge__: ../../../api/comp_method_train.yaml
+name: ss_opm_train
+resources:
+  - type: python_script
+    path: script.py
+engines:
+  - type: docker
+    image: openproblems/base_pytorch_nvidia:1
+    setup:
+      - type: docker
+        run: pip install --no-cache-dir --no-deps git+https://github.com/shu65/open-problems-multimodal.git
+      - type: python
+        packages:
+          - pyarrow
+          - fastparquet
+runners:
+  - type: executable
+  - type: nextflow
+    directives:
+      label: [highmem, hightime, midcpu, highsharedmem, gpu]
