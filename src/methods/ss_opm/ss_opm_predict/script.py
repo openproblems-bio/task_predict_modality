@@ -120,6 +120,10 @@ gc.collect()
 
 # ---- Write output ----
 print('Writing output...', flush=True)
+# Prediction must be a sparse matrix to be compatible with all metrics.
+if not scipy.sparse.issparse(y_pred):
+    y_pred = scipy.sparse.csr_matrix(y_pred)
+
 output = ad.AnnData(
     layers={"normalized": y_pred},
     obs=input_test_mod1.obs,

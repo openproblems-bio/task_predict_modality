@@ -29,10 +29,10 @@ meta = {
 }
 ## VIASH END
 
-# Monkey-patch median_normalize and row_normalize to safely handle degenerate rows.
-# In the installed ss_opm package these functions are imported with 'from X import Y'
-# into pre_post_processing.py. Patching the module-level names after import updates
-# those bindings because Python function bodies resolve globals via the module __dict__.
+# Monkey-patch the source utility modules so ALL callers (pre_post_processing,
+# IterativeSVDImputator, etc.) use safe versions that handle all-zero/all-NaN rows.
+import ss_opm.utility.nonzero_median_normalize as _mnm_module
+import ss_opm.utility.row_normalize as _rn_module
 import ss_opm.pre_post_processing.pre_post_processing as _pp_module
 
 def _safe_median_normalize(values, ignore_zero=True, log=False):
@@ -56,8 +56,27 @@ def _safe_row_normalize(v):
     sigma = np.where(sigma == 0, 1.0, sigma)
     return (v - mu[:, None]) / sigma[:, None]
 
+# Patch the source modules so every 'from X import Y' binding stays in sync
+_mnm_module.median_normalize = _safe_median_normalize
+_rn_module.row_normalize = _safe_row_normalize
+# Also patch the names already bound inside pre_post_processing's namespace
 _pp_module.median_normalize = _safe_median_normalize
 _pp_module.row_normalize = _safe_row_normalize
+
+# The SVD decomposer components are stored as float64 tensors inside
+# MultiEncoderDecoderModule, but the neural-network outputs are float32.
+# Patch _train_step_forward to convert the whole sub-model to float32
+# immediately before any forward pass, so all tensors share the same dtype.
+import ss_opm.model.encoder_decoder.encoder_decoder as _ed_module
+
+_orig_train_step_fwd = _ed_module.EncoderDecoder._train_step_forward
+
+def _patched_train_step_fwd(self, batch, training_length_ratio):
+    if hasattr(self, 'model') and self.model is not None:
+        self.model.float()
+    return _orig_train_step_fwd(self, batch, training_length_ratio)
+
+_ed_module.EncoderDecoder._train_step_forward = _patched_train_step_fwd
 
 SEED = 42
 set_seed(SEED)
@@ -212,6 +231,12 @@ preprocessed_inputs, preprocessed_targets = pre_post_process.preprocess(
 )
 
 # ---- Train model ----
+# Cast preprocessed arrays to float32 to match what PyTorch expects.
+if isinstance(preprocessed_inputs, np.ndarray):
+    preprocessed_inputs = preprocessed_inputs.astype(np.float32)
+if isinstance(preprocessed_targets, np.ndarray):
+    preprocessed_targets = preprocessed_targets.astype(np.float32)
+
 print('Training model...', flush=True)
 model = EncoderDecoder(model_params)
 model.fit(
