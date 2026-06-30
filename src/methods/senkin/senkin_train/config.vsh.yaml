@@ -1,0 +1,45 @@
+__merge__: ../../../api/comp_method_train.yaml
+name: senkin_train
+resources:
+  - path: script.py
+    type: python_script
+arguments:
+  - name: "--n_folds"
+    type: integer
+    default: 5
+    description: Number of cross-validation folds for LightGBM and neural network training.
+  - name: "--lgbm_boost_rounds"
+    type: integer
+    default: 10000
+    description: Maximum LightGBM boosting rounds (early stopping applies).
+  - name: "--lgbm_early_stopping"
+    type: integer
+    default: 100
+    description: LightGBM early stopping patience (rounds without improvement).
+  - name: "--nn_epochs"
+    type: integer
+    default: 100
+    description: Maximum neural network training epochs (early stopping applies).
+  - name: "--n_tsvd_components"
+    type: integer
+    default: 100
+    description: TSVD components for reducing LightGBM predictions before NN input.
+engines:
+  - type: docker
+    image: openproblems/base_pytorch_nvidia:1
+    setup:
+      - type: docker
+        run: pip install --no-cache-dir --no-deps git+https://github.com/lueckenlab/senkin-tmp-cite-pred.git
+      - type: python
+        packages:
+          - lightgbm>=4.0
+          - tensorflow>=2.12
+          - scikit-learn>=1.1
+          - mudata>=0.2
+          - muon>=0.1
+          - fast-array-utils
+runners:
+  - type: executable
+  - type: nextflow
+    directives:
+      label: [highmem, hightime, midcpu, gpu]
