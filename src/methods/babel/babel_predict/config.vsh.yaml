@@ -1,0 +1,19 @@
+__merge__: ../../../api/comp_method_predict.yaml
+name: babel_predict
+resources:
+  - path: script.py
+    type: python_script
+  - path: ../model.py
+    dest: model.py
+engines:
+  - type: docker
+    image: openproblems/base_pytorch_nvidia:1
+    setup:
+      - type: python
+        packages:
+          - scikit-learn>=1.1
+runners:
+  - type: executable
+  - type: nextflow
+    directives:
+      label: [highmem, hightime, midcpu, gpu]

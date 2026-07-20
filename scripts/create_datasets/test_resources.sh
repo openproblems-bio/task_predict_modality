@@ -40,7 +40,7 @@ for name in bmmc_cite/normal bmmc_cite/swap bmmc_multiome/normal bmmc_multiome/s
   echo "pre-train simple_mlp on $name"
   [ -d $OUTPUT_DIR/openproblems_neurips2021/$name/models/simple_mlp/ ] && rm -r $OUTPUT_DIR/openproblems_neurips2021/$name/models/simple_mlp/
   mkdir -p $OUTPUT_DIR/openproblems_neurips2021/$name/models/simple_mlp/
-  viash run src/methods/simple_mlp/train/config.vsh.yaml -- \
+  viash run src/methods/simple_mlp/simple_mlp_train/config.vsh.yaml -- \
     --input_train_mod1 $OUTPUT_DIR/openproblems_neurips2021/$name/train_mod1.h5ad \
     --input_train_mod2 $OUTPUT_DIR/openproblems_neurips2021/$name/train_mod2.h5ad \
     --input_test_mod1 $OUTPUT_DIR/openproblems_neurips2021/$name/test_mod1.h5ad \
@@ -49,11 +49,32 @@ for name in bmmc_cite/normal bmmc_cite/swap bmmc_multiome/normal bmmc_multiome/s
   echo "pre-train novel on $name"
   [ -d $OUTPUT_DIR/openproblems_neurips2021/$name/models/novel/ ] && rm -r $OUTPUT_DIR/openproblems_neurips2021/$name/models/novel/
   mkdir -p $OUTPUT_DIR/openproblems_neurips2021/$name/models/novel/
-  viash run src/methods/novel/train/config.vsh.yaml -- \
+  viash run src/methods/novel/novel_train/config.vsh.yaml -- \
     --input_train_mod1 $OUTPUT_DIR/openproblems_neurips2021/$name/train_mod1.h5ad \
     --input_train_mod2 $OUTPUT_DIR/openproblems_neurips2021/$name/train_mod2.h5ad \
     --input_test_mod1 $OUTPUT_DIR/openproblems_neurips2021/$name/test_mod1.h5ad \
     --output $OUTPUT_DIR/openproblems_neurips2021/$name/models/novel
+
+done
+
+for name in bmmc_multiome/swap; do
+  # babel only supports ATAC->GEX prediction (see babel_train/script.py); the
+  # bmmc_multiome/normal variant is GEX->ATAC and is intentionally unsupported.
+  echo "pre-train babel on $name"
+  [ -d $OUTPUT_DIR/openproblems_neurips2021/$name/models/babel/ ] && rm -r $OUTPUT_DIR/openproblems_neurips2021/$name/models/babel/
+  mkdir -p $OUTPUT_DIR/openproblems_neurips2021/$name/models/babel/
+  viash run src/methods/babel/babel_train/config.vsh.yaml -- \
+    --input_train_mod1 $OUTPUT_DIR/openproblems_neurips2021/$name/train_mod1.h5ad \
+    --input_train_mod2 $OUTPUT_DIR/openproblems_neurips2021/$name/train_mod2.h5ad \
+    --input_test_mod1 $OUTPUT_DIR/openproblems_neurips2021/$name/test_mod1.h5ad \
+    --output $OUTPUT_DIR/openproblems_neurips2021/$name/models/babel/output_model.pkl
+
+  echo "predict babel on $name"
+  viash run src/methods/babel/babel_predict/config.vsh.yaml -- \
+    --input_test_mod1 $OUTPUT_DIR/openproblems_neurips2021/$name/test_mod1.h5ad \
+    --input_train_mod2 $OUTPUT_DIR/openproblems_neurips2021/$name/train_mod2.h5ad \
+    --input_model $OUTPUT_DIR/openproblems_neurips2021/$name/models/babel/output_model.pkl \
+    --output $OUTPUT_DIR/openproblems_neurips2021/$name/models/babel/prediction.h5ad
 
 done
 
