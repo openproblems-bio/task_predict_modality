@@ -18,7 +18,8 @@ methods = [
   lm,
   guanlab_dengkw_pm,
   novel,
-  simple_mlp
+  simple_mlp,
+  scbutterfly
 ]
 
 // construct list of metrics

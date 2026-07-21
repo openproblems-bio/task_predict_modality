@@ -1,0 +1,27 @@
+__merge__: ../../../api/comp_method.yaml
+name: scbutterfly
+label: scButterfly
+summary: "Dual-VAE adversarial translator for paired single-cell multi-omics (GEX<->ATAC)"
+description: |
+  scButterfly (Basic variant, scButterfly-B) is a dual variational autoencoder with an
+  adversarial translator that learns to convert between paired single-cell modalities.
+  For the predict-modality task it is trained on paired Multiome cells and used to translate
+  the held-out test modality. Chromosome grouping for the ATAC branch is parsed from peak
+  coordinates in the feature names. Only Multiome GEX<->ATAC is supported; CITE-seq (ADT)
+  datasets are not handled.
+references:
+  doi:
+    - 10.1038/s41467-024-47418-x
+links:
+  repository: https://github.com/BioX-NKU/scButterfly
+info:
+  preferred_normalization: log_cp10k
+resources:
+  - path: main.nf
+    type: nextflow_script
+    entrypoint: run_wf
+dependencies:
+  - name: methods/scbutterfly_train
+  - name: methods/scbutterfly_predict
+runners:
+  - type: nextflow

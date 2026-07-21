@@ -55,6 +55,21 @@ for name in bmmc_cite/normal bmmc_cite/swap bmmc_multiome/normal bmmc_multiome/s
     --input_test_mod1 $OUTPUT_DIR/openproblems_neurips2021/$name/test_mod1.h5ad \
     --output $OUTPUT_DIR/openproblems_neurips2021/$name/models/novel
 
+  # scbutterfly only supports Multiome (GEX<->ATAC); skip the CITE datasets.
+  case "$name" in
+    bmmc_multiome/*)
+      echo "pre-train scbutterfly on $name"
+      [ -d $OUTPUT_DIR/openproblems_neurips2021/$name/models/scbutterfly/ ] && rm -r $OUTPUT_DIR/openproblems_neurips2021/$name/models/scbutterfly/
+      mkdir -p $OUTPUT_DIR/openproblems_neurips2021/$name/models/scbutterfly/
+      viash run src/methods/scbutterfly/scbutterfly_train/config.vsh.yaml -- \
+        --input_train_mod1 $OUTPUT_DIR/openproblems_neurips2021/$name/train_mod1.h5ad \
+        --input_train_mod2 $OUTPUT_DIR/openproblems_neurips2021/$name/train_mod2.h5ad \
+        --input_test_mod1 $OUTPUT_DIR/openproblems_neurips2021/$name/test_mod1.h5ad \
+        --rna_pretrain_epoch 2 --atac_pretrain_epoch 2 --translator_epoch 2 --patience 5 --n_top_genes 500 \
+        --output $OUTPUT_DIR/openproblems_neurips2021/$name/models/scbutterfly
+      ;;
+  esac
+
 done
 
 # only run this if you have access to the openproblems-data bucket

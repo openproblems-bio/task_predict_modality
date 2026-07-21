@@ -1,0 +1,80 @@
+__merge__: ../../../api/comp_method_train.yaml
+name: scbutterfly_train
+info:
+  # The api example paths point at bmmc_cite, but this method is Multiome-only. Override
+  # inputs to bmmc_multiome/swap and use tiny epochs so the test trains quickly.
+  test_setup:
+    quick:
+      input_train_mod1: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap/train_mod1.h5ad
+      input_train_mod2: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap/train_mod2.h5ad
+      input_test_mod1: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap/test_mod1.h5ad
+      rna_pretrain_epoch: 2
+      atac_pretrain_epoch: 2
+      translator_epoch: 2
+      patience: 5
+      n_top_genes: 500
+resources:
+  - path: script.py
+    type: python_script
+  - path: ../butterfly_common.py
+  - path: ../chrom_utils.py
+arguments:
+  - name: "--rna_pretrain_epoch"
+    type: integer
+    default: 100
+    description: RNA autoencoder pretraining epochs (R2R_pretrain_epoch).
+  - name: "--atac_pretrain_epoch"
+    type: integer
+    default: 100
+    description: ATAC autoencoder pretraining epochs (A2A_pretrain_epoch).
+  - name: "--translator_epoch"
+    type: integer
+    default: 200
+    description: Translator training epochs.
+  - name: "--patience"
+    type: integer
+    default: 50
+    description: Early-stopping patience for the translator.
+  - name: "--batch_size"
+    type: integer
+    default: 64
+    description: Training batch size.
+  - name: "--n_top_genes"
+    type: integer
+    default: 3000
+    description: Number of highly variable genes kept by scButterfly RNA preprocessing.
+engines:
+  # scButterfly 0.0.9 hard-pins a 2022-era stack (scipy==1.9.3, scvi-tools==0.19.0,
+  # episcanpy==0.3.2) that will not build on the newer Python of the shared
+  # openproblems base image. Use a Python 3.9 base and install the pinned stack from
+  # wheels. The torch cu117 wheel bundles its own CUDA runtime, so GPU works when the
+  # container is run with --gpus (matching the nextflow 'gpu' label) without a separate
+  # CUDA base image. scButterfly is installed --no-deps to avoid dragging in scvi-tools
+  # and jax, which the Basic (aug_type=None) path never uses.
+  - type: docker
+    image: python:3.9
+    setup:
+      - type: docker
+        run:
+          - pip install --no-cache-dir torch==1.13.1 torchvision==0.14.1 --index-url https://download.pytorch.org/whl/cu117
+          - pip install --no-cache-dir --no-deps scButterfly
+          - pip install --no-cache-dir "numpy==1.23.5" "scipy==1.9.3" "pandas<2" "scanpy==1.9.3" "anndata==0.8.0" "scikit-learn>=1.1" numba tqdm matplotlib adjustText bamnostic pysam legacy-api-wrap
+          # episcanpy 0.3.2's requirements pull `tbb`, which the resolver cannot satisfy on
+          # this platform. Install it --no-deps; its import-time deps (incl. bamnostic, pysam,
+          # legacy-api-wrap) are provided explicitly above.
+          - pip install --no-cache-dir --no-deps episcanpy==0.3.2
+          # `openproblems` (config reader used by the component test harness) is bundled in
+          # the shared base images but not on this custom base; install it from the same
+          # source the base images use so `viash ns test` works.
+          - pip install --no-cache-dir "git+https://github.com/openproblems-bio/core.git#subdirectory=packages/python/openproblems"
+runners:
+  - type: executable
+  - type: nextflow
+    directives:
+      label: [highmem, hightime, midcpu, gpu]
+# Override the api default (bmmc_cite) — this method only supports Multiome GEX<->ATAC.
+test_resources:
+  - type: python_script
+    path: /common/component_tests/run_and_check_output.py
+  - path: /resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap
+    dest: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap
