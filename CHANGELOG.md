@@ -1,3 +1,9 @@
+# task_predict_modality 0.2.0
+
+## MINOR CHANGES
+
+* `file_test_mod2`: Declare `uns["normalization_id"]`, which `run_benchmark` reads off this file to decide which method to run on which dataset (PR #30).
+
 # task_predict_modality 0.1.1
 
 ## NEW FUNCTIONALITY
