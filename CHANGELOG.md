@@ -1,3 +1,9 @@
+# task_predict_modality 0.2.0
+
+## BUG FIXES
+
+* `process_dataset`: Add the `--seed` argument the API and README already advertised, and pass it through from the `process_datasets` workflow. Without it `par$seed` was `NULL`, and `set.seed(NULL)` re-seeds from the clock -- so the test-cell and ATAC-peak subsampling were not reproducible (PR #27).
+
 # task_predict_modality 0.1.1
 
 ## NEW FUNCTIONALITY
