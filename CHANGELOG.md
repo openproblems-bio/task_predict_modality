@@ -1,3 +1,9 @@
+# task_predict_modality 0.2.0
+
+## BUG FIXES
+
+* `simple_mlp_predict`: Size the model output with `input_train_mod2.n_vars` instead of `input_test_mod1.n_vars`. The two only coincide on the test resources, so this crashed on every real dataset (PR #24).
+
 # task_predict_modality 0.1.1
 
 ## NEW FUNCTIONALITY
