@@ -1,3 +1,9 @@
+# task_predict_modality 0.2.0
+
+## BUG FIXES
+
+* `mse`: Coerce both layers to sparse before differencing them. A method returning a dense `normalized` layer made the metric crash with `AttributeError: 'matrix' object has no attribute 'power'` instead of producing a score (PR #26).
+
 # task_predict_modality 0.1.1
 
 ## NEW FUNCTIONALITY
