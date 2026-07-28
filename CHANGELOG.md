@@ -1,3 +1,9 @@
+# task_predict_modality 0.2.0
+
+## MINOR CHANGES
+
+* `file_train_mod1`, `file_train_mod2`, `file_test_mod1`, `file_test_mod2`: Declare `uns["modality"]`, which `process_dataset` already writes and which six methods and the `run_benchmark` workflow already read (PR #29).
+
 # task_predict_modality 0.1.1
 
 ## NEW FUNCTIONALITY
