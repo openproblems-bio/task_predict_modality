@@ -20,7 +20,7 @@ nextflow run . \
   -profile docker \
   -resume \
   -c common/nextflow_helpers/labels_ci.config \
-  --id cxg_mouse_pancreas_atlas \
+  --id bmmc_cite_normal \
   --input_train_mod1 resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal/train_mod1.h5ad \
   --input_train_mod2 resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal/train_mod2.h5ad \
   --input_test_mod1 resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal/test_mod1.h5ad \
