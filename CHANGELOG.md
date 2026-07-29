@@ -1,3 +1,9 @@
+# task_predict_modality 0.2.0
+
+## MINOR CHANGES
+
+* `run_benchmark`: Emit one dataset metadata entry per dataset by de-duplicating on `dataset_id`, rather than by keeping only the `log_cp10k` states. The old filter emitted nothing at all if a dataset ever arrived under a different normalization (PR #48).
+
 # task_predict_modality 0.1.1
 
 ## NEW FUNCTIONALITY
