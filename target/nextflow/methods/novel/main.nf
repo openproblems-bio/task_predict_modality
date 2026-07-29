@@ -3480,16 +3480,6 @@ meta = [
       "type" : "python_script",
       "path" : "/common/component_tests/check_config.py",
       "is_executable" : true
-    },
-    {
-      "type" : "python_script",
-      "path" : "/common/component_tests/run_and_check_output.py",
-      "is_executable" : true
-    },
-    {
-      "type" : "file",
-      "path" : "/resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap",
-      "dest" : "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap"
     }
   ],
   "info" : {
@@ -3588,7 +3578,7 @@ meta = [
     "engine" : "native",
     "output" : "target/nextflow/methods/novel",
     "viash_version" : "0.9.7",
-    "git_commit" : "f37fbccda283b54e2e05b224d511b9f4ca231e66",
+    "git_commit" : "cf8b845f5821fdb4c0986141bfbfcdb4733bf787",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {

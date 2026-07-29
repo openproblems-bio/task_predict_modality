@@ -3578,7 +3578,7 @@ meta = [
     "engine" : "native",
     "output" : "target/nextflow/methods/simple_mlp",
     "viash_version" : "0.9.7",
-    "git_commit" : "f37fbccda283b54e2e05b224d511b9f4ca231e66",
+    "git_commit" : "cf8b845f5821fdb4c0986141bfbfcdb4733bf787",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3777,7 +3777,7 @@ workflow run_wf {
     )
 
     | simple_mlp_predict.run(
-      fromState: ["input_train_mod2", "input_test_mod1", "input_model", "input_transform"],
+      fromState: ["input_train_mod2", "input_test_mod1", "input_model"],
       toState: ["output": "output"]
     )
 
