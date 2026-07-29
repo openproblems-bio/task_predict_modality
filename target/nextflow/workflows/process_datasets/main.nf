@@ -3077,6 +3077,18 @@ meta = [
                   "required" : true
                 },
                 {
+                  "type" : "string",
+                  "name" : "cell_type",
+                  "description" : "Cell type annotation. Used to balance the subsample of test cells.",
+                  "required" : true
+                },
+                {
+                  "type" : "string",
+                  "name" : "is_train",
+                  "description" : "Which split the cell belongs to. Cells labelled 'train' become the training set,\nall other cells (e.g. 'test', 'iid_holdout') become the test set. Optional: when\nabsent, `process_dataset` holds out a quarter of the batches instead.\n",
+                  "required" : false
+                },
+                {
                   "type" : "double",
                   "name" : "size_factors",
                   "description" : "The size factors of the cells prior to normalization.",
@@ -3213,6 +3225,18 @@ meta = [
                   "name" : "batch",
                   "description" : "Batch information",
                   "required" : true
+                },
+                {
+                  "type" : "string",
+                  "name" : "cell_type",
+                  "description" : "Cell type annotation. Used to balance the subsample of test cells.",
+                  "required" : true
+                },
+                {
+                  "type" : "string",
+                  "name" : "is_train",
+                  "description" : "Which split the cell belongs to. Cells labelled 'train' become the training set,\nall other cells (e.g. 'test', 'iid_holdout') become the test set. Optional: when\nabsent, `process_dataset` holds out a quarter of the batches instead.\n",
+                  "required" : false
                 },
                 {
                   "type" : "double",
@@ -3954,7 +3978,7 @@ meta = [
     "engine" : "native",
     "output" : "target/nextflow/workflows/process_datasets",
     "viash_version" : "0.9.7",
-    "git_commit" : "f0e32f9b94ff641e8a130be528925b496da9bf91",
+    "git_commit" : "6276cbc74cbb4739b4d82bccc9d1f030b7cf2036",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {

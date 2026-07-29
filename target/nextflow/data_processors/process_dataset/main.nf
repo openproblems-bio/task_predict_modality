@@ -3077,6 +3077,18 @@ meta = [
                   "required" : true
                 },
                 {
+                  "type" : "string",
+                  "name" : "cell_type",
+                  "description" : "Cell type annotation. Used to balance the subsample of test cells.",
+                  "required" : true
+                },
+                {
+                  "type" : "string",
+                  "name" : "is_train",
+                  "description" : "Which split the cell belongs to. Cells labelled 'train' become the training set,\nall other cells (e.g. 'test', 'iid_holdout') become the test set. Optional: when\nabsent, `process_dataset` holds out a quarter of the batches instead.\n",
+                  "required" : false
+                },
+                {
                   "type" : "double",
                   "name" : "size_factors",
                   "description" : "The size factors of the cells prior to normalization.",
@@ -3213,6 +3225,18 @@ meta = [
                   "name" : "batch",
                   "description" : "Batch information",
                   "required" : true
+                },
+                {
+                  "type" : "string",
+                  "name" : "cell_type",
+                  "description" : "Cell type annotation. Used to balance the subsample of test cells.",
+                  "required" : true
+                },
+                {
+                  "type" : "string",
+                  "name" : "is_train",
+                  "description" : "Which split the cell belongs to. Cells labelled 'train' become the training set,\nall other cells (e.g. 'test', 'iid_holdout') become the test set. Optional: when\nabsent, `process_dataset` holds out a quarter of the batches instead.\n",
+                  "required" : false
                 },
                 {
                   "type" : "double",
@@ -3972,7 +3996,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/data_processors/process_dataset",
     "viash_version" : "0.9.7",
-    "git_commit" : "f0e32f9b94ff641e8a130be528925b496da9bf91",
+    "git_commit" : "6276cbc74cbb4739b4d82bccc9d1f030b7cf2036",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -4220,6 +4244,11 @@ cat("Reading input data\\\\n")
 ad1 <- anndata::read_h5ad(if (!par\\$swap) par\\$input_mod1 else par\\$input_mod2)
 ad2 <- anndata::read_h5ad(if (!par\\$swap) par\\$input_mod2 else par\\$input_mod1)
 
+# input checks -- used to balance the subsample of test cells further down
+if (!"cell_type" %in% colnames(ad1\\$obs)) {
+  stop("obs['cell_type'] is required but missing from the input dataset")
+}
+
 # use heuristic to determine modality
 # TODO: should be removed once modality is stored in the uns
 determine_modality <- function(ad, mod1 = TRUE) {
@@ -4288,8 +4317,26 @@ if (ad2_mod == "ATAC") {
 }
 
 cat("Creating train/test split\\\\n")
-is_train <- which(ad1\\$obs[["is_train"]] == "train")
-is_test <- which(!ad1\\$obs[["is_train"]] == "train")
+if ("is_train" %in% colnames(ad1\\$obs)) {
+  is_train <- which(ad1\\$obs[["is_train"]] == "train")
+  is_test <- which(ad1\\$obs[["is_train"]] != "train")
+} else {
+  # No predefined split -- obs['is_train'] carries the NeurIPS 2021 competition
+  # split and other datasets have no reason to have it. Hold out a quarter of the
+  # batches instead, so the test cells come from donors the method has not seen.
+  batches <- unique(as.character(ad1\\$obs[["batch"]]))
+  if (length(batches) > 1) {
+    test_batches <- sample(batches, max(1, floor(length(batches) / 4)))
+    cat("No obs['is_train'], holding out batches: ", paste(test_batches, collapse = ", "), "\\\\n", sep = "")
+    in_test <- as.character(ad1\\$obs[["batch"]]) %in% test_batches
+  } else {
+    cat("No obs['is_train'] and only one batch, holding out a quarter of the cells\\\\n")
+    in_test <- seq_len(nrow(ad1)) %in% sample.int(nrow(ad1), max(1, floor(nrow(ad1) / 4)))
+  }
+  is_train <- which(!in_test)
+  is_test <- which(in_test)
+}
+cat("Train cells: ", length(is_train), ", test cells: ", length(is_test), "\\\\n", sep = "")
 
 # sample cells
 if (length(is_test) > 1000) {

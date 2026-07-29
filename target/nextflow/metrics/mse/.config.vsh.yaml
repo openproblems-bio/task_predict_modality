@@ -264,7 +264,7 @@ build_info:
   output: "target/nextflow/metrics/mse"
   executable: "target/nextflow/metrics/mse/main.nf"
   viash_version: "0.9.7"
-  git_commit: "f0e32f9b94ff641e8a130be528925b496da9bf91"
+  git_commit: "6276cbc74cbb4739b4d82bccc9d1f030b7cf2036"
   git_remote: "https://github.com/openproblems-bio/task_predict_modality"
 package_config:
   name: "task_predict_modality"
