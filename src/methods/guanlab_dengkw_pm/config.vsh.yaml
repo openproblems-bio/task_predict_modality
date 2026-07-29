@@ -29,6 +29,7 @@ arguments:
 resources:
   - type: python_script
     path: script.py
+  - path: /src/utils/exit_codes.py
 engines:
   - type: docker
     image: openproblems/base_python:1

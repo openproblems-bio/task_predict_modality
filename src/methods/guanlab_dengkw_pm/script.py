@@ -1,3 +1,4 @@
+import sys
 import anndata as ad
 import numpy as np
 from scipy.sparse import csc_matrix
@@ -15,9 +16,13 @@ par = {
     'n_pcs': 50
 }
 meta = {
-    'name': 'guanlab_dengkw_pm'
+    'name': 'guanlab_dengkw_pm',
+    'resources_dir': 'src/utils'
 }
 ## VIASH END
+
+sys.path.append(meta['resources_dir'])
+from exit_codes import exit_non_applicable
 
 
 ## Removed PCA and normalization steps, as they arr already performed with the input data
@@ -49,6 +54,11 @@ n_comp_dict = {
     ("ATAC", "GEX"): (100, 70, 10, 0.1)
 }
 print(f"{mod1_type}, {mod2_type}", flush=True)
+if (mod1_type, mod2_type) not in n_comp_dict:
+    exit_non_applicable(
+        f"Guanlab-dengkw was tuned on the NeurIPS 2021 modality pairs and has no "
+        f"hyperparameters for {mod1_type} -> {mod2_type}"
+    )
 n_mod1, n_mod2, scale, alpha = n_comp_dict[(mod1_type, mod2_type)]
 print(f"{n_mod1}, {n_mod2}, {scale}, {alpha}", flush=True)
 
@@ -68,6 +78,8 @@ if n_mod2 is not None and n_mod2 < input_train_mod2.n_vars:
     embedder_mod2 = TruncatedSVD(n_components=n_mod2)
     train_gs = embedder_mod2.fit_transform(input_train_mod2.layers["normalized"]).astype(np.float32)
 else:
+    # no dimensionality reduction, so the KRR predicts the mod2 features directly
+    embedder_mod2 = None
     train_gs = input_train_mod2.to_df(layer="normalized").values.astype(np.float32)
 
 del input_train
@@ -112,7 +124,11 @@ for batch in batch_subsets:
         train_norm[input_train_mod1.obs.batch.isin(batch)], 
         train_gs[input_train_mod2.obs.batch.isin(batch)]
     )
-    y_pred += (krr.predict(test_norm) @ embedder_mod2.components_)
+    y_pred_batch = krr.predict(test_norm)
+    if embedder_mod2 is not None:
+        # map the predicted components back to the mod2 feature space
+        y_pred_batch = y_pred_batch @ embedder_mod2.components_
+    y_pred += y_pred_batch
 
 np.clip(y_pred, a_min=0, a_max=None, out=y_pred)
 y_pred /= len(batch_subsets)
