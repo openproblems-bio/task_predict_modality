@@ -84,8 +84,18 @@ spearman_vec_2[tv_sd2 == 0 | pv_sd2 == 0] <- 0
 mean_pearson_per_gene <- mean(pearson_vec_2)
 mean_spearman_per_gene <- mean(spearman_vec_2)
 
-overall_pearson <- cor(as.vector(tv), as.vector(pv), method = "pearson")
-overall_spearman <- cor(as.vector(tv), as.vector(pv), method = "spearman")
+tv_vec <- as.vector(tv)
+pv_vec <- as.vector(pv)
+
+# a constant prediction has no correlation to speak of -- score it as 0, the same
+# substitution the per-cell and per-gene metrics make above. cor() would return NA.
+if (sd(tv_vec) == 0 || sd(pv_vec) == 0) {
+  overall_pearson <- 0
+  overall_spearman <- 0
+} else {
+  overall_pearson <- cor(tv_vec, pv_vec, method = "pearson")
+  overall_spearman <- cor(tv_vec, pv_vec, method = "spearman")
+}
 
 metric_ids <- c("mean_pearson_per_cell", "mean_spearman_per_cell", "mean_pearson_per_gene", "mean_spearman_per_gene", "overall_pearson", "overall_spearman")
 metric_values <- c(mean_pearson_per_cell, mean_spearman_per_cell, mean_pearson_per_gene, mean_spearman_per_gene, overall_pearson, overall_spearman)
