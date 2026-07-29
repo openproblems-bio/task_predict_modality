@@ -1,3 +1,9 @@
+# task_predict_modality 0.2.0
+
+## MINOR CHANGES
+
+* `correlation`: Read the paired correlations off proxyC's sparse diagonal instead of `diag(dynutils::calculate_similarity(...))`, which densified an `n_features^2` matrix first. Scores are unchanged (PR #36).
+
 # task_predict_modality 0.1.1
 
 ## NEW FUNCTIONALITY
