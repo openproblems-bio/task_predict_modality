@@ -3581,7 +3581,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/simple_mlp_predict",
     "viash_version" : "0.9.7",
-    "git_commit" : "227295281678eca957eea4bf231e11a53ff91c27",
+    "git_commit" : "6c6b4f3a59049fa3e2daa914eb0f8fe0fb7a5af3",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
