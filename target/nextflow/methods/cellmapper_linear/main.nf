@@ -3547,7 +3547,6 @@ meta = [
     "variants" : {
       "cellmapper-pca" : {
         "fallback_representation" : "joint_pca",
-        "mask_var" : "None",
         "kernel_method" : "hnoca"
       },
       "cellmapper-pca-hvg" : {
@@ -3562,7 +3561,6 @@ meta = [
       },
       "cellmapper-cca" : {
         "fallback_representation" : "fast_cca",
-        "mask_var" : "None",
         "kernel_method" : "hnoca"
       },
       "cellmapper-cca-hvg" : {
@@ -3672,7 +3670,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/cellmapper_linear",
     "viash_version" : "0.9.7",
-    "git_commit" : "c44271cbbb4980a6475a9f225a23dbf2128db409",
+    "git_commit" : "e9a5df28002d555487c8721e2c667a5d8b321ede",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {

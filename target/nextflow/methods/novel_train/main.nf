@@ -3551,7 +3551,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/novel_train",
     "viash_version" : "0.9.7",
-    "git_commit" : "c44271cbbb4980a6475a9f225a23dbf2128db409",
+    "git_commit" : "e9a5df28002d555487c8721e2c667a5d8b321ede",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
