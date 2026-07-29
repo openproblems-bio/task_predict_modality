@@ -3588,7 +3588,7 @@ meta = [
     "engine" : "native",
     "output" : "target/nextflow/methods/novel",
     "viash_version" : "0.9.7",
-    "git_commit" : "ec08f0f524159995a9a9e717b97e78a1efacfad7",
+    "git_commit" : "f0dd458e21a152647bcfebe7fd2db285ec81c3d9",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
