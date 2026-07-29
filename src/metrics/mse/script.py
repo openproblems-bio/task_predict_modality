@@ -5,8 +5,8 @@ from scipy.sparse import csr_matrix
 
 ## VIASH START
 par = {
-  "input_test_mod2" : "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/test_mod2.h5ad",
-  "input_prediction" : "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/prediction.h5ad",
+  "input_test_mod2" : "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal/test_mod2.h5ad",
+  "input_prediction" : "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal/prediction.h5ad",
   "output" : "output/scores.h5ad"
 }
 ## VIASH END
