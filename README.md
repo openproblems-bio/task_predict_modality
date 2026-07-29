@@ -175,7 +175,7 @@ Format:
      var: 'gene_ids', 'hvg', 'hvg_score'
      obsm: 'gene_activity'
      layers: 'counts', 'normalized'
-     uns: 'dataset_id', 'common_dataset_id', 'dataset_organism', 'normalization_id', 'gene_activity_var_names'
+     uns: 'dataset_id', 'common_dataset_id', 'modality', 'dataset_organism', 'normalization_id', 'gene_activity_var_names'
 
 </div>
 
@@ -195,6 +195,7 @@ Data structure:
 | `layers["normalized"]` | `double` | Normalized expression values. |
 | `uns["dataset_id"]` | `string` | A unique identifier for the dataset. |
 | `uns["common_dataset_id"]` | `string` | (*Optional*) A common identifier for the dataset. |
+| `uns["modality"]` | `string` | The modality of the data, e.g. ‘GEX’, ‘ADT’ or ‘ATAC’. Methods use this to pick modality-specific hyperparameters or models. |
 | `uns["dataset_organism"]` | `string` | (*Optional*) The organism of the sample in the dataset. |
 | `uns["normalization_id"]` | `string` | The unique identifier of the normalization method used. |
 | `uns["gene_activity_var_names"]` | `string` | (*Optional*) Names of the gene activity matrix. |
@@ -217,7 +218,7 @@ Format:
      var: 'gene_ids', 'hvg', 'hvg_score'
      obsm: 'gene_activity'
      layers: 'counts', 'normalized'
-     uns: 'dataset_id', 'common_dataset_id', 'dataset_organism', 'normalization_id', 'gene_activity_var_names'
+     uns: 'dataset_id', 'common_dataset_id', 'modality', 'dataset_organism', 'normalization_id', 'gene_activity_var_names'
 
 </div>
 
@@ -237,6 +238,7 @@ Data structure:
 | `layers["normalized"]` | `double` | Normalized expression values. |
 | `uns["dataset_id"]` | `string` | A unique identifier for the dataset. |
 | `uns["common_dataset_id"]` | `string` | (*Optional*) A common identifier for the dataset. |
+| `uns["modality"]` | `string` | The modality of the data, e.g. ‘GEX’, ‘ADT’ or ‘ATAC’. Methods use this to pick modality-specific hyperparameters or models. |
 | `uns["dataset_organism"]` | `string` | (*Optional*) The organism of the sample in the dataset. |
 | `uns["normalization_id"]` | `string` | The unique identifier of the normalization method used. |
 | `uns["gene_activity_var_names"]` | `string` | (*Optional*) Names of the gene activity matrix. |
@@ -259,7 +261,7 @@ Format:
      var: 'gene_ids', 'hvg', 'hvg_score'
      obsm: 'gene_activity'
      layers: 'counts', 'normalized'
-     uns: 'dataset_id', 'common_dataset_id', 'dataset_name', 'dataset_url', 'dataset_reference', 'dataset_summary', 'dataset_description', 'dataset_organism', 'normalization_id', 'gene_activity_var_names'
+     uns: 'dataset_id', 'common_dataset_id', 'modality', 'dataset_name', 'dataset_url', 'dataset_reference', 'dataset_summary', 'dataset_description', 'dataset_organism', 'normalization_id', 'gene_activity_var_names'
 
 </div>
 
@@ -279,6 +281,7 @@ Data structure:
 | `layers["normalized"]` | `double` | Normalized expression values. |
 | `uns["dataset_id"]` | `string` | A unique identifier for the dataset. |
 | `uns["common_dataset_id"]` | `string` | (*Optional*) A common identifier for the dataset. |
+| `uns["modality"]` | `string` | The modality of the data, e.g. ‘GEX’, ‘ADT’ or ‘ATAC’. Methods use this to pick modality-specific hyperparameters or models. |
 | `uns["dataset_name"]` | `string` | Nicely formatted name. |
 | `uns["dataset_url"]` | `string` | (*Optional*) Link to the original source of the dataset. |
 | `uns["dataset_reference"]` | `string` | (*Optional*) Bibtex reference of the paper in which the dataset was published. |
@@ -311,7 +314,7 @@ Format:
      var: 'gene_ids', 'hvg', 'hvg_score'
      obsm: 'gene_activity'
      layers: 'counts', 'normalized'
-     uns: 'dataset_id', 'common_dataset_id', 'dataset_name', 'dataset_url', 'dataset_reference', 'dataset_summary', 'dataset_description', 'dataset_organism', 'gene_activity_var_names'
+     uns: 'dataset_id', 'common_dataset_id', 'modality', 'dataset_name', 'dataset_url', 'dataset_reference', 'dataset_summary', 'dataset_description', 'dataset_organism', 'gene_activity_var_names'
 
 </div>
 
@@ -331,6 +334,7 @@ Data structure:
 | `layers["normalized"]` | `double` | Normalized expression values. |
 | `uns["dataset_id"]` | `string` | A unique identifier for the dataset. |
 | `uns["common_dataset_id"]` | `string` | (*Optional*) A common identifier for the dataset. |
+| `uns["modality"]` | `string` | The modality of the data, e.g. ‘GEX’, ‘ADT’ or ‘ATAC’. Methods use this to pick modality-specific hyperparameters or models. |
 | `uns["dataset_name"]` | `string` | Nicely formatted name. |
 | `uns["dataset_url"]` | `string` | (*Optional*) Link to the original source of the dataset. |
 | `uns["dataset_reference"]` | `string` | (*Optional*) Bibtex reference of the paper in which the dataset was published. |

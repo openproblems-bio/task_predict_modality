@@ -50,6 +50,12 @@ info:
         name: common_dataset_id
         description: "A common identifier for the dataset"
         required: false
+      - type: string
+        name: modality
+        description: |
+          The modality of the data, e.g. 'GEX', 'ADT' or 'ATAC'. Methods use this to pick
+          modality-specific hyperparameters or models.
+        required: true
       - name: dataset_name
         type: string
         description: Nicely formatted name.

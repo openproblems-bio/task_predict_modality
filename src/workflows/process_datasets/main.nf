@@ -102,7 +102,8 @@ workflow run_wf {
           output_train_mod2: state.output_train_mod2,
           output_test_mod1: state.output_test_mod1,
           output_test_mod2: state.output_test_mod2,
-          swap: swap_state
+          swap: swap_state,
+          seed: state.seed
         ]
       },
       toState: [
