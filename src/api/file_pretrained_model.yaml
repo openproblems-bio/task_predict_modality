@@ -1,3 +1,4 @@
 type: file
+example: "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/models/novel"
 label: "Pretrained model"
 summary: "A pretrained model for predicting the expression of one modality from another."

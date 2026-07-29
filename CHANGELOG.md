@@ -1,3 +1,9 @@
+# task_predict_modality 0.2.0
+
+## BUG FIXES
+
+* `file_pretrained_model`: Add the missing `example`. Without one, `run_and_check_output` never assigned a value to `--output`, so `viash test` invoked `novel_train` and `simple_mlp_train` without their required output argument and they could not pass (PR #52).
+
 # task_predict_modality 0.1.1
 
 ## NEW FUNCTIONALITY
