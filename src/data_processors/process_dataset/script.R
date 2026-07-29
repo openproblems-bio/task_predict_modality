@@ -85,7 +85,9 @@ if (ad2_mod == "ATAC") {
   # subset to make the task computationally feasible
   if (ncol(ad2) > 10000) {
     poss_ix <- which(Matrix::colSums(ad2$layers[["normalized"]]) > 0)
-    sel_ix <- sort(sample(poss_ix, 10000))
+    # sample by position -- sample(x, n) errors when n > length(x), and treats a
+    # length-1 x as seq_len(x)
+    sel_ix <- sort(poss_ix[sample.int(length(poss_ix), min(10000, length(poss_ix)))])
     ad2 <- ad2[, sel_ix]$copy()
     ad2_var <- ad2_var[sel_ix, , drop = FALSE]
   }
