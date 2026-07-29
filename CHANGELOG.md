@@ -1,3 +1,9 @@
+# task_predict_modality 0.2.0
+
+## MINOR CHANGES
+
+* `correlation`: `overall_pearson` and `overall_spearman` are a single correlation of the flattened matrices, not a mean of correlations -- the descriptions said the latter. Also spelled out the zero-variance convention on all six metrics (PR #43).
+
 # task_predict_modality 0.1.1
 
 ## NEW FUNCTIONALITY
