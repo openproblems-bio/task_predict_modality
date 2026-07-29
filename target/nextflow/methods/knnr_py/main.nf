@@ -3513,6 +3513,11 @@ meta = [
   "test_resources" : [
     {
       "type" : "python_script",
+      "path" : "/common/component_tests/check_config.py",
+      "is_executable" : true
+    },
+    {
+      "type" : "python_script",
       "path" : "/common/component_tests/run_and_check_output.py",
       "is_executable" : true
     },
@@ -3523,8 +3528,6 @@ meta = [
     }
   ],
   "info" : {
-    "documentation_url" : "https://scikit-learn.org/stable/modules/neighbors.html",
-    "repository_url" : "https://github.com/scikit-learn/scikit-learn",
     "preferred_normalization" : "log_cp10k",
     "type" : "method",
     "type_info" : {
@@ -3553,8 +3556,9 @@ meta = [
     ]
   },
   "links" : {
-    "repository" : "https://github.com/openproblems-bio/task_predict_modality",
-    "docker_registry" : "ghcr.io"
+    "repository" : "https://github.com/scikit-learn/scikit-learn",
+    "docker_registry" : "ghcr.io",
+    "documentation" : "https://scikit-learn.org/stable/modules/neighbors.html"
   },
   "runners" : [
     {
@@ -3611,7 +3615,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/knnr_py",
     "viash_version" : "0.9.7",
-    "git_commit" : "e9a5df28002d555487c8721e2c667a5d8b321ede",
+    "git_commit" : "62743348c9b71d9a70ba773449bbd0172670d393",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {

@@ -3711,7 +3711,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/control_methods/zeros",
     "viash_version" : "0.9.7",
-    "git_commit" : "e9a5df28002d555487c8721e2c667a5d8b321ede",
+    "git_commit" : "62743348c9b71d9a70ba773449bbd0172670d393",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {

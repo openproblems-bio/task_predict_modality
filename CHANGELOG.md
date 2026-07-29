@@ -8,6 +8,12 @@
 
 * `cellmapper_linear`: Write the unmasked variants as `mask_var: null` rather than `mask_var: None`, which YAML reads as the string `"None"` and which would resolve to `adata.var["None"]` (PR #38).
 
+* `comp_method`: Run `check_config.py` as part of the component tests, so method metadata is validated like control methods and metrics already are (PR #37).
+
+* `knnr_py`, `knnr_r`, `lm`, `guanlab_dengkw_pm`: Move `documentation_url` and `repository_url` out of `info` and into the top-level `links` (PR #37).
+
+* `novel`, `simple_mlp`: Add a placeholder Nextflow resource label. Viash renders no process for a `nextflow_script` component, so the label is inert -- it is only there because `check_config` requires one. Can be removed once openproblems-bio/core#41 is released (PR #37).
+
 ## BUG FIXES
 
 * Fix the component paths, build paths and `rename_keys` separator in the helper scripts, which prevented `scripts/create_datasets/test_resources.sh` and both `run_test.sh` scripts from running at all (PR #22).

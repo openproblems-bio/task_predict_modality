@@ -3478,6 +3478,11 @@ meta = [
   "test_resources" : [
     {
       "type" : "python_script",
+      "path" : "/common/component_tests/check_config.py",
+      "is_executable" : true
+    },
+    {
+      "type" : "python_script",
       "path" : "/common/component_tests/run_and_check_output.py",
       "is_executable" : true
     },
@@ -3540,6 +3545,11 @@ meta = [
       "type" : "nextflow",
       "id" : "nextflow",
       "directives" : {
+        "label" : [
+          "lowtime",
+          "lowmem",
+          "lowcpu"
+        ],
         "tag" : "$id"
       },
       "auto" : {
@@ -3578,7 +3588,7 @@ meta = [
     "engine" : "native",
     "output" : "target/nextflow/methods/novel",
     "viash_version" : "0.9.7",
-    "git_commit" : "e9a5df28002d555487c8721e2c667a5d8b321ede",
+    "git_commit" : "62743348c9b71d9a70ba773449bbd0172670d393",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3801,6 +3811,11 @@ meta["defaults"] = [
 
   // default directives
   directives: readJsonBlob('''{
+  "label" : [
+    "lowtime",
+    "lowmem",
+    "lowcpu"
+  ],
   "tag" : "$id"
 }'''),
 

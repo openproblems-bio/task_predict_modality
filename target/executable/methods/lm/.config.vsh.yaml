@@ -320,14 +320,15 @@ summary: "Linear model regression."
 description: "A linear model regression method."
 test_resources:
 - type: "python_script"
+  path: "check_config.py"
+  is_executable: true
+- type: "python_script"
   path: "run_and_check_output.py"
   is_executable: true
 - type: "file"
   path: "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap"
   dest: "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap"
 info:
-  repository_url: "https://github.com/RcppCore/RcppArmadillo"
-  documentation_url: "https://cran.r-project.org/package=RcppArmadillo"
   preferred_normalization: "log_cp10k"
   type: "method"
   type_info:
@@ -349,8 +350,9 @@ references:
   doi:
   - "10.2307/2346786"
 links:
-  repository: "https://github.com/openproblems-bio/task_predict_modality"
+  repository: "https://github.com/RcppCore/RcppArmadillo"
   docker_registry: "ghcr.io"
+  documentation: "https://cran.r-project.org/package=RcppArmadillo"
 runners:
 - type: "executable"
   id: "executable"
@@ -404,7 +406,7 @@ build_info:
   output: "target/executable/methods/lm"
   executable: "target/executable/methods/lm/lm"
   viash_version: "0.9.7"
-  git_commit: "e9a5df28002d555487c8721e2c667a5d8b321ede"
+  git_commit: "62743348c9b71d9a70ba773449bbd0172670d393"
   git_remote: "https://github.com/openproblems-bio/task_predict_modality"
 package_config:
   name: "task_predict_modality"
