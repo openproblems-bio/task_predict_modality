@@ -3532,6 +3532,12 @@ meta = [
                   "required" : false
                 },
                 {
+                  "name" : "normalization_id",
+                  "type" : "string",
+                  "description" : "The unique identifier of the normalization method used.",
+                  "required" : true
+                },
+                {
                   "type" : "string",
                   "name" : "gene_activity_var_names",
                   "description" : "Names of the gene activity matrix",
@@ -3712,7 +3718,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/control_methods/mean_per_gene",
     "viash_version" : "0.9.7",
-    "git_commit" : "6276cbc74cbb4739b4d82bccc9d1f030b7cf2036",
+    "git_commit" : "f37fbccda283b54e2e05b224d511b9f4ca231e66",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {

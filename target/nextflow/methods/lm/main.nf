@@ -3561,7 +3561,7 @@ meta = [
         "label" : [
           "hightime",
           "highmem",
-          "highcpu"
+          "lowcpu"
         ],
         "tag" : "$id"
       },
@@ -3615,7 +3615,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/lm",
     "viash_version" : "0.9.7",
-    "git_commit" : "6276cbc74cbb4739b4d82bccc9d1f030b7cf2036",
+    "git_commit" : "f37fbccda283b54e2e05b224d511b9f4ca231e66",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3853,8 +3853,6 @@ options(.viash_orig_warn)
 rm(.viash_orig_warn)
 
 ## VIASH END
-
-n_cores <- parallel::detectCores(all.tests = FALSE, logical = TRUE)
 
 cat("Reading mod1 files\\\\n")
 input_train_mod1 <- anndata::read_h5ad(par\\$input_train_mod1)
@@ -4302,7 +4300,7 @@ meta["defaults"] = [
   "label" : [
     "hightime",
     "highmem",
-    "highcpu"
+    "lowcpu"
   ],
   "tag" : "$id"
 }'''),

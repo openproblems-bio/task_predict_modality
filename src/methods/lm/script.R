@@ -15,8 +15,6 @@ par <- list(
 meta <- list(name = "foo")
 ## VIASH END
 
-n_cores <- parallel::detectCores(all.tests = FALSE, logical = TRUE)
-
 cat("Reading mod1 files\n")
 input_train_mod1 <- anndata::read_h5ad(par$input_train_mod1)
 input_test_mod1 <- anndata::read_h5ad(par$input_test_mod1)
