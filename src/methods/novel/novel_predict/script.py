@@ -110,6 +110,8 @@ adata = ad.AnnData(
     shape=outputs.shape,
     uns={
         'dataset_id': input_test_mod1.uns['dataset_id'],
+        # the wrapper workflow's name, not meta['name'] -- the metrics copy this
+        # straight into the score, so it has to be the id the benchmark reports
         'method_id': "novel",
     },
 )

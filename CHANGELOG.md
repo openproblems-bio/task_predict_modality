@@ -1,3 +1,9 @@
+# task_predict_modality 0.2.0
+
+## MINOR CHANGES
+
+* `novel_predict`, `simple_mlp_predict`: Note why `uns["method_id"]` is the wrapper's name rather than `meta["name"]` (PR #40).
+
 # task_predict_modality 0.1.1
 
 ## NEW FUNCTIONALITY
