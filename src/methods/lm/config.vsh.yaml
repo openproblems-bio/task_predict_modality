@@ -5,9 +5,10 @@ summary: Linear model regression.
 description: A linear model regression method.
 references:
   doi: 10.2307/2346786
+links:
+  documentation: https://cran.r-project.org/package=RcppArmadillo
+  repository: https://github.com/RcppCore/RcppArmadillo
 info:
-  repository_url: https://github.com/RcppCore/RcppArmadillo
-  documentation_url: https://cran.r-project.org/package=RcppArmadillo
   preferred_normalization: log_cp10k
 arguments:
   - name: "--distance_method"

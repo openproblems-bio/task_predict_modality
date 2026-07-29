@@ -39,6 +39,10 @@ argument_groups:
         type: "boolean"
         description: "Swap mod1 and mod2"
         default: false
+      - name: "--seed"
+        type: "integer"
+        description: "The seed for determining the train/test split."
+        default: 1
 resources:
   - type: r_script
     path: script.R
