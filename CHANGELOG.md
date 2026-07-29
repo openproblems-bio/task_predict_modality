@@ -14,6 +14,8 @@
 
 * `novel`, `simple_mlp`: Add a placeholder Nextflow resource label. Viash renders no process for a `nextflow_script` component, so the label is inert -- it is only there because `check_config` requires one. Can be removed once openproblems-bio/core#41 is released (PR #37).
 
+* `correlation`: Read the paired correlations off proxyC's sparse diagonal instead of `diag(dynutils::calculate_similarity(...))`, which densified an `n_features^2` matrix first. Scores are unchanged (PR #36).
+
 ## BUG FIXES
 
 * Fix the component paths, build paths and `rename_keys` separator in the helper scripts, which prevented `scripts/create_datasets/test_resources.sh` and both `run_test.sh` scripts from running at all (PR #22).
