@@ -3581,7 +3581,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/simple_mlp_predict",
     "viash_version" : "0.9.7",
-    "git_commit" : "4ff3812f60a1b362d89f99ae5a457aa93af11b62",
+    "git_commit" : "d956cd3f7463f4b0b118aa6a083875525607e5a4",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3854,7 +3854,7 @@ ymean = np.load(ymean_path)
 
 print('Start predict', flush=True)
 if task == 'GEX2ATAC':
-    y_pred = ymean*np.ones([input_test_mod1.n_obs, input_test_mod1.n_vars])
+    y_pred = ymean*np.ones([input_test_mod1.n_obs, input_train_mod2.n_vars])
 else:
     folds = [0, 1, 2]
 
@@ -3875,7 +3875,7 @@ else:
         model_inf = MLP.load_from_checkpoint(
             ckpt,
             in_dim=X.shape[1],
-            out_dim=input_test_mod1.n_vars,
+            out_dim=input_train_mod2.n_vars,
             ymean=ymean,
             config=config
         )
