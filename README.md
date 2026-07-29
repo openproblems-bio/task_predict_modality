@@ -54,7 +54,7 @@ flowchart TB
   file_train_mod1("<a href='https://github.com/openproblems-bio/task_predict_modality#file-format-train-mod1'>Train mod1</a>")
   file_train_mod2("<a href='https://github.com/openproblems-bio/task_predict_modality#file-format-train-mod2'>Train mod2</a>")
   file_test_mod1("<a href='https://github.com/openproblems-bio/task_predict_modality#file-format-test-mod1'>Test mod1</a>")
-  file_test_mod2("<a href='https://github.com/openproblems-bio/task_predict_modality#file-format-test-mod2'>Test mod2</a>")
+  file_test_mod2("<a href='https://github.com/openproblems-bio/task_predict_modality#file-format-solution'>Solution</a>")
   comp_control_method[/"<a href='https://github.com/openproblems-bio/task_predict_modality#component-type-control-method'>Control method</a>"/]
   comp_method[/"<a href='https://github.com/openproblems-bio/task_predict_modality#component-type-method'>Method</a>"/]
   comp_method_predict[/"<a href='https://github.com/openproblems-bio/task_predict_modality#component-type-predict'>Predict</a>"/]
@@ -155,7 +155,7 @@ Arguments:
 | `--output_train_mod1` | `file` | (*Output*) The mod1 expression values of the train cells. |
 | `--output_train_mod2` | `file` | (*Output*) The mod2 expression values of the train cells. |
 | `--output_test_mod1` | `file` | (*Output*) The mod1 expression values of the test cells. |
-| `--output_test_mod2` | `file` | (*Output*) The mod2 expression values of the test cells. |
+| `--output_test_mod2` | `file` | (*Output*) The ground-truth mod2 expression values of the test cells. |
 
 </div>
 
@@ -293,12 +293,17 @@ Data structure:
 
 </div>
 
-## File format: Test mod2
+## File format: Solution
 
-The mod2 expression values of the test cells.
+The ground-truth mod2 expression values of the test cells.
 
 Example file:
 `resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/test_mod2.h5ad`
+
+Description:
+
+The ground truth against which predictions are scored. Only the metrics
+and the control methods receive this file; regular methods never see it.
 
 Format:
 
@@ -353,7 +358,7 @@ Arguments:
 | `--input_train_mod1` | `file` | The mod1 expression values of the train cells. |
 | `--input_train_mod2` | `file` | The mod2 expression values of the train cells. |
 | `--input_test_mod1` | `file` | The mod1 expression values of the test cells. |
-| `--input_test_mod2` | `file` | The mod2 expression values of the test cells. |
+| `--input_test_mod2` | `file` | The ground-truth mod2 expression values of the test cells. |
 | `--output` | `file` | (*Output*) A prediction of the mod2 expression values of the test cells. |
 
 </div>
@@ -421,7 +426,7 @@ Arguments:
 | Name | Type | Description |
 |:---|:---|:---|
 | `--input_prediction` | `file` | A prediction of the mod2 expression values of the test cells. |
-| `--input_test_mod2` | `file` | The mod2 expression values of the test cells. |
+| `--input_test_mod2` | `file` | The ground-truth mod2 expression values of the test cells. |
 | `--output` | `file` | (*Output*) Metric score file. |
 
 </div>
