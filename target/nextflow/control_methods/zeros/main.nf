@@ -3422,8 +3422,9 @@ meta = [
         {
           "type" : "file",
           "name" : "--input_test_mod2",
-          "label" : "Test mod2",
-          "summary" : "The mod2 expression values of the test cells.",
+          "label" : "Solution",
+          "summary" : "The ground-truth mod2 expression values of the test cells.",
+          "description" : "The ground truth against which predictions are scored. Only the metrics and the\ncontrol methods receive this file; regular methods never see it.\n",
           "info" : {
             "format" : {
               "type" : "h5ad",
@@ -3711,7 +3712,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/control_methods/zeros",
     "viash_version" : "0.9.7",
-    "git_commit" : "8f1423cac000d5b2a542624d5e3b04d5a4cb2651",
+    "git_commit" : "e19b14070256786fe0806c74fd82a869b73bc6a7",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {

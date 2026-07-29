@@ -1,7 +1,10 @@
 type: file
 example: "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/test_mod2.h5ad"
-label: "Test mod2"
-summary: "The mod2 expression values of the test cells."
+label: "Solution"
+summary: "The ground-truth mod2 expression values of the test cells."
+description: |
+  The ground truth against which predictions are scored. Only the metrics and the
+  control methods receive this file; regular methods never see it.
 info:
   format:
     type: h5ad

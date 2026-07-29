@@ -446,9 +446,9 @@ function ViashDockerfile {
 FROM openproblems/base_r:1
 ENTRYPOINT []
 LABEL org.opencontainers.image.description="Companion container for running component control_methods solution"
-LABEL org.opencontainers.image.created="2026-07-29T12:26:44Z"
+LABEL org.opencontainers.image.created="2026-07-29T12:30:18Z"
 LABEL org.opencontainers.image.source="https://github.com/openproblems-bio/task_predict_modality"
-LABEL org.opencontainers.image.revision="8f1423cac000d5b2a542624d5e3b04d5a4cb2651"
+LABEL org.opencontainers.image.revision="e19b14070256786fe0806c74fd82a869b73bc6a7"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER
@@ -590,6 +590,9 @@ function ViashHelp {
   echo "        type: file, required parameter, file must exist"
   echo "        example:"
   echo "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/test_mod2.h5ad"
+  echo "        The ground truth against which predictions are scored. Only the metrics"
+  echo "        and the"
+  echo "        control methods receive this file; regular methods never see it."
   echo ""
   echo "    --output"
   echo "        type: file, required parameter, output, file must exist"

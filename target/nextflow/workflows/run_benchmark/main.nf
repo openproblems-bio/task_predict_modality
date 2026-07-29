@@ -3422,8 +3422,9 @@ meta = [
         {
           "type" : "file",
           "name" : "--input_test_mod2",
-          "label" : "Test mod2",
-          "summary" : "The mod2 expression values of the test cells.",
+          "label" : "Solution",
+          "summary" : "The ground-truth mod2 expression values of the test cells.",
+          "description" : "The ground truth against which predictions are scored. Only the metrics and the\ncontrol methods receive this file; regular methods never see it.\n",
           "info" : {
             "format" : {
               "type" : "h5ad",
@@ -3812,7 +3813,7 @@ meta = [
     "engine" : "native",
     "output" : "target/nextflow/workflows/run_benchmark",
     "viash_version" : "0.9.7",
-    "git_commit" : "8f1423cac000d5b2a542624d5e3b04d5a4cb2651",
+    "git_commit" : "e19b14070256786fe0806c74fd82a869b73bc6a7",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -4179,17 +4180,17 @@ workflow run_wf {
 
   // extract the dataset metadata
   meta_ch = dataset_ch
-    // only keep one of the normalization methods
-    | filter{ id, state ->
-      state.rna_norm == "log_cp10k"
-    }
     | joinStates { ids, states ->
-      // store the dataset metadata in a file
-      def dataset_uns = states.collect{state ->
-        def uns = state.dataset_uns_mod2.clone()
-        uns.remove("normalization_id")
-        uns
-      }
+      // store the dataset metadata in a file, one entry per dataset rather than
+      // one per normalization
+      def seen_dataset_ids = [] as Set
+      def dataset_uns = states
+        .findAll{state -> seen_dataset_ids.add(state.dataset_uns_mod2.dataset_id) }
+        .collect{state ->
+          def uns = state.dataset_uns_mod2.clone()
+          uns.remove("normalization_id")
+          uns
+        }
       def dataset_uns_yaml_blob = toYamlBlob(dataset_uns)
       def dataset_uns_file = tempFile("dataset_uns.yaml")
       dataset_uns_file.write(dataset_uns_yaml_blob)
