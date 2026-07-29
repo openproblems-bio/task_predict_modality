@@ -1,3 +1,11 @@
+# task_predict_modality 0.2.0
+
+## MINOR CHANGES
+
+* `file_test_mod2`: Label this file "Solution" and say in the description that only the metrics and control methods receive it. It holds the ground truth, but read like just another input (PR #49).
+
+* Regenerate `README.md`. It had drifted from the api yamls independently of this change -- author table layout, node ordering, and a contributor added in PR #10 (PR #49).
+
 # task_predict_modality 0.1.1
 
 ## NEW FUNCTIONALITY

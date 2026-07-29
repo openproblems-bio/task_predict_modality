@@ -30,19 +30,20 @@ data shows that this is not trivial.
 
 ## Authors & contributors
 
-| name               | roles              |
-|:-------------------|:-------------------|
-| Alejandro Granados | author             |
-| Alex Tong          | author             |
-| Bastian Rieck      | author             |
-| Christopher Lance  | author             |
-| Daniel Burkhardt   | author             |
-| Kai Waldrant       | contributor        |
-| Kaiwen Deng        | contributor        |
-| Louise Deconinck   | author             |
-| Robrecht Cannoodt  | author, maintainer |
-| Xueer Chen         | contributor        |
-| Jiwei Liu          | contributor        |
+| Name | Roles | Github | Orcid | Email |
+|:---|:---|:---|:---|:---|
+| Alejandro Granados | author | agranado |  |  |
+| Alex Tong | author | atong01 |  |  |
+| Bastian Rieck | author | Pseudomanifold |  |  |
+| Christopher Lance | author | xlancelottx | 0000-0002-1275-9802 |  |
+| Daniel Burkhardt | author | dburkhardt |  |  |
+| Kai Waldrant | contributor | KaiWaldrant | 0009-0003-8555-1361 |  |
+| Kaiwen Deng | contributor | nonztalk |  | dengkw@umich.edu |
+| Louise Deconinck | author | LouiseDck |  |  |
+| Robrecht Cannoodt | author, maintainer | rcannood | 0000-0003-3641-729X |  |
+| Xueer Chen | contributor | xuerchen |  | xc2579@columbia.edu |
+| Jiwei Liu | contributor | daxiongshu | 0000-0002-8799-9763 | jiweil@nvidia.com |
+| Marius Lange | contributor | marius1311 | 0000-0002-4846-1266 |  |
 
 ## API
 
@@ -50,42 +51,42 @@ data shows that this is not trivial.
 flowchart TB
   file_common_dataset_mod1("<a href='https://github.com/openproblems-bio/task_predict_modality#file-format-raw-dataset-rna'>Raw dataset RNA</a>")
   comp_process_datasets[/"<a href='https://github.com/openproblems-bio/task_predict_modality#component-type-process-dataset'>Process Dataset</a>"/]
-  file_test_mod1("<a href='https://github.com/openproblems-bio/task_predict_modality#file-format-test-mod1'>Test mod1</a>")
-  file_test_mod2("<a href='https://github.com/openproblems-bio/task_predict_modality#file-format-test-mod2'>Test mod2</a>")
   file_train_mod1("<a href='https://github.com/openproblems-bio/task_predict_modality#file-format-train-mod1'>Train mod1</a>")
   file_train_mod2("<a href='https://github.com/openproblems-bio/task_predict_modality#file-format-train-mod2'>Train mod2</a>")
+  file_test_mod1("<a href='https://github.com/openproblems-bio/task_predict_modality#file-format-test-mod1'>Test mod1</a>")
+  file_test_mod2("<a href='https://github.com/openproblems-bio/task_predict_modality#file-format-solution'>Solution</a>")
   comp_control_method[/"<a href='https://github.com/openproblems-bio/task_predict_modality#component-type-control-method'>Control method</a>"/]
+  comp_method[/"<a href='https://github.com/openproblems-bio/task_predict_modality#component-type-method'>Method</a>"/]
   comp_method_predict[/"<a href='https://github.com/openproblems-bio/task_predict_modality#component-type-predict'>Predict</a>"/]
   comp_method_train[/"<a href='https://github.com/openproblems-bio/task_predict_modality#component-type-train'>Train</a>"/]
-  comp_method[/"<a href='https://github.com/openproblems-bio/task_predict_modality#component-type-method'>Method</a>"/]
   comp_metric[/"<a href='https://github.com/openproblems-bio/task_predict_modality#component-type-metric'>Metric</a>"/]
   file_prediction("<a href='https://github.com/openproblems-bio/task_predict_modality#file-format-prediction'>Prediction</a>")
   file_pretrained_model("<a href='https://github.com/openproblems-bio/task_predict_modality#file-format-pretrained-model'>Pretrained model</a>")
   file_score("<a href='https://github.com/openproblems-bio/task_predict_modality#file-format-score'>Score</a>")
   file_common_dataset_mod2("<a href='https://github.com/openproblems-bio/task_predict_modality#file-format-raw-dataset-mod2'>Raw dataset mod2</a>")
   file_common_dataset_mod1---comp_process_datasets
-  comp_process_datasets-->file_test_mod1
-  comp_process_datasets-->file_test_mod2
   comp_process_datasets-->file_train_mod1
   comp_process_datasets-->file_train_mod2
-  file_test_mod1---comp_control_method
-  file_test_mod1---comp_method_predict
-  file_test_mod1-.-comp_method_train
-  file_test_mod1---comp_method
-  file_test_mod2---comp_control_method
-  file_test_mod2---comp_metric
+  comp_process_datasets-->file_test_mod1
+  comp_process_datasets-->file_test_mod2
   file_train_mod1---comp_control_method
+  file_train_mod1---comp_method
   file_train_mod1-.-comp_method_predict
   file_train_mod1---comp_method_train
-  file_train_mod1---comp_method
   file_train_mod2---comp_control_method
+  file_train_mod2---comp_method
   file_train_mod2-.-comp_method_predict
   file_train_mod2---comp_method_train
-  file_train_mod2---comp_method
+  file_test_mod1---comp_control_method
+  file_test_mod1---comp_method
+  file_test_mod1---comp_method_predict
+  file_test_mod1-.-comp_method_train
+  file_test_mod2---comp_control_method
+  file_test_mod2---comp_metric
   comp_control_method-->file_prediction
+  comp_method-->file_prediction
   comp_method_predict-->file_prediction
   comp_method_train-->file_pretrained_model
-  comp_method-->file_prediction
   comp_metric-->file_score
   file_prediction---comp_metric
   file_pretrained_model---comp_method_predict
@@ -154,101 +155,7 @@ Arguments:
 | `--output_train_mod1` | `file` | (*Output*) The mod1 expression values of the train cells. |
 | `--output_train_mod2` | `file` | (*Output*) The mod2 expression values of the train cells. |
 | `--output_test_mod1` | `file` | (*Output*) The mod1 expression values of the test cells. |
-| `--output_test_mod2` | `file` | (*Output*) The mod2 expression values of the test cells. |
-| `--seed` | `integer` | (*Optional*) NA. Default: `1`. |
-
-</div>
-
-## File format: Test mod1
-
-The mod1 expression values of the test cells.
-
-Example file:
-`resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/test_mod1.h5ad`
-
-Format:
-
-<div class="small">
-
-    AnnData object
-     obs: 'batch', 'size_factors'
-     var: 'gene_ids', 'hvg', 'hvg_score'
-     obsm: 'gene_activity'
-     layers: 'counts', 'normalized'
-     uns: 'dataset_id', 'common_dataset_id', 'dataset_name', 'dataset_url', 'dataset_reference', 'dataset_summary', 'dataset_description', 'dataset_organism', 'normalization_id', 'gene_activity_var_names'
-
-</div>
-
-Data structure:
-
-<div class="small">
-
-| Slot | Type | Description |
-|:---|:---|:---|
-| `obs["batch"]` | `string` | Batch information. |
-| `obs["size_factors"]` | `double` | (*Optional*) The size factors of the cells prior to normalization. |
-| `var["gene_ids"]` | `string` | (*Optional*) The gene identifiers (if available). |
-| `var["hvg"]` | `boolean` | Whether or not the feature is considered to be a ‘highly variable gene’. |
-| `var["hvg_score"]` | `double` | A score for the feature indicating how highly variable it is. |
-| `obsm["gene_activity"]` | `double` | (*Optional*) ATAC gene activity. |
-| `layers["counts"]` | `integer` | Raw counts. |
-| `layers["normalized"]` | `double` | Normalized expression values. |
-| `uns["dataset_id"]` | `string` | A unique identifier for the dataset. |
-| `uns["common_dataset_id"]` | `string` | (*Optional*) A common identifier for the dataset. |
-| `uns["dataset_name"]` | `string` | Nicely formatted name. |
-| `uns["dataset_url"]` | `string` | (*Optional*) Link to the original source of the dataset. |
-| `uns["dataset_reference"]` | `string` | (*Optional*) Bibtex reference of the paper in which the dataset was published. |
-| `uns["dataset_summary"]` | `string` | Short description of the dataset. |
-| `uns["dataset_description"]` | `string` | Long description of the dataset. |
-| `uns["dataset_organism"]` | `string` | (*Optional*) The organism of the sample in the dataset. |
-| `uns["normalization_id"]` | `string` | The unique identifier of the normalization method used. |
-| `uns["gene_activity_var_names"]` | `string` | (*Optional*) Names of the gene activity matrix. |
-
-</div>
-
-## File format: Test mod2
-
-The mod2 expression values of the test cells.
-
-Example file:
-`resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/test_mod2.h5ad`
-
-Format:
-
-<div class="small">
-
-    AnnData object
-     obs: 'batch', 'size_factors'
-     var: 'gene_ids', 'hvg', 'hvg_score'
-     obsm: 'gene_activity'
-     layers: 'counts', 'normalized'
-     uns: 'dataset_id', 'common_dataset_id', 'dataset_name', 'dataset_url', 'dataset_reference', 'dataset_summary', 'dataset_description', 'dataset_organism', 'gene_activity_var_names'
-
-</div>
-
-Data structure:
-
-<div class="small">
-
-| Slot | Type | Description |
-|:---|:---|:---|
-| `obs["batch"]` | `string` | Batch information. |
-| `obs["size_factors"]` | `double` | (*Optional*) The size factors of the cells prior to normalization. |
-| `var["gene_ids"]` | `string` | (*Optional*) The gene identifiers (if available). |
-| `var["hvg"]` | `boolean` | Whether or not the feature is considered to be a ‘highly variable gene’. |
-| `var["hvg_score"]` | `double` | A score for the feature indicating how highly variable it is. |
-| `obsm["gene_activity"]` | `double` | (*Optional*) ATAC gene activity. |
-| `layers["counts"]` | `integer` | Raw counts. |
-| `layers["normalized"]` | `double` | Normalized expression values. |
-| `uns["dataset_id"]` | `string` | A unique identifier for the dataset. |
-| `uns["common_dataset_id"]` | `string` | (*Optional*) A common identifier for the dataset. |
-| `uns["dataset_name"]` | `string` | Nicely formatted name. |
-| `uns["dataset_url"]` | `string` | (*Optional*) Link to the original source of the dataset. |
-| `uns["dataset_reference"]` | `string` | (*Optional*) Bibtex reference of the paper in which the dataset was published. |
-| `uns["dataset_summary"]` | `string` | Short description of the dataset. |
-| `uns["dataset_description"]` | `string` | Long description of the dataset. |
-| `uns["dataset_organism"]` | `string` | (*Optional*) The organism of the sample in the dataset. |
-| `uns["gene_activity_var_names"]` | `string` | (*Optional*) Names of the gene activity matrix. |
+| `--output_test_mod2` | `file` | (*Output*) The ground-truth mod2 expression values of the test cells. |
 
 </div>
 
@@ -336,6 +243,104 @@ Data structure:
 
 </div>
 
+## File format: Test mod1
+
+The mod1 expression values of the test cells.
+
+Example file:
+`resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/test_mod1.h5ad`
+
+Format:
+
+<div class="small">
+
+    AnnData object
+     obs: 'batch', 'size_factors'
+     var: 'gene_ids', 'hvg', 'hvg_score'
+     obsm: 'gene_activity'
+     layers: 'counts', 'normalized'
+     uns: 'dataset_id', 'common_dataset_id', 'dataset_name', 'dataset_url', 'dataset_reference', 'dataset_summary', 'dataset_description', 'dataset_organism', 'normalization_id', 'gene_activity_var_names'
+
+</div>
+
+Data structure:
+
+<div class="small">
+
+| Slot | Type | Description |
+|:---|:---|:---|
+| `obs["batch"]` | `string` | Batch information. |
+| `obs["size_factors"]` | `double` | (*Optional*) The size factors of the cells prior to normalization. |
+| `var["gene_ids"]` | `string` | (*Optional*) The gene identifiers (if available). |
+| `var["hvg"]` | `boolean` | Whether or not the feature is considered to be a ‘highly variable gene’. |
+| `var["hvg_score"]` | `double` | A score for the feature indicating how highly variable it is. |
+| `obsm["gene_activity"]` | `double` | (*Optional*) ATAC gene activity. |
+| `layers["counts"]` | `integer` | Raw counts. |
+| `layers["normalized"]` | `double` | Normalized expression values. |
+| `uns["dataset_id"]` | `string` | A unique identifier for the dataset. |
+| `uns["common_dataset_id"]` | `string` | (*Optional*) A common identifier for the dataset. |
+| `uns["dataset_name"]` | `string` | Nicely formatted name. |
+| `uns["dataset_url"]` | `string` | (*Optional*) Link to the original source of the dataset. |
+| `uns["dataset_reference"]` | `string` | (*Optional*) Bibtex reference of the paper in which the dataset was published. |
+| `uns["dataset_summary"]` | `string` | Short description of the dataset. |
+| `uns["dataset_description"]` | `string` | Long description of the dataset. |
+| `uns["dataset_organism"]` | `string` | (*Optional*) The organism of the sample in the dataset. |
+| `uns["normalization_id"]` | `string` | The unique identifier of the normalization method used. |
+| `uns["gene_activity_var_names"]` | `string` | (*Optional*) Names of the gene activity matrix. |
+
+</div>
+
+## File format: Solution
+
+The ground-truth mod2 expression values of the test cells.
+
+Example file:
+`resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/test_mod2.h5ad`
+
+Description:
+
+The ground truth against which predictions are scored. Only the metrics
+and the control methods receive this file; regular methods never see it.
+
+Format:
+
+<div class="small">
+
+    AnnData object
+     obs: 'batch', 'size_factors'
+     var: 'gene_ids', 'hvg', 'hvg_score'
+     obsm: 'gene_activity'
+     layers: 'counts', 'normalized'
+     uns: 'dataset_id', 'common_dataset_id', 'dataset_name', 'dataset_url', 'dataset_reference', 'dataset_summary', 'dataset_description', 'dataset_organism', 'gene_activity_var_names'
+
+</div>
+
+Data structure:
+
+<div class="small">
+
+| Slot | Type | Description |
+|:---|:---|:---|
+| `obs["batch"]` | `string` | Batch information. |
+| `obs["size_factors"]` | `double` | (*Optional*) The size factors of the cells prior to normalization. |
+| `var["gene_ids"]` | `string` | (*Optional*) The gene identifiers (if available). |
+| `var["hvg"]` | `boolean` | Whether or not the feature is considered to be a ‘highly variable gene’. |
+| `var["hvg_score"]` | `double` | A score for the feature indicating how highly variable it is. |
+| `obsm["gene_activity"]` | `double` | (*Optional*) ATAC gene activity. |
+| `layers["counts"]` | `integer` | Raw counts. |
+| `layers["normalized"]` | `double` | Normalized expression values. |
+| `uns["dataset_id"]` | `string` | A unique identifier for the dataset. |
+| `uns["common_dataset_id"]` | `string` | (*Optional*) A common identifier for the dataset. |
+| `uns["dataset_name"]` | `string` | Nicely formatted name. |
+| `uns["dataset_url"]` | `string` | (*Optional*) Link to the original source of the dataset. |
+| `uns["dataset_reference"]` | `string` | (*Optional*) Bibtex reference of the paper in which the dataset was published. |
+| `uns["dataset_summary"]` | `string` | Short description of the dataset. |
+| `uns["dataset_description"]` | `string` | Long description of the dataset. |
+| `uns["dataset_organism"]` | `string` | (*Optional*) The organism of the sample in the dataset. |
+| `uns["gene_activity_var_names"]` | `string` | (*Optional*) Names of the gene activity matrix. |
+
+</div>
+
 ## Component type: Control method
 
 Quality control methods for verifying the pipeline.
@@ -349,7 +354,24 @@ Arguments:
 | `--input_train_mod1` | `file` | The mod1 expression values of the train cells. |
 | `--input_train_mod2` | `file` | The mod2 expression values of the train cells. |
 | `--input_test_mod1` | `file` | The mod1 expression values of the test cells. |
-| `--input_test_mod2` | `file` | The mod2 expression values of the test cells. |
+| `--input_test_mod2` | `file` | The ground-truth mod2 expression values of the test cells. |
+| `--output` | `file` | (*Output*) A prediction of the mod2 expression values of the test cells. |
+
+</div>
+
+## Component type: Method
+
+A regression method.
+
+Arguments:
+
+<div class="small">
+
+| Name | Type | Description |
+|:---|:---|:---|
+| `--input_train_mod1` | `file` | The mod1 expression values of the train cells. |
+| `--input_train_mod2` | `file` | The mod2 expression values of the train cells. |
+| `--input_test_mod1` | `file` | The mod1 expression values of the test cells. |
 | `--output` | `file` | (*Output*) A prediction of the mod2 expression values of the test cells. |
 
 </div>
@@ -389,23 +411,6 @@ Arguments:
 
 </div>
 
-## Component type: Method
-
-A regression method.
-
-Arguments:
-
-<div class="small">
-
-| Name | Type | Description |
-|:---|:---|:---|
-| `--input_train_mod1` | `file` | The mod1 expression values of the train cells. |
-| `--input_train_mod2` | `file` | The mod2 expression values of the train cells. |
-| `--input_test_mod1` | `file` | The mod1 expression values of the test cells. |
-| `--output` | `file` | (*Output*) A prediction of the mod2 expression values of the test cells. |
-
-</div>
-
 ## Component type: Metric
 
 A predict modality metric.
@@ -417,7 +422,7 @@ Arguments:
 | Name | Type | Description |
 |:---|:---|:---|
 | `--input_prediction` | `file` | A prediction of the mod2 expression values of the test cells. |
-| `--input_test_mod2` | `file` | The mod2 expression values of the test cells. |
+| `--input_test_mod2` | `file` | The ground-truth mod2 expression values of the test cells. |
 | `--output` | `file` | (*Output*) Metric score file. |
 
 </div>
@@ -532,4 +537,3 @@ Data structure:
 | `uns["gene_activity_var_names"]` | `string` | (*Optional*) Names of the gene activity matrix. |
 
 </div>
-
