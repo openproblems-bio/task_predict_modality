@@ -1,3 +1,9 @@
+# task_predict_modality 0.2.0
+
+## BUG FIXES
+
+* Fix the component paths, build paths and `rename_keys` separator in the helper scripts, which prevented `scripts/create_datasets/test_resources.sh` and both `run_test.sh` scripts from running at all (PR #22).
+
 # task_predict_modality 0.1.1
 
 ## NEW FUNCTIONALITY
