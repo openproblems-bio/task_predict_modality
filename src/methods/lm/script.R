@@ -33,6 +33,10 @@ ix <- seq_len(nrow(input_train_mod1))
 dr_train <- dr[ix, , drop = FALSE]
 dr_test <- dr[-ix, , drop = FALSE]
 
+# add an intercept column -- fastLm() uses the design matrix as is
+dr_train <- cbind(intercept = 1, dr_train)
+dr_test <- cbind(intercept = 1, dr_test)
+
 rm(input_test_mod1)
 gc()
 
