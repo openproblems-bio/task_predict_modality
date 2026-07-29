@@ -9,7 +9,7 @@ from sklearn.decomposition import PCA
 from sklearn.model_selection import KFold
 import tensorflow as tf
 
-from senkin_tmp_cite_pred.preprocess import remove_constant_vars, senkin_normalize, get_top_correlated_features
+from senkin_tmp_cite_pred.preprocess import remove_constant_vars, senkin_normalize, get_top_correlated_features, log_normalize, clr_tsvd
 from senkin_tmp_cite_pred.lgbm_models import get_lgbm_predictions, lgbm_params_1, lgbm_params_2, lgbm_params_3, lgbm_params_4
 from senkin_tmp_cite_pred.nn_models import cite_cos_sim_model, cite_mse_model, nn_kfold, zscore
 from senkin_tmp_cite_pred.metrics import cosine_similarity_loss
@@ -37,16 +37,6 @@ def _to_dense(X):
     return X.toarray() if issparse(X) else np.array(X)
 
 
-def _clr_tsvd_fitted(adata, n_components=200):
-    """CLR then TSVD, returning (transformed_array, fitted_tsvd)."""
-    from sklearn.decomposition import TruncatedSVD
-    from muon import prot as pt
-    n_comp = min(n_components, min(adata.shape) - 1)
-    tsvd = TruncatedSVD(n_components=n_comp, algorithm="arpack", random_state=42)
-    clr = pt.pp.clr(adata, inplace=False).X
-    return tsvd.fit_transform(clr), tsvd
-
-
 def _parse_batch(obs, batch_col="batch"):
     if batch_col not in obs.columns:
         obs["day"] = "unknown"
@@ -60,13 +50,6 @@ def _parse_batch(obs, batch_col="batch"):
         return b, b
     obs["day"], obs["donor"] = zip(*obs[batch_col].astype(str).map(_split))
     return obs
-
-
-def _lognorm(X_counts):
-    X = _to_dense(X_counts).astype(np.float64)
-    row_sums = X.sum(axis=1, keepdims=True)
-    row_sums[row_sums == 0] = 1
-    return np.log1p(X / row_sums * 1e4)
 
 
 # ---------------------------------------------------------------------------
@@ -101,12 +84,12 @@ X_counts_all = _to_dense(adata_rna_all_filt.layers.get("counts", adata_rna_all_f
 train_mask = adata_rna_all_filt.obs["split"] == "train"
 test_mask  = adata_rna_all_filt.obs["split"] == "test"
 
-# Log-normalize
-X_lognorm_all = _lognorm(X_counts_all)
+# Log-normalize (CP10K + log1p) via the senkin_tmp_cite_pred library helper
+X_lognorm_all = np.asarray(log_normalize(adata_rna_all_filt, target_sum=1e4))
 
-# CLR-TSVD — fit on all, keep fitted object for predict-time use
+# CLR-TSVD via the library helper (random_state=42 for reproducible components)
 logger.info("Computing CLR-TSVD...")
-X_clr_tsvd_all, clr_tsvd_fitted = _clr_tsvd_fitted(adata_rna_all_filt, n_components=200)
+X_clr_tsvd_all = clr_tsvd(adata_rna_all_filt, n_components=200, random_state=42)
 
 # SenKin normalization + PCA — fit on all
 logger.info("Computing SenKin normalization and PCA...")
