@@ -1,3 +1,9 @@
+# task_predict_modality 0.2.0
+
+## MINOR CHANGES
+
+* `novel`: Drop the first of the two identical validation passes in `train_and_valid()`. Its result was never read, so it cost one full pass over the validation set per epoch, 100 epochs per run (PR #41).
+
 # task_predict_modality 0.1.1
 
 ## NEW FUNCTIONALITY
