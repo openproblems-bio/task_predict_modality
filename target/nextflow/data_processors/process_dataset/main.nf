@@ -3971,7 +3971,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/data_processors/process_dataset",
     "viash_version" : "0.9.7",
-    "git_commit" : "953aa1053a050dae27a1656b1fdcdbb59d6370ce",
+    "git_commit" : "ca3729f9eb51ecda8afe69129e5b22b3b10bdf37",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -4272,7 +4272,9 @@ if (ad2_mod == "ATAC") {
   # subset to make the task computationally feasible
   if (ncol(ad2) > 10000) {
     poss_ix <- which(Matrix::colSums(ad2\\$layers[["normalized"]]) > 0)
-    sel_ix <- sort(sample(poss_ix, 10000))
+    # sample by position -- sample(x, n) errors when n > length(x), and treats a
+    # length-1 x as seq_len(x)
+    sel_ix <- sort(poss_ix[sample.int(length(poss_ix), min(10000, length(poss_ix)))])
     ad2 <- ad2[, sel_ix]\\$copy()
     ad2_var <- ad2_var[sel_ix, , drop = FALSE]
   }

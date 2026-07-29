@@ -446,9 +446,9 @@ function ViashDockerfile {
 FROM openproblems/base_r:1
 ENTRYPOINT []
 LABEL org.opencontainers.image.description="Companion container for running component data_processors process_dataset"
-LABEL org.opencontainers.image.created="2026-07-29T12:14:31Z"
+LABEL org.opencontainers.image.created="2026-07-29T12:16:41Z"
 LABEL org.opencontainers.image.source="https://github.com/openproblems-bio/task_predict_modality"
-LABEL org.opencontainers.image.revision="953aa1053a050dae27a1656b1fdcdbb59d6370ce"
+LABEL org.opencontainers.image.revision="ca3729f9eb51ecda8afe69129e5b22b3b10bdf37"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER
@@ -1310,7 +1310,9 @@ if (ad2_mod == "ATAC") {
   # subset to make the task computationally feasible
   if (ncol(ad2) > 10000) {
     poss_ix <- which(Matrix::colSums(ad2\$layers[["normalized"]]) > 0)
-    sel_ix <- sort(sample(poss_ix, 10000))
+    # sample by position -- sample(x, n) errors when n > length(x), and treats a
+    # length-1 x as seq_len(x)
+    sel_ix <- sort(poss_ix[sample.int(length(poss_ix), min(10000, length(poss_ix)))])
     ad2 <- ad2[, sel_ix]\$copy()
     ad2_var <- ad2_var[sel_ix, , drop = FALSE]
   }
