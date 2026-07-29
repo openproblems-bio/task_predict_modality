@@ -3117,6 +3117,12 @@ meta = [
                   "required" : false
                 },
                 {
+                  "type" : "string",
+                  "name" : "modality",
+                  "description" : "The modality of the data, e.g. 'GEX', 'ADT' or 'ATAC'. Methods use this to pick\nmodality-specific hyperparameters or models.\n",
+                  "required" : true
+                },
+                {
                   "name" : "dataset_organism",
                   "type" : "string",
                   "description" : "The organism of the sample in the dataset.",
@@ -3225,6 +3231,12 @@ meta = [
                   "required" : false
                 },
                 {
+                  "type" : "string",
+                  "name" : "modality",
+                  "description" : "The modality of the data, e.g. 'GEX', 'ADT' or 'ATAC'. Methods use this to pick\nmodality-specific hyperparameters or models.\n",
+                  "required" : true
+                },
+                {
                   "name" : "dataset_organism",
                   "type" : "string",
                   "description" : "The organism of the sample in the dataset.",
@@ -3331,6 +3343,12 @@ meta = [
                   "name" : "common_dataset_id",
                   "description" : "A common identifier for the dataset",
                   "required" : false
+                },
+                {
+                  "type" : "string",
+                  "name" : "modality",
+                  "description" : "The modality of the data, e.g. 'GEX', 'ADT' or 'ATAC'. Methods use this to pick\nmodality-specific hyperparameters or models.\n",
+                  "required" : true
                 },
                 {
                   "name" : "dataset_name",
@@ -3469,6 +3487,12 @@ meta = [
                   "name" : "common_dataset_id",
                   "description" : "A common identifier for the dataset",
                   "required" : false
+                },
+                {
+                  "type" : "string",
+                  "name" : "modality",
+                  "description" : "The modality of the data, e.g. 'GEX', 'ADT' or 'ATAC'. Methods use this to pick\nmodality-specific hyperparameters or models.\n",
+                  "required" : true
                 },
                 {
                   "name" : "dataset_name",
@@ -3687,7 +3711,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/control_methods/mean_per_gene",
     "viash_version" : "0.9.7",
-    "git_commit" : "f6e5f9c62ca599c20cd23ecd05078e585e3e0448",
+    "git_commit" : "9bb88f402c00fc10b935dc85746c6b48534f6fa9",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
