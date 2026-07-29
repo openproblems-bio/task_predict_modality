@@ -1,3 +1,9 @@
+# task_predict_modality 0.2.0
+
+## MINOR CHANGES
+
+* `comp_control_method`: Set `preferred_normalization` to `log_cp10k`, which is what the control methods actually read. They were declared as `counts` and only reached the right dataset via the `counts` -> `log_cp10k` fallback in the `run_benchmark` filter (PR #39).
+
 # task_predict_modality 0.1.1
 
 ## NEW FUNCTIONALITY
