@@ -6,6 +6,8 @@
 
 * `mse`: Write the unbounded maximum as `"+.inf"` rather than `"+inf"`, which is the literal the metric schema accepts (PR #31).
 
+* `cellmapper_linear`: Write the unmasked variants as `mask_var: null` rather than `mask_var: None`, which YAML reads as the string `"None"` and which would resolve to `adata.var["None"]` (PR #38).
+
 ## BUG FIXES
 
 * Fix the component paths, build paths and `rename_keys` separator in the helper scripts, which prevented `scripts/create_datasets/test_resources.sh` and both `run_test.sh` scripts from running at all (PR #22).
