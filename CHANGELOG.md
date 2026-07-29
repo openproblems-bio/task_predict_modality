@@ -1,3 +1,9 @@
+# task_predict_modality 0.2.0
+
+## MINOR CHANGES
+
+* `novel_train`: Store only the metadata `novel_predict` needs in the model artifact, instead of a full copy of `train_mod2` (PR #47).
+
 # task_predict_modality 0.1.1
 
 ## NEW FUNCTIONALITY

@@ -38,7 +38,8 @@ print('Load data', flush=True)
 input_train_mod1 = ad.read_h5ad(par['input_train_mod1'])
 input_train_mod2 = ad.read_h5ad(par['input_train_mod2'])
 
-adata = input_train_mod2.copy()
+# carries the metadata novel_predict needs; the matrix itself is not used there
+adata = ad.AnnData(uns=dict(input_train_mod2.uns))
 
 mod1 = input_train_mod1.uns['modality']
 mod2 = input_train_mod2.uns['modality']
