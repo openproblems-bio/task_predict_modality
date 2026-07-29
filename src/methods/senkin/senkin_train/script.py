@@ -84,8 +84,9 @@ X_counts_all = _to_dense(adata_rna_all_filt.layers.get("counts", adata_rna_all_f
 train_mask = adata_rna_all_filt.obs["split"] == "train"
 test_mask  = adata_rna_all_filt.obs["split"] == "test"
 
-# Log-normalize (CP10K + log1p) via the senkin_tmp_cite_pred library helper
-X_lognorm_all = np.asarray(log_normalize(adata_rna_all_filt, target_sum=1e4))
+# Log-normalize (CP10K + log1p) via the senkin_tmp_cite_pred library helper.
+# log_normalize preserves the input sparsity, so densify for the array math below.
+X_lognorm_all = _to_dense(log_normalize(adata_rna_all_filt, target_sum=1e4)).astype(np.float64)
 
 # CLR-TSVD via the library helper (random_state=42 for reproducible components)
 logger.info("Computing CLR-TSVD...")
