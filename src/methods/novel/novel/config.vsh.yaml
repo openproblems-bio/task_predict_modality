@@ -20,4 +20,8 @@ dependencies:
   - name: methods/novel_train
   - name: methods/novel_predict
 runners:
-  - type: nextflow 
+  - type: nextflow
+    directives:
+      # this component only orchestrates novel_train and novel_predict,
+      # which carry the resource labels that actually matter
+      label: [lowtime, lowmem, lowcpu] 

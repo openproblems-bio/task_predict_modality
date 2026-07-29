@@ -11,10 +11,11 @@ description: |
   singular vectors.
 references:
   doi: 10.1101/2022.04.11.487796
+links:
+  documentation: https://github.com/openproblems-bio/neurips2021_multimodal_topmethods/tree/main/src/predict_modality/methods/Guanlab-dengkw
+  repository: https://github.com/openproblems-bio/neurips2021_multimodal_topmethods/tree/main/src/predict_modality/methods/Guanlab-dengkw
 info:
   preferred_normalization: log_cp10k
-  documentation_url: https://github.com/openproblems-bio/neurips2021_multimodal_topmethods/tree/main/src/predict_modality/methods/Guanlab-dengkw
-  repository_url: https://github.com/openproblems-bio/neurips2021_multimodal_topmethods/tree/main/src/predict_modality/methods/Guanlab-dengkw
   competition_submission_id: 170636
 arguments:
   - name: "--distance_method"

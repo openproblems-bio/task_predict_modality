@@ -25,3 +25,7 @@ dependencies:
   - name: methods/simple_mlp_predict
 runners:
   - type: nextflow
+    directives:
+      # this component only orchestrates simple_mlp_train and simple_mlp_predict,
+      # which carry the resource labels that actually matter
+      label: [lowtime, lowmem, lowcpu]

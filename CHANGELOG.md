@@ -1,3 +1,13 @@
+# task_predict_modality 0.2.0
+
+## MINOR CHANGES
+
+* `comp_method`: Run `check_config.py` as part of the component tests, so method metadata is validated like control methods and metrics already are (PR #37).
+
+* `knnr_py`, `knnr_r`, `lm`, `guanlab_dengkw_pm`: Move `documentation_url` and `repository_url` out of `info` and into the top-level `links` (PR #37).
+
+* `novel`, `simple_mlp`: Give the orchestrating workflow components a Nextflow resource label, which `check_config` requires (PR #37).
+
 # task_predict_modality 0.1.1
 
 ## NEW FUNCTIONALITY
