@@ -2,6 +2,10 @@
 
 ## BUG FIXES
 
+* Fix the component paths, build paths and `rename_keys` separator in the helper scripts, which prevented `scripts/create_datasets/test_resources.sh` and both `run_test.sh` scripts from running at all (PR #22).
+
+* `cellmapper_scvi`: Fix postfix due to breaking changes in package (PR #23).
+
 * `simple_mlp_predict`: Size the model output with `input_train_mod2.n_vars` instead of `input_test_mod1.n_vars`. The two only coincide on the test resources, so this crashed on every real dataset (PR #24).
 
 # task_predict_modality 0.1.1
