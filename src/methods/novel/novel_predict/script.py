@@ -18,12 +18,12 @@ else:
 
 ## VIASH START
 par = {
-    'input_train_mod2': 'resources_test/predict_modality/openproblems_neurips2021/bmmc_cite/normal/train_mod2.h5ad',
-    'input_test_mod1': 'resources_test/predict_modality/openproblems_neurips2021/bmmc_cite/normal/test_mod1.h5ad',
-    'input_model': 'resources_test/predict_modality/neurips2021_bmmc_cite/model.pt',
+    'input_train_mod2': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal/train_mod2.h5ad',
+    'input_test_mod1': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal/test_mod1.h5ad',
+    'input_model': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal/models/novel',
 }
 meta = {
-    'resources_dir': 'src/tasks/predict_modality/methods/novel',
+    'resources_dir': 'src/methods/novel',
 }
 ## VIASH END
 
