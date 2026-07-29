@@ -2,7 +2,7 @@
 
 ## BUG FIXES
 
-* `cellmapper_scvi`: Read the prediction from `obsm["mod2pred"]` instead of `obsm["mod2_pred"]`, which raised a `KeyError` after every scVI/PoissonVI training run (PR #23).
+* `cellmapper_scvi`: Fix postfix due to breaking changes in package.
 
 # task_predict_modality 0.1.1
 
