@@ -1,6 +1,7 @@
 import anndata as ad
 import logging
 import numpy as np
+from scipy.sparse import csr_matrix
 
 ## VIASH START
 par = {
@@ -25,7 +26,9 @@ if ad_sol.shape != ad_pred.shape:
 
 logging.info("Computing MSE metrics")
 
-tmp = ad_sol.layers["normalized"] - ad_pred.layers["normalized"]
+# coerce to sparse -- a method is free to return a dense layer, and
+# sparse - dense yields a np.matrix, which has no .power()
+tmp = csr_matrix(ad_sol.layers["normalized"]) - csr_matrix(ad_pred.layers["normalized"])
 rmse = np.sqrt(tmp.power(2).mean())
 mae = np.abs(tmp).mean()
 
