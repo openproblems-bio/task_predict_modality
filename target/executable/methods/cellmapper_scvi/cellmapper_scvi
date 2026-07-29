@@ -449,9 +449,9 @@ RUN pip install --upgrade pip && \
   pip install --upgrade --no-cache-dir "cellmapper>=0.2.2" "scvi-tools>=1.3.0" "muon>=0.1.6"
 
 LABEL org.opencontainers.image.description="Companion container for running component methods cellmapper_scvi"
-LABEL org.opencontainers.image.created="2026-07-29T09:54:15Z"
+LABEL org.opencontainers.image.created="2026-07-29T09:57:55Z"
 LABEL org.opencontainers.image.source="https://github.com/quadbio/cellmapper"
-LABEL org.opencontainers.image.revision="4ed7d8cea4a31126a0e7bf7b3b9222424ebb740a"
+LABEL org.opencontainers.image.revision="4ff3812f60a1b362d89f99ae5a457aa93af11b62"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER
@@ -1323,7 +1323,7 @@ cmap.compute_neighbors(
 cmap.compute_mapping_matrix(kernel_method=par['kernel_method'])
 
 print("Predict on test data", flush=True)
-cmap.map_obsm(key="mod2", prediction_postfix="pred")
+cmap.map_obsm(key="mod2", prediction_postfix="_pred")
 mod2_pred = csc_matrix(cmap.query.obsm["mod2_pred"])
 
 print("Write output AnnData to file", flush=True)

@@ -3669,7 +3669,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/cellmapper_scvi",
     "viash_version" : "0.9.7",
-    "git_commit" : "4ed7d8cea4a31126a0e7bf7b3b9222424ebb740a",
+    "git_commit" : "4ff3812f60a1b362d89f99ae5a457aa93af11b62",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3948,7 +3948,7 @@ cmap.compute_neighbors(
 cmap.compute_mapping_matrix(kernel_method=par['kernel_method'])
 
 print("Predict on test data", flush=True)
-cmap.map_obsm(key="mod2", prediction_postfix="pred")
+cmap.map_obsm(key="mod2", prediction_postfix="_pred")
 mod2_pred = csc_matrix(cmap.query.obsm["mod2_pred"])
 
 print("Write output AnnData to file", flush=True)
