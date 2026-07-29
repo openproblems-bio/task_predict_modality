@@ -52,6 +52,10 @@
 
 * `process_dataset`: Sample ATAC peaks by position and cap the sample at the number of non-zero peaks. The guard tested `ncol(ad2) > 10000` but sampled from the non-zero peaks only, so a dataset with many peaks but fewer than 10000 non-zero ones errored out (PR #35).
 
+* `novel`: Merge `wf_method.yaml` rather than `comp_method.yaml`, matching `simple_mlp`. It is a Nextflow-only workflow, so the executable-based output check never applied to it (PR #44).
+
+* `simple_mlp`: Drop the `input_transform` key from the `simple_mlp_predict` call, which is not an argument of that component (PR #44).
+
 # task_predict_modality 0.1.1
 
 ## NEW FUNCTIONALITY
