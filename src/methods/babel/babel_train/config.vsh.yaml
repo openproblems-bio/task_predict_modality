@@ -1,5 +1,15 @@
 __merge__: ../../../api/comp_method_train.yaml
 name: babel_train
+info:
+  # The api example paths point at bmmc_cite (ADT/GEX), but babel is Multiome-only
+  # (GEX<->ATAC). Redirect the component test to bmmc_multiome/swap (mod1=ATAC,
+  # mod2=GEX, i.e. the ATAC->GEX direction) and use tiny epochs for a fast test.
+  test_setup:
+    multiome:
+      input_train_mod1: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap/train_mod1.h5ad
+      input_train_mod2: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap/train_mod2.h5ad
+      input_test_mod1: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap/test_mod1.h5ad
+      nn_epochs: 2
 resources:
   - path: script.py
     type: python_script
@@ -48,3 +58,9 @@ runners:
   - type: nextflow
     directives:
       label: [highmem, hightime, midcpu, gpu]
+# Override the api default (bmmc_cite) — babel only supports Multiome GEX<->ATAC.
+test_resources:
+  - type: python_script
+    path: /common/component_tests/run_and_check_output.py
+  - path: /resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap
+    dest: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap
