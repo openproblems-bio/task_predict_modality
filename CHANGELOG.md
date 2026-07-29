@@ -6,7 +6,7 @@
 
 * `knnr_py`, `knnr_r`, `lm`, `guanlab_dengkw_pm`: Move `documentation_url` and `repository_url` out of `info` and into the top-level `links` (PR #37).
 
-* `novel`, `simple_mlp`: Give the orchestrating workflow components a Nextflow resource label, which `check_config` requires (PR #37).
+* `novel`, `simple_mlp`: Add a placeholder Nextflow resource label. Viash renders no process for a `nextflow_script` component, so the label is inert -- it is only there because `check_config` requires one. Can be removed once openproblems-bio/core#41 is released (PR #37).
 
 # task_predict_modality 0.1.1
 

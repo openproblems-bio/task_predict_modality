@@ -22,6 +22,5 @@ dependencies:
 runners:
   - type: nextflow
     directives:
-      # this component only orchestrates novel_train and novel_predict,
-      # which carry the resource labels that actually matter
-      label: [lowtime, lowmem, lowcpu] 
+      # inert placeholder -- remove when check_config is updated (openproblems-bio/core#41)
+      label: [lowtime, lowmem, lowcpu]
