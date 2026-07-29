@@ -54,7 +54,13 @@
 
 * Bump image version for `openproblems/base_*` images to 1 -- a sliding release (PR #9).
 
-* Bump Viash version to 0.9.4 (PR #12).
+* Bump Viash version to 0.9.4 (PR #12), and to 0.9.7 (PR #15).
+
+## BUG FIXES
+
+* `cellmapper_linear`, `cellmapper_scvi`: Fix NaNs in the linear variant, use the counts layer for the scvi models, disable HVG selection by default and correct the PCA key (PR #14).
+
+* `cellmapper_linear`, `guanlab_dengkw_pm`: Minor script corrections (PR #15).
 
 # task_predict_modality 0.1.0
 
