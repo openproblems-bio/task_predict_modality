@@ -39,9 +39,31 @@ pv_sd2 <- proxyC::colSds(pv)
 tv_sd1 <- proxyC::rowSds(tv)
 pv_sd1 <- proxyC::rowSds(pv)
 
+# correlate matching rows (margin 1) or columns (margin 2) of two matrices.
+# dynutils::calculate_similarity() would do this too, but it ends in as.matrix(),
+# densifying an n x n / p x p matrix just so we can read its diagonal.
+paired_similarity <- function(x, y, margin, method) {
+  if (margin == 1) {
+    x <- Matrix::t(x)
+    y <- Matrix::t(y)
+  }
+  if (method == "spearman") {
+    x <- dynutils:::spearman_rank_sparse(x)
+    y <- dynutils:::spearman_rank_sparse(y)
+  }
+  sim <- proxyC::simil(
+    x = x, y = y, method = "correlation",
+    margin = 2, diag = TRUE, drop0 = TRUE, use_nan = FALSE
+  )
+  out <- Matrix::diag(sim)
+  out[is.nan(out)] <- 0
+  out[out > 1] <- 1
+  out
+}
+
 # Compute metrics
-pearson_vec_1 <- diag(dynutils::calculate_similarity(tv, pv, method = "pearson", margin = 1, diag = TRUE, drop0 = TRUE))
-spearman_vec_1 <- diag(dynutils::calculate_similarity(tv, pv, method = "spearman", margin = 1, diag = TRUE, drop0 = TRUE))
+pearson_vec_1 <- paired_similarity(tv, pv, margin = 1, method = "pearson")
+spearman_vec_1 <- paired_similarity(tv, pv, margin = 1, method = "spearman")
 
 pearson_vec_1[tv_sd1 == 0 | pv_sd1 == 0] <- 0
 spearman_vec_1[tv_sd1 == 0 | pv_sd1 == 0] <- 0
@@ -51,8 +73,8 @@ spearman_vec_1[tv_sd1 == 0 | pv_sd1 == 0] <- 0
 mean_pearson_per_cell <- mean(pearson_vec_1)
 mean_spearman_per_cell <- mean(spearman_vec_1)
 
-pearson_vec_2 <- diag(dynutils::calculate_similarity(tv, pv, method = "pearson", margin = 2, diag = TRUE, drop0 = TRUE))
-spearman_vec_2 <- diag(dynutils::calculate_similarity(tv, pv, method = "spearman", margin = 2, diag = TRUE, drop0 = TRUE))
+pearson_vec_2 <- paired_similarity(tv, pv, margin = 2, method = "pearson")
+spearman_vec_2 <- paired_similarity(tv, pv, margin = 2, method = "spearman")
 
 pearson_vec_2[tv_sd2 == 0 | pv_sd2 == 0] <- 0
 spearman_vec_2[tv_sd2 == 0 | pv_sd2 == 0] <- 0
@@ -62,8 +84,18 @@ spearman_vec_2[tv_sd2 == 0 | pv_sd2 == 0] <- 0
 mean_pearson_per_gene <- mean(pearson_vec_2)
 mean_spearman_per_gene <- mean(spearman_vec_2)
 
-overall_pearson <- cor(as.vector(tv), as.vector(pv), method = "pearson")
-overall_spearman <- cor(as.vector(tv), as.vector(pv), method = "spearman")
+tv_vec <- as.vector(tv)
+pv_vec <- as.vector(pv)
+
+# a constant prediction has no correlation to speak of -- score it as 0, the same
+# substitution the per-cell and per-gene metrics make above. cor() would return NA.
+if (sd(tv_vec) == 0 || sd(pv_vec) == 0) {
+  overall_pearson <- 0
+  overall_spearman <- 0
+} else {
+  overall_pearson <- cor(tv_vec, pv_vec, method = "pearson")
+  overall_spearman <- cor(tv_vec, pv_vec, method = "spearman")
+}
 
 metric_ids <- c("mean_pearson_per_cell", "mean_spearman_per_cell", "mean_pearson_per_gene", "mean_spearman_per_gene", "overall_pearson", "overall_spearman")
 metric_values <- c(mean_pearson_per_cell, mean_spearman_per_cell, mean_pearson_per_gene, mean_spearman_per_gene, overall_pearson, overall_spearman)
