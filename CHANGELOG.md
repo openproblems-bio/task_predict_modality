@@ -26,6 +26,8 @@
 
 * `process_dataset`: Add the `--seed` argument the API and README already advertised, and pass it through from the `process_datasets` workflow. Without it `par$seed` was `NULL`, and `set.seed(NULL)` re-seeds from the clock -- so the test-cell and ATAC-peak subsampling were not reproducible (PR #27).
 
+* `novel`: Record every all-zero training feature in `uns["removed_vars"]`, not just the first. With more than one such feature, `novel_predict` left extra columns in the test matrix and the model dimensions no longer lined up (PR #33).
+
 # task_predict_modality 0.1.1
 
 ## NEW FUNCTIONALITY
