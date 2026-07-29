@@ -22,7 +22,7 @@ par = {
     'output': 'output/model'
 }
 meta = {
-    'resources_dir': 'src/tasks/predict_modality/methods/simple_mlp',
+    'resources_dir': 'src/methods/simple_mlp',
     'cpus': 10
 }
 ## VIASH END
