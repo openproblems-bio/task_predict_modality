@@ -446,9 +446,9 @@ function ViashDockerfile {
 FROM openproblems/base_r:1
 ENTRYPOINT []
 LABEL org.opencontainers.image.description="Companion container for running component data_processors process_dataset"
-LABEL org.opencontainers.image.created="2026-07-29T12:10:07Z"
+LABEL org.opencontainers.image.created="2026-07-29T12:11:45Z"
 LABEL org.opencontainers.image.source="https://github.com/openproblems-bio/task_predict_modality"
-LABEL org.opencontainers.image.revision="62743348c9b71d9a70ba773449bbd0172670d393"
+LABEL org.opencontainers.image.revision="b6f7ad55118e55f270e1b69c82df145e1e0bac52"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER

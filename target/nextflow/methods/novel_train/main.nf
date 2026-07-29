@@ -3551,7 +3551,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/novel_train",
     "viash_version" : "0.9.7",
-    "git_commit" : "62743348c9b71d9a70ba773449bbd0172670d393",
+    "git_commit" : "b6f7ad55118e55f270e1b69c82df145e1e0bac52",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3916,7 +3916,7 @@ train_and_valid(model, optimizer, loss_fn, dataloader_train, dataloader_test, ou
 # Add model dim for use in predict part
 adata.uns["model_dim"] = {"mod1": n_vars_mod1, "mod2": n_vars_mod2}
 if rem_var is not None:
-  adata.uns["removed_vars"] = [rem_var[0]]
+  adata.uns["removed_vars"] = list(rem_var)
 adata.write_h5ad(output_h5ad, compression="gzip")
 
 if mod1 != 'ADT':
