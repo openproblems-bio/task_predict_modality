@@ -3929,7 +3929,7 @@ meta = [
     "engine" : "native",
     "output" : "target/nextflow/workflows/process_datasets",
     "viash_version" : "0.9.7",
-    "git_commit" : "7d8c3e89efc953104939ff25d893cf017b1fc18c",
+    "git_commit" : "f6e5f9c62ca599c20cd23ecd05078e585e3e0448",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -4222,7 +4222,8 @@ workflow run_wf {
           output_train_mod2: state.output_train_mod2,
           output_test_mod1: state.output_test_mod1,
           output_test_mod2: state.output_test_mod2,
-          swap: swap_state
+          swap: swap_state,
+          seed: state.seed
         ]
       },
       toState: [

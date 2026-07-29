@@ -3839,6 +3839,18 @@ meta = [
           "direction" : "input",
           "multiple" : false,
           "multiple_sep" : ";"
+        },
+        {
+          "type" : "integer",
+          "name" : "--seed",
+          "description" : "The seed for determining the train/test split.",
+          "default" : [
+            1
+          ],
+          "required" : false,
+          "direction" : "input",
+          "multiple" : false,
+          "multiple_sep" : ";"
         }
       ]
     }
@@ -3935,7 +3947,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/data_processors/process_dataset",
     "viash_version" : "0.9.7",
-    "git_commit" : "7d8c3e89efc953104939ff25d893cf017b1fc18c",
+    "git_commit" : "f6e5f9c62ca599c20cd23ecd05078e585e3e0448",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -4142,7 +4154,8 @@ par <- list(
   "output_test_mod1" = $( if [ ! -z ${VIASH_PAR_OUTPUT_TEST_MOD1+x} ]; then echo -n "'"; echo -n "$VIASH_PAR_OUTPUT_TEST_MOD1" | sed "s#['\\\\]#\\\\\\\\&#g"; echo "'"; else echo NULL; fi ),
   "output_test_mod2" = $( if [ ! -z ${VIASH_PAR_OUTPUT_TEST_MOD2+x} ]; then echo -n "'"; echo -n "$VIASH_PAR_OUTPUT_TEST_MOD2" | sed "s#['\\\\]#\\\\\\\\&#g"; echo "'"; else echo NULL; fi ),
   "dataset_id" = $( if [ ! -z ${VIASH_PAR_DATASET_ID+x} ]; then echo -n "'"; echo -n "$VIASH_PAR_DATASET_ID" | sed "s#['\\\\]#\\\\\\\\&#g"; echo "'"; else echo NULL; fi ),
-  "swap" = $( if [ ! -z ${VIASH_PAR_SWAP+x} ]; then echo -n "as.logical(toupper('"; echo -n "$VIASH_PAR_SWAP" | sed "s#['\\\\]#\\\\\\\\&#g"; echo "'))"; else echo NULL; fi )
+  "swap" = $( if [ ! -z ${VIASH_PAR_SWAP+x} ]; then echo -n "as.logical(toupper('"; echo -n "$VIASH_PAR_SWAP" | sed "s#['\\\\]#\\\\\\\\&#g"; echo "'))"; else echo NULL; fi ),
+  "seed" = $( if [ ! -z ${VIASH_PAR_SEED+x} ]; then echo -n "as.integer('"; echo -n "$VIASH_PAR_SEED" | sed "s#['\\\\]#\\\\\\\\&#g"; echo "')"; else echo NULL; fi )
 )
 meta <- list(
   "name" = $( if [ ! -z ${VIASH_META_NAME+x} ]; then echo -n "'"; echo -n "$VIASH_META_NAME" | sed "s#['\\\\]#\\\\\\\\&#g"; echo "'"; else echo NULL; fi ),
