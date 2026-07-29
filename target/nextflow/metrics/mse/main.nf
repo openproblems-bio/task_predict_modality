@@ -3310,7 +3310,7 @@ meta = [
         "summary" : "The root mean squared error.",
         "description" : "The square root of the mean of the square of all of the error.",
         "min" : 0,
-        "max" : "+inf",
+        "max" : "+.inf",
         "maximize" : false,
         "references" : {
           "doi" : "10.5194/gmdd-7-1525-2014"
@@ -3322,7 +3322,7 @@ meta = [
         "summary" : "The mean absolute error.",
         "description" : "The average difference between the expression values and the predicted expression values.",
         "min" : 0,
-        "max" : "+inf",
+        "max" : "+.inf",
         "maximize" : false,
         "references" : {
           "doi" : "10.5194/gmdd-7-1525-2014"
@@ -3409,7 +3409,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/metrics/mse",
     "viash_version" : "0.9.7",
-    "git_commit" : "9bb88f402c00fc10b935dc85746c6b48534f6fa9",
+    "git_commit" : "c44271cbbb4980a6475a9f225a23dbf2128db409",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
