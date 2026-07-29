@@ -449,9 +449,9 @@ RUN Rscript -e 'options(warn = 2); if (!requireNamespace("remotes", quietly = TR
   Rscript -e 'options(warn = 2); remotes::install_cran(c("lmds", "RcppArmadillo", "pbapply"), repos = "https://cran.rstudio.com")'
 
 LABEL org.opencontainers.image.description="Companion container for running component methods lm"
-LABEL org.opencontainers.image.created="2026-07-29T12:30:17Z"
+LABEL org.opencontainers.image.created="2026-07-29T13:11:03Z"
 LABEL org.opencontainers.image.source="https://github.com/RcppCore/RcppArmadillo"
-LABEL org.opencontainers.image.revision="e19b14070256786fe0806c74fd82a869b73bc6a7"
+LABEL org.opencontainers.image.revision="f0e32f9b94ff641e8a130be528925b496da9bf91"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER
@@ -1192,6 +1192,10 @@ dr <- lmds::lmds(
 ix <- seq_len(nrow(input_train_mod1))
 dr_train <- dr[ix, , drop = FALSE]
 dr_test <- dr[-ix, , drop = FALSE]
+
+# add an intercept column -- fastLm() uses the design matrix as is
+dr_train <- cbind(intercept = 1, dr_train)
+dr_test <- cbind(intercept = 1, dr_test)
 
 rm(input_test_mod1)
 gc()
