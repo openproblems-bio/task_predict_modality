@@ -1,3 +1,9 @@
+# task_predict_modality 0.2.0
+
+## BUG FIXES
+
+* `novel_train`: Seed the fallback that picks the internal validation batches, and log which ones were picked. Both `bmmc_multiome` datasets take this path, so the checkpoint `novel` kept differed from run to run (PR #46).
+
 # task_predict_modality 0.1.1
 
 ## NEW FUNCTIONALITY

@@ -1,5 +1,10 @@
 __merge__: ../../../api/comp_method_train.yaml
 name: novel_train
+arguments:
+  - name: "--seed"
+    type: "integer"
+    description: "Seed for choosing the internal validation batches, when the dataset does not contain the batches used in the competition."
+    default: 1
 resources:
   - path: script.py
     type: python_script
