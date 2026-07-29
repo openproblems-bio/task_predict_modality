@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Run this prior to executing this script:
-# bin/viash_build -q 'batch_integration'
+# viash ns build --parallel --setup cachedbuild
 
 # get the root of the directory
 REPO_ROOT=$(git rev-parse --show-toplevel)
@@ -17,7 +17,7 @@ OUTPUT_DIR="output/test"
 export NXF_VER=22.04.5
 
 nextflow run . \
-  -main-script target/nextflow/predict_modality/workflows/process_datasets/main.nf \
+  -main-script target/nextflow/workflows/process_datasets/main.nf \
   -profile docker \
   -entry auto \
   -c common/nextflow_helpers/labels_ci.config \
