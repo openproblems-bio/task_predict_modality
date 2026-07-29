@@ -150,7 +150,7 @@ train_and_valid(model, optimizer, loss_fn, dataloader_train, dataloader_test, ou
 # Add model dim for use in predict part
 adata.uns["model_dim"] = {"mod1": n_vars_mod1, "mod2": n_vars_mod2}
 if rem_var is not None:
-  adata.uns["removed_vars"] = [rem_var[0]]
+  adata.uns["removed_vars"] = list(rem_var)
 adata.write_h5ad(output_h5ad, compression="gzip")
 
 if mod1 != 'ADT':
