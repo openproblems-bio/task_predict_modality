@@ -27,6 +27,15 @@ nextflow run . \
   --publish_dir "$OUTPUT_DIR" \
   --output_state '$id/state.yaml'
 
+# The common test datasets are square (134 x 134, 1500 x 1500), so a component can
+# mix up n_vars(mod1) and n_vars(mod2) and still pass viash test. Trim mod1 so the
+# fixture looks like a real dataset, where the two modalities differ in width.
+echo "Trim mod1 features"
+for name in bmmc_cite/normal bmmc_cite/swap bmmc_multiome/normal bmmc_multiome/swap; do
+  python scripts/create_datasets/trim_mod1_features.py \
+    "$OUTPUT_DIR/openproblems_neurips2021/$name"
+done
+
 echo "Run one method"
 
 for name in bmmc_cite/normal bmmc_cite/swap bmmc_multiome/normal bmmc_multiome/swap; do

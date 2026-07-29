@@ -1,3 +1,9 @@
+# task_predict_modality 0.2.0
+
+## NEW FUNCTIONALITY
+
+* `scripts/create_datasets`: Trim mod1's features when generating the test resources, so the two modalities differ in width. The common test datasets are square (134 x 134, 1500 x 1500), which let dimension mix-ups pass `viash test` (PR #51).
+
 # task_predict_modality 0.1.1
 
 ## NEW FUNCTIONALITY
