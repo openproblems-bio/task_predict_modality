@@ -32,8 +32,6 @@
 
 ## BUG FIXES
 
-* `novel_predict`: Move the model and the input batch onto the selected device. It picked `cuda:0` when a GPU was present but never used it, so the component requested a GPU node and ran inference on CPU (PR #54).
-
 * `process_dataset`: Fall back to holding out a quarter of the batches when the dataset has no `obs["is_train"]`, rather than silently producing four empty h5ads. `obs["is_train"]` carries the NeurIPS 2021 competition split and stays optional; `obs["cell_type"]` is now declared and required (PR #28).
 
 * Fix the component paths, build paths and `rename_keys` separator in the helper scripts, which prevented `scripts/create_datasets/test_resources.sh` and both `run_test.sh` scripts from running at all (PR #22).
@@ -57,6 +55,10 @@
 * `novel`: Merge `wf_method.yaml` rather than `comp_method.yaml`, matching `simple_mlp`. It is a Nextflow-only workflow, so the executable-based output check never applied to it (PR #44).
 
 * `simple_mlp`: Drop the `input_transform` key from the `simple_mlp_predict` call, which is not an argument of that component (PR #44).
+
+* `cellmapper_scvi`: Bump the base image from `openproblems/base_pytorch_nvidia:1.0.0` to `:1`. (PR #53).
+
+* `novel_predict`: Move the model and the input batch onto the selected device. It picked `cuda:0` when a GPU was present but never used it, so the component requested a GPU node and ran inference on CPU (PR #54).
 
 # task_predict_modality 0.1.1
 
