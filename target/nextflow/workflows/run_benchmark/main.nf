@@ -3751,6 +3751,12 @@ meta = [
       }
     },
     {
+      "name" : "methods/babel",
+      "repository" : {
+        "type" : "local"
+      }
+    },
+    {
       "name" : "methods/senkin_tmp",
       "repository" : {
         "type" : "local"
@@ -3825,7 +3831,7 @@ meta = [
     "engine" : "native",
     "output" : "target/nextflow/workflows/run_benchmark",
     "viash_version" : "0.9.7",
-    "git_commit" : "aa368729caa64452ff9310aa83e7fc835e6262ac",
+    "git_commit" : "ee3a79e3e12f7d00ee5f14666dc98be0ff2f6c17",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -4021,6 +4027,7 @@ include { lm } from "${meta.resources_dir}/../../../nextflow/methods/lm/main.nf"
 include { guanlab_dengkw_pm } from "${meta.resources_dir}/../../../nextflow/methods/guanlab_dengkw_pm/main.nf"
 include { novel } from "${meta.resources_dir}/../../../nextflow/methods/novel/main.nf"
 include { simple_mlp } from "${meta.resources_dir}/../../../nextflow/methods/simple_mlp/main.nf"
+include { babel } from "${meta.resources_dir}/../../../nextflow/methods/babel/main.nf"
 include { senkin_tmp } from "${meta.resources_dir}/../../../nextflow/methods/senkin_tmp/main.nf"
 include { correlation } from "${meta.resources_dir}/../../../nextflow/metrics/correlation/main.nf"
 include { mse } from "${meta.resources_dir}/../../../nextflow/metrics/mse/main.nf"
@@ -4048,6 +4055,7 @@ methods = [
   guanlab_dengkw_pm,
   novel,
   simple_mlp,
+  babel,
   senkin_tmp
 ]
 

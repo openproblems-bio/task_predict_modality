@@ -3416,7 +3416,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/metrics/mse",
     "viash_version" : "0.9.7",
-    "git_commit" : "aa368729caa64452ff9310aa83e7fc835e6262ac",
+    "git_commit" : "ee3a79e3e12f7d00ee5f14666dc98be0ff2f6c17",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
