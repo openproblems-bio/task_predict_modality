@@ -138,6 +138,19 @@ for name in bmmc_cite/normal bmmc_cite/swap bmmc_multiome/normal bmmc_multiome/s
     fi
   fi
 
+  echo "pre-train ss_opm on $name"
+  if up_to_date $DATASET_DIR/$name/models/ss_opm/ $STATE; then
+    echo "  already up to date, skipping"
+  else
+    rm -rf $DATASET_DIR/$name/models/ss_opm/
+    mkdir -p $DATASET_DIR/$name/models/ss_opm/
+    viash run src/methods/ss_opm/ss_opm_train/config.vsh.yaml -- \
+      --input_train_mod1 $DATASET_DIR/$name/train_mod1.h5ad \
+      --input_train_mod2 $DATASET_DIR/$name/train_mod2.h5ad \
+      --input_test_mod1 $DATASET_DIR/$name/test_mod1.h5ad \
+      --output $DATASET_DIR/$name/models/ss_opm
+  fi
+
   # scbutterfly only does multiome (GEX<->ATAC)
   if [[ "$name" == bmmc_multiome/* ]]; then
     echo "pre-train scbutterfly on $name"
