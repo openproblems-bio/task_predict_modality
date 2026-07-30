@@ -33,7 +33,7 @@ adata_out = ad.AnnData(
     var=adata_prot_train.var,
     uns={
         "dataset_id": adata_rna_test.uns.get("dataset_id", bundle.get("dataset_id", "")),
-        "method_id": meta["name"],
+        "method_id": "senkin",
     },
 )
 
