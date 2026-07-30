@@ -1,9 +1,6 @@
-__merge__: ../../../api/comp_method_predict.yaml
+__merge__: /src/api/comp_method_predict.yaml
 name: babel_predict
 info:
-  # babel is Multiome-only (ATAC->GEX). Point the component test at bmmc_multiome/swap
-  # (mod1=ATAC) and the pre-trained babel model committed under models/babel, matching
-  # how novel/simple_mlp wire their predict tests.
   test_setup:
     multiome:
       input_test_mod1: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap/test_mod1.h5ad
@@ -14,6 +11,9 @@ resources:
     type: python_script
   - path: ../model.py
     dest: model.py
+test_resources:
+  - path: /resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap
+    dest: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap
 engines:
   - type: docker
     image: openproblems/base_pytorch_nvidia:1
@@ -26,10 +26,3 @@ runners:
   - type: nextflow
     directives:
       label: [highmem, hightime, midcpu, gpu]
-# Override the api default (bmmc_cite) — babel only supports Multiome GEX<->ATAC.
-# Also copies the pre-trained model referenced by test_setup.input_model above.
-test_resources:
-  - type: python_script
-    path: /common/component_tests/run_and_check_output.py
-  - path: /resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap
-    dest: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap
