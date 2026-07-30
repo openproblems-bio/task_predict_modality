@@ -111,6 +111,7 @@ class BabelNet(skorch.NeuralNet):
         super().__init__(*args, **kwargs)
 
     def get_loss(self, y_pred, y_true, X=None, training=False):
+        y_true = y_true.to(self.device)
         preds11, preds12, preds21, preds22, _, _ = y_pred
         target1 = y_true[:, : self._n_genes]
         target2_bin = y_true[:, self._n_genes : self._n_genes + self._n_peaks]

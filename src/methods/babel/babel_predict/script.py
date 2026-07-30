@@ -89,7 +89,7 @@ adata_out = ad.AnnData(
     var=out_var,
     uns={
         "dataset_id": adata_test_mod1.uns.get("dataset_id", ""),
-        "method_id": meta["name"],
+        "method_id": "babel",
     },
 )
 
