@@ -3433,6 +3433,21 @@ meta = [
           "direction" : "output",
           "multiple" : false,
           "multiple_sep" : ";"
+        },
+        {
+          "type" : "integer",
+          "name" : "--n_epochs",
+          "description" : "Number of training epochs.",
+          "info" : {
+            "test_default" : 2
+          },
+          "default" : [
+            100
+          ],
+          "required" : false,
+          "direction" : "input",
+          "multiple" : false,
+          "multiple_sep" : ";"
         }
       ]
     }
@@ -3554,7 +3569,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/novel_train",
     "viash_version" : "0.9.7",
-    "git_commit" : "882548eb6097f23039fac872b9ff226978d5fe5e",
+    "git_commit" : "efd797e048378b2b45180b52d0771839c17f3fcc",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3771,7 +3786,8 @@ par = {
   'input_train_mod1': $( if [ ! -z ${VIASH_PAR_INPUT_TRAIN_MOD1+x} ]; then echo "r'${VIASH_PAR_INPUT_TRAIN_MOD1//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
   'input_train_mod2': $( if [ ! -z ${VIASH_PAR_INPUT_TRAIN_MOD2+x} ]; then echo "r'${VIASH_PAR_INPUT_TRAIN_MOD2//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
   'input_test_mod1': $( if [ ! -z ${VIASH_PAR_INPUT_TEST_MOD1+x} ]; then echo "r'${VIASH_PAR_INPUT_TEST_MOD1//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
-  'output': $( if [ ! -z ${VIASH_PAR_OUTPUT+x} ]; then echo "r'${VIASH_PAR_OUTPUT//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi )
+  'output': $( if [ ! -z ${VIASH_PAR_OUTPUT+x} ]; then echo "r'${VIASH_PAR_OUTPUT//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
+  'n_epochs': $( if [ ! -z ${VIASH_PAR_N_EPOCHS+x} ]; then echo "int(r'${VIASH_PAR_N_EPOCHS//\\'/\\'\\"\\'\\"r\\'}')"; else echo None; fi )
 }
 meta = {
   'name': $( if [ ! -z ${VIASH_META_NAME+x} ]; then echo "r'${VIASH_META_NAME//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
@@ -3914,7 +3930,7 @@ output_h5ad = f"{par['output']}/train_mod2.h5ad"
 output_transform = f"{par['output']}/transform.pkl"
 
 # train model
-train_and_valid(model, optimizer, loss_fn, dataloader_train, dataloader_test, output_model, device)
+train_and_valid(model, optimizer, loss_fn, dataloader_train, dataloader_test, output_model, device, n_epochs=par['n_epochs'])
 
 # Add model dim for use in predict part
 adata.uns["model_dim"] = {"mod1": n_vars_mod1, "mod2": n_vars_mod2}
