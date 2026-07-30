@@ -1,0 +1,62 @@
+__merge__: /src/api/comp_method_train.yaml
+name: babel_train
+info:
+  test_setup:
+    multiome:
+      input_train_mod1: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap/train_mod1.h5ad
+      input_train_mod2: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap/train_mod2.h5ad
+      input_test_mod1: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap/test_mod1.h5ad
+      nn_epochs: 2
+resources:
+  - path: script.py
+    type: python_script
+  - path: ../model.py
+    dest: model.py
+  - path: ../losses.py
+    dest: losses.py
+  - path: ../chrom_utils.py
+    dest: chrom_utils.py
+test_resources:
+  - path: /resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap
+    dest: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap
+arguments:
+  - name: "--hidden_dim"
+    type: integer
+    default: 16
+    description: Latent dimensionality of the shared encoder/decoder bottleneck.
+  - name: "--nn_epochs"
+    type: integer
+    default: 100
+    description: Maximum training epochs (early stopping applies).
+    info:
+      test_default: 2
+  - name: "--lr"
+    type: double
+    default: 0.001
+    description: Adam learning rate.
+  - name: "--batch_size"
+    type: integer
+    default: 64
+    description: Training batch size.
+  - name: "--loss2_weight"
+    type: double
+    default: 3.0
+    description: Relative weight of the ATAC (BCE) loss terms versus the RNA (negative binomial) loss terms.
+  - name: "--early_stopping_patience"
+    type: integer
+    default: 20
+    description: Epochs without validation loss improvement before stopping early.
+engines:
+  - type: docker
+    image: openproblems/base_pytorch_nvidia:1
+    setup:
+      - type: python
+        packages:
+          - skorch>=0.15
+          - scanpy>=1.9
+          - scikit-learn>=1.1
+runners:
+  - type: executable
+  - type: nextflow
+    directives:
+      label: [highmem, hightime, midcpu, gpu]
