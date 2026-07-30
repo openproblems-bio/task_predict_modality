@@ -20,7 +20,8 @@ methods = [
   novel,
   simple_mlp,
   babel,
-  senkin_tmp
+  senkin_tmp,
+  scbutterfly
 ]
 
 // construct list of metrics

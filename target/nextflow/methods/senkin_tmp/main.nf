@@ -3581,7 +3581,7 @@ meta = [
     "engine" : "native",
     "output" : "target/nextflow/methods/senkin_tmp",
     "viash_version" : "0.9.7",
-    "git_commit" : "ee3a79e3e12f7d00ee5f14666dc98be0ff2f6c17",
+    "git_commit" : "ce09e2ff61c57bc41700f5c540f0946c1099b87b",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {

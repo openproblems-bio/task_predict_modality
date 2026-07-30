@@ -138,6 +138,27 @@ for name in bmmc_cite/normal bmmc_cite/swap bmmc_multiome/normal bmmc_multiome/s
     fi
   fi
 
+  # scbutterfly only does multiome (GEX<->ATAC)
+  if [[ "$name" == bmmc_multiome/* ]]; then
+    echo "pre-train scbutterfly on $name"
+    if up_to_date $DATASET_DIR/$name/models/scbutterfly/ $STATE; then
+      echo "  already up to date, skipping"
+    else
+      rm -rf $DATASET_DIR/$name/models/scbutterfly/
+      mkdir -p $DATASET_DIR/$name/models/scbutterfly/
+      viash run src/methods/scbutterfly/scbutterfly_train/config.vsh.yaml -- \
+        --input_train_mod1 $DATASET_DIR/$name/train_mod1.h5ad \
+        --input_train_mod2 $DATASET_DIR/$name/train_mod2.h5ad \
+        --input_test_mod1 $DATASET_DIR/$name/test_mod1.h5ad \
+        --rna_pretrain_epoch 2 \
+        --atac_pretrain_epoch 2 \
+        --translator_epoch 2 \
+        --patience 5 \
+        --n_top_genes 500 \
+        --output $DATASET_DIR/$name/models/scbutterfly
+    fi
+  fi
+
 done
 
 # only run this if you have access to the openproblems-data bucket

@@ -449,9 +449,9 @@ RUN pip install --upgrade pip && \
   pip install --upgrade --no-cache-dir "cellmapper>=0.2.6" "scvi-tools>=1.3.0" "muon>=0.1.6"
 
 LABEL org.opencontainers.image.description="Companion container for running component methods cellmapper_scvi"
-LABEL org.opencontainers.image.created="2026-07-30T13:31:58Z"
+LABEL org.opencontainers.image.created="2026-07-30T13:52:42Z"
 LABEL org.opencontainers.image.source="https://github.com/quadbio/cellmapper"
-LABEL org.opencontainers.image.revision="ee3a79e3e12f7d00ee5f14666dc98be0ff2f6c17"
+LABEL org.opencontainers.image.revision="ce09e2ff61c57bc41700f5c540f0946c1099b87b"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER
