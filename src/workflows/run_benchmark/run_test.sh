@@ -15,7 +15,7 @@ if [ ! -d "$OUTPUT_DIR" ]; then
   mkdir -p "$OUTPUT_DIR"
 fi
 # run benchmark
-export NXF_VER=23.04.2
+export NXF_VER=25.10.5
 
 nextflow run . \
   -main-script target/nextflow/workflows/run_benchmark/main.nf \
