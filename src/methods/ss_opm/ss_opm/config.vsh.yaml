@@ -1,0 +1,26 @@
+__merge__: ../../../api/comp_method.yaml
+name: ss_opm
+label: SS-OPM
+summary: 1st place solution of the Kaggle Open Problems Multimodal Single-Cell Integration challenge.
+description: |
+  Encoder-decoder MLP method using SVD-based dimensionality reduction for both inputs and
+  targets, followed by batch-median correction. The encoder maps (optionally augmented)
+  cell embeddings to a latent space; multiple decoder blocks predict target expression in
+  the SVD-compressed space. The method was the winning solution of the NeurIPS 2021
+  Open Problems Multimodal Single-Cell Integration Kaggle competition.
+references:
+  doi:
+    - 10.1101/2022.04.11.487796
+links:
+  repository: https://github.com/shu65/open-problems-multimodal
+info:
+  preferred_normalization: log_cp10k
+resources:
+  - path: main.nf
+    type: nextflow_script
+    entrypoint: run_wf
+dependencies:
+  - name: methods/ss_opm_train
+  - name: methods/ss_opm_predict
+runners:
+  - type: nextflow

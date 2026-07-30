@@ -1,10 +1,16 @@
 __merge__: ../../../api/comp_method_train.yaml
 name: novel_train
 arguments:
+  - name: "--n_epochs"
+    type: integer
+    default: 100
+    description: Number of training epochs.
+    info:
+      test_default: 2
   - name: "--seed"
     type: "integer"
-    description: "Seed for choosing the internal validation batches, when the dataset does not contain the batches used in the competition."
     default: 1
+    description: "Seed for choosing the internal validation batches, when the dataset does not contain the batches used in the competition."
 resources:
   - path: script.py
     type: python_script

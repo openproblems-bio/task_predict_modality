@@ -9,7 +9,7 @@ workflow run_wf {
     )
 
     | simple_mlp_predict.run(
-      fromState: ["input_train_mod2", "input_test_mod1", "input_model", "input_transform"],
+      fromState: ["input_train_mod2", "input_test_mod1", "input_model"],
       toState: ["output": "output"]
     )
 
