@@ -90,6 +90,20 @@ for name in bmmc_cite/normal bmmc_cite/swap bmmc_multiome/normal bmmc_multiome/s
       --output $DATASET_DIR/$name/models/simple_mlp/
   fi
 
+  echo "pre-train novel on $name"
+  if up_to_date $DATASET_DIR/$name/models/novel/ $STATE; then
+    echo "  already up to date, skipping"
+  else
+    rm -rf $DATASET_DIR/$name/models/novel/
+    mkdir -p $DATASET_DIR/$name/models/novel/
+    viash run src/methods/novel/novel_train/config.vsh.yaml -- \
+      --input_train_mod1 $DATASET_DIR/$name/train_mod1.h5ad \
+      --input_train_mod2 $DATASET_DIR/$name/train_mod2.h5ad \
+      --input_test_mod1 $DATASET_DIR/$name/test_mod1.h5ad \
+      --n_epochs 2 \
+      --output $DATASET_DIR/$name/models/novel
+  fi
+
   # senkin_tmp is CITE-only
   if [[ "$name" == bmmc_cite/normal ]]; then
     echo "pre-train senkin_tmp on $name"
@@ -108,18 +122,20 @@ for name in bmmc_cite/normal bmmc_cite/swap bmmc_multiome/normal bmmc_multiome/s
     fi
   fi
 
-  echo "pre-train novel on $name"
-  if up_to_date $DATASET_DIR/$name/models/novel/ $STATE; then
-    echo "  already up to date, skipping"
-  else
-    rm -rf $DATASET_DIR/$name/models/novel/
-    mkdir -p $DATASET_DIR/$name/models/novel/
-    viash run src/methods/novel/novel_train/config.vsh.yaml -- \
-      --input_train_mod1 $DATASET_DIR/$name/train_mod1.h5ad \
-      --input_train_mod2 $DATASET_DIR/$name/train_mod2.h5ad \
-      --input_test_mod1 $DATASET_DIR/$name/test_mod1.h5ad \
-      --n_epochs 2 \
-      --output $DATASET_DIR/$name/models/novel
+  # babel only does ATAC->GEX, which is the multiome swap
+  if [[ "$name" == bmmc_multiome/swap ]]; then
+    echo "pre-train babel on $name"
+    if up_to_date $DATASET_DIR/$name/models/babel/output_model.pkl $STATE; then
+      echo "  already up to date, skipping"
+    else
+      mkdir -p $DATASET_DIR/$name/models/babel/
+      viash run src/methods/babel/babel_train/config.vsh.yaml -- \
+        --input_train_mod1 $DATASET_DIR/$name/train_mod1.h5ad \
+        --input_train_mod2 $DATASET_DIR/$name/train_mod2.h5ad \
+        --input_test_mod1 $DATASET_DIR/$name/test_mod1.h5ad \
+        --nn_epochs 2 \
+        --output $DATASET_DIR/$name/models/babel/output_model.pkl
+    fi
   fi
 
 done

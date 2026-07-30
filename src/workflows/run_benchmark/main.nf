@@ -19,6 +19,7 @@ methods = [
   guanlab_dengkw_pm,
   novel,
   simple_mlp,
+  babel,
   senkin_tmp
 ]
 
