@@ -1,6 +1,6 @@
 __merge__: ../../../api/comp_method.yaml
 name: senkin_tmp
-label: SenKin_tmp
+label: "senkin & tmp"
 summary: "LightGBM + bidirectional GRU ensemble for CITE-seq protein prediction (OpenProblems 2022 2nd place)"
 description: |
   Two-stage method from the OpenProblems NeurIPS 2021 competition. Stage 1 trains four
