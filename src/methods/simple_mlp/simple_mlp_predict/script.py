@@ -61,7 +61,7 @@ ymean = np.load(ymean_path)
 
 print('Start predict', flush=True)
 if task == 'GEX2ATAC':
-    y_pred = ymean*np.ones([input_test_mod1.n_obs, input_test_mod1.n_vars])
+    y_pred = ymean*np.ones([input_test_mod1.n_obs, input_train_mod2.n_vars])
 else:
     folds = [0, 1, 2]
 
@@ -82,7 +82,7 @@ else:
         model_inf = MLP.load_from_checkpoint(
             ckpt,
             in_dim=X.shape[1],
-            out_dim=input_test_mod1.n_vars,
+            out_dim=input_train_mod2.n_vars,
             ymean=ymean,
             config=config
         )

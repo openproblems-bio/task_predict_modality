@@ -18,12 +18,12 @@ else:
 
 ## VIASH START
 par = {
-    'input_train_mod2': 'resources_test/predict_modality/openproblems_neurips2021/bmmc_cite/normal/train_mod2.h5ad',
-    'input_test_mod1': 'resources_test/predict_modality/openproblems_neurips2021/bmmc_cite/normal/test_mod1.h5ad',
-    'input_model': 'resources_test/predict_modality/neurips2021_bmmc_cite/model.pt',
+    'input_train_mod2': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal/train_mod2.h5ad',
+    'input_test_mod1': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal/test_mod1.h5ad',
+    'input_model': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal/models/novel',
 }
 meta = {
-    'resources_dir': 'src/tasks/predict_modality/methods/novel',
+    'resources_dir': 'src/methods/novel',
 }
 ## VIASH END
 
@@ -95,10 +95,11 @@ dataset_test = ModalityMatchingDataset(input_test_mod1_, None, is_train=False)
 dataloader_test = DataLoader(dataset_test, 32, shuffle = False, num_workers = 4)
 
 outputs = []
+model = model.to(device)
 model.eval()
 with torch.no_grad():
     for x in dataloader_test:
-        output = model(x.float())
+        output = model(x.float().to(device))
         outputs.append(output.detach().cpu().numpy())
 
 outputs = np.concatenate(outputs)

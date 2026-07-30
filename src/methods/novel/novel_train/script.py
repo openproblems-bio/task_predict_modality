@@ -23,7 +23,8 @@ else:
 par = {
   'input_train_mod1': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/normal/train_mod1.h5ad',
   'input_train_mod2': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/normal/train_mod2.h5ad',
-  'output': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/normal/models/novel'
+  'output': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/normal/models/novel',
+  'n_epochs': 100
 }
 meta = {
   'resources_dir': 'src/methods/novel',
@@ -38,7 +39,8 @@ print('Load data', flush=True)
 input_train_mod1 = ad.read_h5ad(par['input_train_mod1'])
 input_train_mod2 = ad.read_h5ad(par['input_train_mod2'])
 
-adata = input_train_mod2.copy()
+# carries the metadata novel_predict needs; the matrix itself is not used there
+adata = ad.AnnData(uns=dict(input_train_mod2.uns))
 
 mod1 = input_train_mod1.uns['modality']
 mod2 = input_train_mod2.uns['modality']
@@ -145,12 +147,12 @@ output_h5ad = f"{par['output']}/train_mod2.h5ad"
 output_transform = f"{par['output']}/transform.pkl"
 
 # train model
-train_and_valid(model, optimizer, loss_fn, dataloader_train, dataloader_test, output_model, device)
+train_and_valid(model, optimizer, loss_fn, dataloader_train, dataloader_test, output_model, device, n_epochs=par['n_epochs'])
 
 # Add model dim for use in predict part
 adata.uns["model_dim"] = {"mod1": n_vars_mod1, "mod2": n_vars_mod2}
 if rem_var is not None:
-  adata.uns["removed_vars"] = [rem_var[0]]
+  adata.uns["removed_vars"] = list(rem_var)
 adata.write_h5ad(output_h5ad, compression="gzip")
 
 if mod1 != 'ADT':

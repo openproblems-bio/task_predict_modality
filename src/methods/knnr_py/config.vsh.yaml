@@ -5,9 +5,10 @@ summary: K-nearest neighbor regression in Python.
 description: K-nearest neighbor regression in Python.
 references:
   doi: 10.2307/1403797
+links:
+  documentation: https://scikit-learn.org/stable/modules/neighbors.html
+  repository: https://github.com/scikit-learn/scikit-learn
 info:
-  documentation_url: https://scikit-learn.org/stable/modules/neighbors.html
-  repository_url: https://github.com/scikit-learn/scikit-learn
   preferred_normalization: log_cp10k
 arguments:
   - name: "--distance_method"

@@ -48,8 +48,8 @@ cmap.compute_neighbors(
 cmap.compute_mapping_matrix(kernel_method=par['kernel_method'])
 
 print("Predict on test data", flush=True)
-cmap.map_obsm(key="mod2", prediction_postfix="pred")
-mod2_pred = csc_matrix(cmap.query.obsm["mod2pred"])
+cmap.map_obsm(key="mod2", prediction_postfix="_pred")
+mod2_pred = csc_matrix(cmap.query.obsm["mod2_pred"])
 
 print("Write output AnnData to file", flush=True)
 output = ad.AnnData(
