@@ -15,7 +15,7 @@ par = {
     "input_model": "output_model.pkl",
     "output": "output_pred.h5ad",
 }
-meta = {"name": "senkin"}
+meta = {"name": "senkin_tmp"}
 ## VIASH END
 
 logger.info("Reading input files...")
@@ -33,7 +33,7 @@ adata_out = ad.AnnData(
     var=adata_prot_train.var,
     uns={
         "dataset_id": adata_rna_test.uns.get("dataset_id", bundle.get("dataset_id", "")),
-        "method_id": "senkin",
+        "method_id": "senkin_tmp",
     },
 )
 

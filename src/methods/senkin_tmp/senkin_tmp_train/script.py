@@ -29,7 +29,7 @@ par = {
     "nn_epochs": 100,
     "n_tsvd_components": 100,
 }
-meta = {"name": "senkin"}
+meta = {"name": "senkin_tmp"}
 ## VIASH END
 
 

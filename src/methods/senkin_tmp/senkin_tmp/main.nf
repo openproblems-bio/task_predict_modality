@@ -2,11 +2,11 @@ workflow run_wf {
   take: input_ch
   main:
   output_ch = input_ch
-    | senkin_train.run(
+    | senkin_tmp_train.run(
       fromState: ["input_train_mod1", "input_train_mod2", "input_test_mod1"],
       toState: ["input_model": "output"]
     )
-    | senkin_predict.run(
+    | senkin_tmp_predict.run(
       fromState: ["input_test_mod1", "input_train_mod2", "input_model"],
       toState: ["output": "output"]
     )

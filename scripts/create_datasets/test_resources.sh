@@ -46,16 +46,16 @@ for name in bmmc_cite/normal bmmc_cite/swap bmmc_multiome/normal bmmc_multiome/s
     --input_test_mod1 $OUTPUT_DIR/openproblems_neurips2021/$name/test_mod1.h5ad \
     --output $OUTPUT_DIR/openproblems_neurips2021/$name/models/simple_mlp/
 
-  # senkin is CITE-only
+  # senkin_tmp is CITE-only
   if [[ "$name" == bmmc_cite/normal ]]; then
-    echo "pre-train senkin on $name"
-    [ -d $OUTPUT_DIR/openproblems_neurips2021/$name/models/senkin/ ] && rm -r $OUTPUT_DIR/openproblems_neurips2021/$name/models/senkin/
-    mkdir -p $OUTPUT_DIR/openproblems_neurips2021/$name/models/senkin/
-    viash run src/methods/senkin/senkin_train/config.vsh.yaml -- \
+    echo "pre-train senkin_tmp on $name"
+    [ -d $OUTPUT_DIR/openproblems_neurips2021/$name/models/senkin_tmp/ ] && rm -r $OUTPUT_DIR/openproblems_neurips2021/$name/models/senkin_tmp/
+    mkdir -p $OUTPUT_DIR/openproblems_neurips2021/$name/models/senkin_tmp/
+    viash run src/methods/senkin_tmp/senkin_tmp_train/config.vsh.yaml -- \
       --input_train_mod1 $OUTPUT_DIR/openproblems_neurips2021/$name/train_mod1.h5ad \
       --input_train_mod2 $OUTPUT_DIR/openproblems_neurips2021/$name/train_mod2.h5ad \
       --input_test_mod1 $OUTPUT_DIR/openproblems_neurips2021/$name/test_mod1.h5ad \
-      --output $OUTPUT_DIR/openproblems_neurips2021/$name/models/senkin/model.pkl
+      --output $OUTPUT_DIR/openproblems_neurips2021/$name/models/senkin_tmp/model.pkl
   fi
 
   echo "pre-train novel on $name"

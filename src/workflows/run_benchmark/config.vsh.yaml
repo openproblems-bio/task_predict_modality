@@ -74,7 +74,7 @@ dependencies:
   - name: methods/guanlab_dengkw_pm
   - name: methods/novel
   - name: methods/simple_mlp
-  - name: methods/senkin
+  - name: methods/senkin_tmp
   - name: metrics/correlation
   - name: metrics/mse
 runners:

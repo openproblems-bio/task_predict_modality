@@ -1,5 +1,5 @@
 __merge__: ../../../api/comp_method_train.yaml
-name: senkin_train
+name: senkin_tmp_train
 resources:
   - path: script.py
     type: python_script
