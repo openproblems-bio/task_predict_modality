@@ -3578,7 +3578,7 @@ meta = [
     "engine" : "native",
     "output" : "target/nextflow/methods/simple_mlp",
     "viash_version" : "0.9.7",
-    "git_commit" : "cf8b845f5821fdb4c0986141bfbfcdb4733bf787",
+    "git_commit" : "0659ffa8cac7c29d8137f59005ab77011a4f6a57",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {

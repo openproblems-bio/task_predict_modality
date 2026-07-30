@@ -3662,7 +3662,7 @@ meta = [
           "type" : "python",
           "user" : false,
           "packages" : [
-            "cellmapper>=0.2.2"
+            "cellmapper>=0.2.6"
           ],
           "upgrade" : true
         }
@@ -3675,7 +3675,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/cellmapper_linear",
     "viash_version" : "0.9.7",
-    "git_commit" : "cf8b845f5821fdb4c0986141bfbfcdb4733bf787",
+    "git_commit" : "0659ffa8cac7c29d8137f59005ab77011a4f6a57",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3935,8 +3935,8 @@ cmap.compute_neighbors(
 cmap.compute_mapping_matrix(kernel_method=par['kernel_method'])
 
 print("Predict on test data", flush=True)
-cmap.map_obsm(key="mod2", prediction_postfix="pred")
-mod2_pred = csc_matrix(cmap.query.obsm["mod2pred"])
+cmap.map_obsm(key="mod2", prediction_postfix="_pred")
+mod2_pred = csc_matrix(cmap.query.obsm["mod2_pred"])
 
 print("Write output AnnData to file", flush=True)
 output = ad.AnnData(

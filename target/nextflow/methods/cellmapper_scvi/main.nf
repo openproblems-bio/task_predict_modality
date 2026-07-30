@@ -3670,14 +3670,14 @@ meta = [
     {
       "type" : "docker",
       "id" : "docker",
-      "image" : "openproblems/base_pytorch_nvidia:1.0.0",
+      "image" : "openproblems/base_pytorch_nvidia:1",
       "namespace_separator" : "/",
       "setup" : [
         {
           "type" : "python",
           "user" : false,
           "packages" : [
-            "cellmapper>=0.2.2",
+            "cellmapper>=0.2.6",
             "scvi-tools>=1.3.0",
             "muon>=0.1.6"
           ],
@@ -3692,7 +3692,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/cellmapper_scvi",
     "viash_version" : "0.9.7",
-    "git_commit" : "cf8b845f5821fdb4c0986141bfbfcdb4733bf787",
+    "git_commit" : "0659ffa8cac7c29d8137f59005ab77011a4f6a57",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
