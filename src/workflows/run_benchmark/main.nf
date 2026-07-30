@@ -21,7 +21,8 @@ methods = [
   simple_mlp,
   babel,
   senkin_tmp,
-  scbutterfly
+  scbutterfly,
+  ss_opm
 ]
 
 // construct list of metrics

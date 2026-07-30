@@ -3769,6 +3769,12 @@ meta = [
       }
     },
     {
+      "name" : "methods/ss_opm",
+      "repository" : {
+        "type" : "local"
+      }
+    },
+    {
       "name" : "metrics/correlation",
       "repository" : {
         "type" : "local"
@@ -3837,7 +3843,7 @@ meta = [
     "engine" : "native",
     "output" : "target/nextflow/workflows/run_benchmark",
     "viash_version" : "0.9.7",
-    "git_commit" : "ce09e2ff61c57bc41700f5c540f0946c1099b87b",
+    "git_commit" : "7e413b196aff00d8b64ab0b2d121c2d44a70a16e",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -4036,6 +4042,7 @@ include { simple_mlp } from "${meta.resources_dir}/../../../nextflow/methods/sim
 include { babel } from "${meta.resources_dir}/../../../nextflow/methods/babel/main.nf"
 include { senkin_tmp } from "${meta.resources_dir}/../../../nextflow/methods/senkin_tmp/main.nf"
 include { scbutterfly } from "${meta.resources_dir}/../../../nextflow/methods/scbutterfly/main.nf"
+include { ss_opm } from "${meta.resources_dir}/../../../nextflow/methods/ss_opm/main.nf"
 include { correlation } from "${meta.resources_dir}/../../../nextflow/metrics/correlation/main.nf"
 include { mse } from "${meta.resources_dir}/../../../nextflow/metrics/mse/main.nf"
 
@@ -4064,7 +4071,8 @@ methods = [
   simple_mlp,
   babel,
   senkin_tmp,
-  scbutterfly
+  scbutterfly,
+  ss_opm
 ]
 
 // construct list of metrics
