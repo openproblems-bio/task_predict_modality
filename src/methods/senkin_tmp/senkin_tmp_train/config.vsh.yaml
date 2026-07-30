@@ -12,14 +12,20 @@ arguments:
     type: integer
     default: 10000
     description: Maximum LightGBM boosting rounds (early stopping applies).
+    info:
+      test_default: 50
   - name: "--lgbm_early_stopping"
     type: integer
     default: 100
     description: LightGBM early stopping patience (rounds without improvement).
+    info:
+      test_default: 10
   - name: "--nn_epochs"
     type: integer
     default: 100
     description: Maximum neural network training epochs (early stopping applies).
+    info:
+      test_default: 2
   - name: "--n_tsvd_components"
     type: integer
     default: 100
