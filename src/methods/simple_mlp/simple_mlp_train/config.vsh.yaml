@@ -1,5 +1,12 @@
 __merge__: /src/api/comp_method_train.yaml
 name: simple_mlp_train
+arguments:
+  - name: "--n_epochs"
+    type: integer
+    required: false
+    description: Number of training epochs. Defaults to the value in the bundled model config.
+    info:
+      test_default: 2
 resources:
   - type: python_script
     path: script.py

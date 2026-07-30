@@ -56,6 +56,10 @@
 
 * `simple_mlp`: Drop the `input_transform` key from the `simple_mlp_predict` call, which is not an argument of that component (PR #44).
 
+* `cellmapper_scvi`: Bump the base image from `openproblems/base_pytorch_nvidia:1.0.0` to `:1`. (PR #53).
+
+* `novel_predict`: Move the model and the input batch onto the selected device. It picked `cuda:0` when a GPU was present but never used it, so the component requested a GPU node and ran inference on CPU (PR #54).
+
 # task_predict_modality 0.1.1
 
 ## NEW FUNCTIONALITY
