@@ -1,3 +1,4 @@
+import sys
 import anndata as ad
 import numpy as np
 from scipy.sparse import csc_matrix
@@ -10,14 +11,18 @@ par = {
     'input_train_mod1': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/normal/train_mod1.h5ad',
     'input_train_mod2': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/normal/train_mod2.h5ad',
     'input_test_mod1': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/normal/test_mod1.h5ad',
-    'output': 'output.h5ad', 
-    'distance_method': 'minkowski', 
-    'n_pcs': 50
+    'output': 'output.h5ad',
+    'n_repeats': 5,
+    'seed': 1000
 }
 meta = {
-    'name': 'guanlab_dengkw_pm'
+    'name': 'guanlab_dengkw_pm',
+    'resources_dir': 'src/utils'
 }
 ## VIASH END
+
+sys.path.append(meta['resources_dir'])
+from exit_codes import exit_non_applicable
 
 
 ## Removed PCA and normalization steps, as they arr already performed with the input data
@@ -49,6 +54,11 @@ n_comp_dict = {
     ("ATAC", "GEX"): (100, 70, 10, 0.1)
 }
 print(f"{mod1_type}, {mod2_type}", flush=True)
+if (mod1_type, mod2_type) not in n_comp_dict:
+    exit_non_applicable(
+        f"Guanlab-dengkw was tuned on the NeurIPS 2021 modality pairs and has no "
+        f"hyperparameters for {mod1_type} -> {mod2_type}"
+    )
 n_mod1, n_mod2, scale, alpha = n_comp_dict[(mod1_type, mod2_type)]
 print(f"{n_mod1}, {n_mod2}, {scale}, {alpha}", flush=True)
 
@@ -68,6 +78,8 @@ if n_mod2 is not None and n_mod2 < input_train_mod2.n_vars:
     embedder_mod2 = TruncatedSVD(n_components=n_mod2)
     train_gs = embedder_mod2.fit_transform(input_train_mod2.layers["normalized"]).astype(np.float32)
 else:
+    # no dimensionality reduction, so the KRR predicts the mod2 features directly
+    embedder_mod2 = None
     train_gs = input_train_mod2.to_df(layer="normalized").values.astype(np.float32)
 
 del input_train
@@ -86,36 +98,36 @@ test_norm = test_norm.astype(np.float32)
 del test_matrix
 
 print('Running KRR model ...', flush=True)
-if batch_len == 1:
-    # just in case there is only one batch
-    batch_subsets = [batches]
-elif mod1_type == "ADT" or mod2_type == "ADT":
-    # two fold consensus predictions
-    batch_subsets = [
-        batches[:batch_len//2],
-        batches[batch_len//2:]
-    ]
-else:
-    # leave-one-batch-out consensus predictions
-    batch_subsets = [
-        batches[:i] + batches[i+1:]
-        for i in range(batch_len)
-    ]
-
+# consensus over n_repeats reshuffles of the batches into two halves, as in the
+# original submission
 y_pred = np.zeros((input_test_mod1.n_obs, input_train_mod2.n_vars), dtype=np.float32)
-for batch in batch_subsets:
-    print(batch, flush=True)
-    kernel = RBF(length_scale = scale)
-    krr = KernelRidge(alpha=alpha, kernel=kernel)
-    print('Fitting KRR ... ', flush=True)
-    krr.fit(
-        train_norm[input_train_mod1.obs.batch.isin(batch)], 
-        train_gs[input_train_mod2.obs.batch.isin(batch)]
-    )
-    y_pred += (krr.predict(test_norm) @ embedder_mod2.components_)
+np.random.seed(par['seed'])
+n_models = 0
+
+for _ in range(par['n_repeats']):
+    np.random.shuffle(batches)
+    for batch in [batches[:batch_len//2], batches[batch_len//2:]]:
+        # with a single batch one half comes out empty
+        if not batch:
+            batch = [batches[0]]
+
+        print(batch, flush=True)
+        kernel = RBF(length_scale = scale)
+        krr = KernelRidge(alpha=alpha, kernel=kernel)
+        print('Fitting KRR ... ', flush=True)
+        krr.fit(
+            train_norm[input_train_mod1.obs.batch.isin(batch)],
+            train_gs[input_train_mod2.obs.batch.isin(batch)]
+        )
+        y_pred_batch = krr.predict(test_norm)
+        if embedder_mod2 is not None:
+            # map the predicted components back to the mod2 feature space
+            y_pred_batch = y_pred_batch @ embedder_mod2.components_
+        y_pred += y_pred_batch
+        n_models += 1
 
 np.clip(y_pred, a_min=0, a_max=None, out=y_pred)
-y_pred /= len(batch_subsets)
+y_pred /= n_models
 
 # Store as sparse matrix to be efficient. 
 # Note that this might require different classifiers/embedders before-hand. 
