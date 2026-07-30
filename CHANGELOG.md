@@ -1,5 +1,9 @@
 # task_predict_modality 0.2.0
 
+## NEW FUNCTIONALITY
+
+* Added `src/utils/exit_codes.py`, so components can mark themselves non-applicable for a dataset (PR #32).
+
 ## MINOR CHANGES
 
 * `file_train_mod1`, `file_train_mod2`, `file_test_mod1`, `file_test_mod2`: Declare `uns["modality"]`, which `process_dataset` already writes and which six methods and the `run_benchmark` workflow already read (PR #29).
@@ -33,6 +37,10 @@
 * `novel_train`: Store only the metadata `novel_predict` needs in the model artifact, instead of a full copy of `train_mod2` (PR #47).
 
 ## BUG FIXES
+
+* `guanlab_dengkw_pm`: Restore the consensus scheme of the original submission -- five reshuffles of the batches into two halves, ten kernel ridge models averaged. The port had replaced it with a single fixed two-way split for ADT pairs and leave-one-batch-out otherwise, so the result depended on the order the batches happened to come in. `--n_repeats` and `--seed` are now arguments; the unused `--distance_method` and `--n_pcs` are gone (PR #32).
+
+* `guanlab_dengkw_pm`: Only map the predictions back through the mod2 SVD when that SVD was actually fitted. When the target had fewer features than `n_mod2`, the method raised `NameError: embedder_mod2`. Unsupported modality pairs now exit 99 (non-applicable) instead of raising a `KeyError` (PR #32).
 
 * `novel_train`: Seed the fallback that picks the internal validation batches, and log which ones were picked. Both `bmmc_multiome` datasets take this path, so the checkpoint `novel` kept differed from run to run (PR #46).
 
