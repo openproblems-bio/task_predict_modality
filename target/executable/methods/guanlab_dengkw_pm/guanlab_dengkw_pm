@@ -449,9 +449,9 @@ RUN pip install --upgrade pip && \
   pip install --upgrade --no-cache-dir "scikit-learn" "pandas" "numpy"
 
 LABEL org.opencontainers.image.description="Companion container for running component methods guanlab_dengkw_pm"
-LABEL org.opencontainers.image.created="2026-07-30T14:52:36Z"
+LABEL org.opencontainers.image.created="2026-07-30T17:07:55Z"
 LABEL org.opencontainers.image.source="https://github.com/openproblems-bio/neurips2021_multimodal_topmethods/tree/main/src/predict_modality/methods/Guanlab-dengkw"
-LABEL org.opencontainers.image.revision="e0e3c90a45d674542835fa86b9cbf43f620f634e"
+LABEL org.opencontainers.image.revision="221a0290600aeb9e3f38e533d0029ee1ff13052d"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER
@@ -604,17 +604,18 @@ function ViashHelp {
   echo "        example:"
   echo "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/prediction.h5ad"
   echo ""
-  echo "    --distance_method"
-  echo "        type: string"
-  echo "        default: minkowski"
-  echo "        choices: [ euclidean, minkowski ]"
-  echo "        The distance metric to use. Possible values include \`euclidean\` and"
-  echo "        \`minkowski\`."
-  echo ""
-  echo "    --n_pcs"
+  echo "    --n_repeats"
   echo "        type: integer"
-  echo "        default: 50"
-  echo "        Number of components to use for dimensionality reduction."
+  echo "        default: 5"
+  echo "        Number of times the batches are reshuffled into two halves. Each half"
+  echo "        fits one"
+  echo "        kernel ridge model, so the consensus averages \`2 * n_repeats\`"
+  echo "        predictions."
+  echo ""
+  echo "    --seed"
+  echo "        type: integer"
+  echo "        default: 1000"
+  echo "        Seed for the batch reshuffling."
   echo ""
   echo "Viash built in Computational Requirements:"
   echo "    ---cpus=INT"
@@ -710,26 +711,26 @@ while [[ $# -gt 0 ]]; do
             VIASH_PAR_OUTPUT=$(ViashRemoveFlags "$1")
             shift 1
             ;;
-        --distance_method)
-            [ -n "$VIASH_PAR_DISTANCE_METHOD" ] && ViashError Bad arguments for option \'--distance_method\': \'$VIASH_PAR_DISTANCE_METHOD\' \& \'$2\' - you should provide exactly one argument for this option. && exit 1
-            VIASH_PAR_DISTANCE_METHOD="$2"
-            [ $# -lt 2 ] && ViashError Not enough arguments passed to --distance_method. Use "--help" to get more information on the parameters. && exit 1
+        --n_repeats)
+            [ -n "$VIASH_PAR_N_REPEATS" ] && ViashError Bad arguments for option \'--n_repeats\': \'$VIASH_PAR_N_REPEATS\' \& \'$2\' - you should provide exactly one argument for this option. && exit 1
+            VIASH_PAR_N_REPEATS="$2"
+            [ $# -lt 2 ] && ViashError Not enough arguments passed to --n_repeats. Use "--help" to get more information on the parameters. && exit 1
             shift 2
             ;;
-        --distance_method=*)
-            [ -n "$VIASH_PAR_DISTANCE_METHOD" ] && ViashError Bad arguments for option \'--distance_method=*\': \'$VIASH_PAR_DISTANCE_METHOD\' \& \'$2\' - you should provide exactly one argument for this option. && exit 1
-            VIASH_PAR_DISTANCE_METHOD=$(ViashRemoveFlags "$1")
+        --n_repeats=*)
+            [ -n "$VIASH_PAR_N_REPEATS" ] && ViashError Bad arguments for option \'--n_repeats=*\': \'$VIASH_PAR_N_REPEATS\' \& \'$2\' - you should provide exactly one argument for this option. && exit 1
+            VIASH_PAR_N_REPEATS=$(ViashRemoveFlags "$1")
             shift 1
             ;;
-        --n_pcs)
-            [ -n "$VIASH_PAR_N_PCS" ] && ViashError Bad arguments for option \'--n_pcs\': \'$VIASH_PAR_N_PCS\' \& \'$2\' - you should provide exactly one argument for this option. && exit 1
-            VIASH_PAR_N_PCS="$2"
-            [ $# -lt 2 ] && ViashError Not enough arguments passed to --n_pcs. Use "--help" to get more information on the parameters. && exit 1
+        --seed)
+            [ -n "$VIASH_PAR_SEED" ] && ViashError Bad arguments for option \'--seed\': \'$VIASH_PAR_SEED\' \& \'$2\' - you should provide exactly one argument for this option. && exit 1
+            VIASH_PAR_SEED="$2"
+            [ $# -lt 2 ] && ViashError Not enough arguments passed to --seed. Use "--help" to get more information on the parameters. && exit 1
             shift 2
             ;;
-        --n_pcs=*)
-            [ -n "$VIASH_PAR_N_PCS" ] && ViashError Bad arguments for option \'--n_pcs=*\': \'$VIASH_PAR_N_PCS\' \& \'$2\' - you should provide exactly one argument for this option. && exit 1
-            VIASH_PAR_N_PCS=$(ViashRemoveFlags "$1")
+        --seed=*)
+            [ -n "$VIASH_PAR_SEED" ] && ViashError Bad arguments for option \'--seed=*\': \'$VIASH_PAR_SEED\' \& \'$2\' - you should provide exactly one argument for this option. && exit 1
+            VIASH_PAR_SEED=$(ViashRemoveFlags "$1")
             shift 1
             ;;
         ---engine)
@@ -944,11 +945,11 @@ if [ -z ${VIASH_META_TEMP_DIR+x} ]; then
 fi
 
 # filling in defaults
-if [ -z ${VIASH_PAR_DISTANCE_METHOD+x} ]; then
-  VIASH_PAR_DISTANCE_METHOD="minkowski"
+if [ -z ${VIASH_PAR_N_REPEATS+x} ]; then
+  VIASH_PAR_N_REPEATS="5"
 fi
-if [ -z ${VIASH_PAR_N_PCS+x} ]; then
-  VIASH_PAR_N_PCS="50"
+if [ -z ${VIASH_PAR_SEED+x} ]; then
+  VIASH_PAR_SEED="1000"
 fi
 
 # check whether required files exist
@@ -966,9 +967,15 @@ if [ ! -z "$VIASH_PAR_INPUT_TEST_MOD1" ] && [ ! -e "$VIASH_PAR_INPUT_TEST_MOD1" 
 fi
 
 # check whether parameters values are of the right type
-if [[ -n "$VIASH_PAR_N_PCS" ]]; then
-  if ! [[ "$VIASH_PAR_N_PCS" =~ ^[-+]?[0-9]+$ ]]; then
-    ViashError '--n_pcs' has to be an integer. Use "--help" to get more information on the parameters.
+if [[ -n "$VIASH_PAR_N_REPEATS" ]]; then
+  if ! [[ "$VIASH_PAR_N_REPEATS" =~ ^[-+]?[0-9]+$ ]]; then
+    ViashError '--n_repeats' has to be an integer. Use "--help" to get more information on the parameters.
+    exit 1
+  fi
+fi
+if [[ -n "$VIASH_PAR_SEED" ]]; then
+  if ! [[ "$VIASH_PAR_SEED" =~ ^[-+]?[0-9]+$ ]]; then
+    ViashError '--seed' has to be an integer. Use "--help" to get more information on the parameters.
     exit 1
   fi
 fi
@@ -1043,19 +1050,6 @@ if [[ -n "$VIASH_META_MEMORY_PIB" ]]; then
     ViashError 'memory_pib' has to be a long. Use "--help" to get more information on the parameters.
     exit 1
   fi
-fi
-
-# check whether value is belongs to a set of choices
-if [ ! -z "$VIASH_PAR_DISTANCE_METHOD" ]; then
-  VIASH_PAR_DISTANCE_METHOD_CHOICES=("euclidean;minkowski")
-  IFS=';'
-  set -f
-  if ! [[ ";${VIASH_PAR_DISTANCE_METHOD_CHOICES[*]};" =~ ";$VIASH_PAR_DISTANCE_METHOD;" ]]; then
-    ViashError '--distance_method' specified value of \'$VIASH_PAR_DISTANCE_METHOD\' is not in the list of allowed values. Use "--help" to get more information on the parameters.
-    exit 1
-  fi
-  set +f
-  unset IFS
 fi
 
 # create parent directories of output files, if so desired
@@ -1150,6 +1144,7 @@ function interrupt {
 trap clean_up EXIT
 trap interrupt INT SIGINT
 cat > "\$tempscript" << 'VIASHMAIN'
+import sys
 import anndata as ad
 import numpy as np
 from scipy.sparse import csc_matrix
@@ -1164,8 +1159,8 @@ par = {
   'input_train_mod2': $( if [ ! -z ${VIASH_PAR_INPUT_TRAIN_MOD2+x} ]; then echo "r'${VIASH_PAR_INPUT_TRAIN_MOD2//\'/\'\"\'\"r\'}'"; else echo None; fi ),
   'input_test_mod1': $( if [ ! -z ${VIASH_PAR_INPUT_TEST_MOD1+x} ]; then echo "r'${VIASH_PAR_INPUT_TEST_MOD1//\'/\'\"\'\"r\'}'"; else echo None; fi ),
   'output': $( if [ ! -z ${VIASH_PAR_OUTPUT+x} ]; then echo "r'${VIASH_PAR_OUTPUT//\'/\'\"\'\"r\'}'"; else echo None; fi ),
-  'distance_method': $( if [ ! -z ${VIASH_PAR_DISTANCE_METHOD+x} ]; then echo "r'${VIASH_PAR_DISTANCE_METHOD//\'/\'\"\'\"r\'}'"; else echo None; fi ),
-  'n_pcs': $( if [ ! -z ${VIASH_PAR_N_PCS+x} ]; then echo "int(r'${VIASH_PAR_N_PCS//\'/\'\"\'\"r\'}')"; else echo None; fi )
+  'n_repeats': $( if [ ! -z ${VIASH_PAR_N_REPEATS+x} ]; then echo "int(r'${VIASH_PAR_N_REPEATS//\'/\'\"\'\"r\'}')"; else echo None; fi ),
+  'seed': $( if [ ! -z ${VIASH_PAR_SEED+x} ]; then echo "int(r'${VIASH_PAR_SEED//\'/\'\"\'\"r\'}')"; else echo None; fi )
 }
 meta = {
   'name': $( if [ ! -z ${VIASH_META_NAME+x} ]; then echo "r'${VIASH_META_NAME//\'/\'\"\'\"r\'}'"; else echo None; fi ),
@@ -1192,6 +1187,9 @@ dep = {
 }
 
 ## VIASH END
+
+sys.path.append(meta['resources_dir'])
+from exit_codes import exit_non_applicable
 
 
 ## Removed PCA and normalization steps, as they arr already performed with the input data
@@ -1223,6 +1221,11 @@ n_comp_dict = {
     ("ATAC", "GEX"): (100, 70, 10, 0.1)
 }
 print(f"{mod1_type}, {mod2_type}", flush=True)
+if (mod1_type, mod2_type) not in n_comp_dict:
+    exit_non_applicable(
+        f"Guanlab-dengkw was tuned on the NeurIPS 2021 modality pairs and has no "
+        f"hyperparameters for {mod1_type} -> {mod2_type}"
+    )
 n_mod1, n_mod2, scale, alpha = n_comp_dict[(mod1_type, mod2_type)]
 print(f"{n_mod1}, {n_mod2}, {scale}, {alpha}", flush=True)
 
@@ -1242,6 +1245,8 @@ if n_mod2 is not None and n_mod2 < input_train_mod2.n_vars:
     embedder_mod2 = TruncatedSVD(n_components=n_mod2)
     train_gs = embedder_mod2.fit_transform(input_train_mod2.layers["normalized"]).astype(np.float32)
 else:
+    # no dimensionality reduction, so the KRR predicts the mod2 features directly
+    embedder_mod2 = None
     train_gs = input_train_mod2.to_df(layer="normalized").values.astype(np.float32)
 
 del input_train
@@ -1260,36 +1265,36 @@ test_norm = test_norm.astype(np.float32)
 del test_matrix
 
 print('Running KRR model ...', flush=True)
-if batch_len == 1:
-    # just in case there is only one batch
-    batch_subsets = [batches]
-elif mod1_type == "ADT" or mod2_type == "ADT":
-    # two fold consensus predictions
-    batch_subsets = [
-        batches[:batch_len//2],
-        batches[batch_len//2:]
-    ]
-else:
-    # leave-one-batch-out consensus predictions
-    batch_subsets = [
-        batches[:i] + batches[i+1:]
-        for i in range(batch_len)
-    ]
-
+# consensus over n_repeats reshuffles of the batches into two halves, as in the
+# original submission
 y_pred = np.zeros((input_test_mod1.n_obs, input_train_mod2.n_vars), dtype=np.float32)
-for batch in batch_subsets:
-    print(batch, flush=True)
-    kernel = RBF(length_scale = scale)
-    krr = KernelRidge(alpha=alpha, kernel=kernel)
-    print('Fitting KRR ... ', flush=True)
-    krr.fit(
-        train_norm[input_train_mod1.obs.batch.isin(batch)], 
-        train_gs[input_train_mod2.obs.batch.isin(batch)]
-    )
-    y_pred += (krr.predict(test_norm) @ embedder_mod2.components_)
+np.random.seed(par['seed'])
+n_models = 0
+
+for _ in range(par['n_repeats']):
+    np.random.shuffle(batches)
+    for batch in [batches[:batch_len//2], batches[batch_len//2:]]:
+        # with a single batch one half comes out empty
+        if not batch:
+            batch = [batches[0]]
+
+        print(batch, flush=True)
+        kernel = RBF(length_scale = scale)
+        krr = KernelRidge(alpha=alpha, kernel=kernel)
+        print('Fitting KRR ... ', flush=True)
+        krr.fit(
+            train_norm[input_train_mod1.obs.batch.isin(batch)],
+            train_gs[input_train_mod2.obs.batch.isin(batch)]
+        )
+        y_pred_batch = krr.predict(test_norm)
+        if embedder_mod2 is not None:
+            # map the predicted components back to the mod2 feature space
+            y_pred_batch = y_pred_batch @ embedder_mod2.components_
+        y_pred += y_pred_batch
+        n_models += 1
 
 np.clip(y_pred, a_min=0, a_max=None, out=y_pred)
-y_pred /= len(batch_subsets)
+y_pred /= n_models
 
 # Store as sparse matrix to be efficient. 
 # Note that this might require different classifiers/embedders before-hand. 

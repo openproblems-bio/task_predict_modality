@@ -18,18 +18,22 @@ info:
   preferred_normalization: log_cp10k
   competition_submission_id: 170636
 arguments:
-  - name: "--distance_method"
-    type: "string"
-    default: "minkowski"
-    description: The distance metric to use. Possible values include `euclidean` and `minkowski`.
-    choices: [euclidean, minkowski]
-  - name: "--n_pcs"
+  - name: "--n_repeats"
     type: "integer"
-    default: 50
-    description: Number of components to use for dimensionality reduction.
+    default: 5
+    description: |
+      Number of times the batches are reshuffled into two halves. Each half fits one
+      kernel ridge model, so the consensus averages `2 * n_repeats` predictions.
+    info:
+      test_default: 1
+  - name: "--seed"
+    type: "integer"
+    default: 1000
+    description: Seed for the batch reshuffling.
 resources:
   - type: python_script
     path: script.py
+  - path: /src/utils/exit_codes.py
 engines:
   - type: docker
     image: openproblems/base_python:1
