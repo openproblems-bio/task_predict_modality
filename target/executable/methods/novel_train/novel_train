@@ -449,9 +449,9 @@ RUN pip install --upgrade pip && \
   pip install --upgrade --no-cache-dir "scikit-learn" "networkx"
 
 LABEL org.opencontainers.image.description="Companion container for running component methods novel_train"
-LABEL org.opencontainers.image.created="2026-07-30T14:47:14Z"
+LABEL org.opencontainers.image.created="2026-07-30T14:52:36Z"
 LABEL org.opencontainers.image.source="https://github.com/openproblems-bio/task_predict_modality"
-LABEL org.opencontainers.image.revision="7e413b196aff00d8b64ab0b2d121c2d44a70a16e"
+LABEL org.opencontainers.image.revision="e0e3c90a45d674542835fa86b9cbf43f620f634e"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER
@@ -1163,7 +1163,8 @@ print('Load data', flush=True)
 input_train_mod1 = ad.read_h5ad(par['input_train_mod1'])
 input_train_mod2 = ad.read_h5ad(par['input_train_mod2'])
 
-adata = input_train_mod2.copy()
+# carries the metadata novel_predict needs; the matrix itself is not used there
+adata = ad.AnnData(uns=dict(input_train_mod2.uns))
 
 mod1 = input_train_mod1.uns['modality']
 mod2 = input_train_mod2.uns['modality']

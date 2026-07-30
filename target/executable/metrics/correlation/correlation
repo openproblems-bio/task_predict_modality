@@ -449,9 +449,9 @@ RUN Rscript -e 'options(warn = 2); if (!requireNamespace("remotes", quietly = TR
   Rscript -e 'options(warn = 2); remotes::install_cran(c("proxyC", "testthat", "dynutils"), repos = "https://cran.rstudio.com")'
 
 LABEL org.opencontainers.image.description="Companion container for running component metrics correlation"
-LABEL org.opencontainers.image.created="2026-07-30T14:47:15Z"
+LABEL org.opencontainers.image.created="2026-07-30T14:52:36Z"
 LABEL org.opencontainers.image.source="https://github.com/openproblems-bio/task_predict_modality"
-LABEL org.opencontainers.image.revision="7e413b196aff00d8b64ab0b2d121c2d44a70a16e"
+LABEL org.opencontainers.image.revision="e0e3c90a45d674542835fa86b9cbf43f620f634e"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER
