@@ -204,11 +204,10 @@ class ModelRegressionGex2Adt(nn.Module):
 def rmse(y, y_pred):
     return np.sqrt(np.mean(np.square(y - y_pred)))
 
-def train_and_valid(model, optimizer, loss_fn, dataloader_train, dataloader_test, name_model, device):
+def train_and_valid(model, optimizer, loss_fn, dataloader_train, dataloader_test, name_model, device, n_epochs=100):
     best_score = 100000
-    for i in range(100):
+    for i in range(n_epochs):
         train_losses = []
-        test_losses = []
         model.train()
 
         for x, y in dataloader_train:
@@ -218,14 +217,6 @@ def train_and_valid(model, optimizer, loss_fn, dataloader_train, dataloader_test
             loss.backward()
             train_losses.append(loss.item())
             optimizer.step()
-
-        model.eval()
-        with torch.no_grad():
-            for x, y in dataloader_test:
-                output = model(x.float().to(device))
-                output[output<0] = 0.0
-                loss = torch.sqrt(loss_fn(output, y.float().to(device)))
-                test_losses.append(loss.item())
 
         outputs = []
         targets = []

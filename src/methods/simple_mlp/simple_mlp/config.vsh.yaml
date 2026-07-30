@@ -25,3 +25,6 @@ dependencies:
   - name: methods/simple_mlp_predict
 runners:
   - type: nextflow
+    directives:
+      # inert placeholder -- remove when check_config is updated (openproblems-bio/core#41)
+      label: [lowtime, lowmem, lowcpu]

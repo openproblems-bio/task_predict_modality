@@ -1,4 +1,4 @@
-__merge__: ../../../api/comp_method.yaml
+__merge__: /src/api/wf_method.yaml
 name: novel
 label: Novel
 summary: A method using encoder-decoder MLP model
@@ -20,4 +20,7 @@ dependencies:
   - name: methods/novel_train
   - name: methods/novel_predict
 runners:
-  - type: nextflow 
+  - type: nextflow
+    directives:
+      # inert placeholder -- remove when check_config is updated (openproblems-bio/core#41)
+      label: [lowtime, lowmem, lowcpu]

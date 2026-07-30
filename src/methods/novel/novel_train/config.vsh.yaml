@@ -1,5 +1,12 @@
 __merge__: ../../../api/comp_method_train.yaml
 name: novel_train
+arguments:
+  - name: "--n_epochs"
+    type: integer
+    default: 100
+    description: Number of training epochs.
+    info:
+      test_default: 2
 resources:
   - path: script.py
     type: python_script

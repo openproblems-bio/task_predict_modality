@@ -19,10 +19,11 @@ par = {
     'input_train_mod1': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap/train_mod1.h5ad',
     'input_train_mod2': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap/train_mod2.h5ad',
     'input_test_mod1': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap/test_mod1.h5ad',
-    'output': 'output/model'
+    'output': 'output/model',
+    'n_epochs': None
 }
 meta = {
-    'resources_dir': 'src/tasks/predict_modality/methods/simple_mlp',
+    'resources_dir': 'src/methods/simple_mlp',
     'cpus': 10
 }
 ## VIASH END
@@ -137,6 +138,9 @@ for fold in range(3):
     logger = TensorBoardLogger(save_path, name='') 
 
     config = utils.load_yaml(yaml_path)
+
+    if par["n_epochs"] is not None:
+        config = config._replace(epochs=par["n_epochs"])
 
     if config.batch_size > X.shape[0]:
         config = config._replace(batch_size=math.ceil(X.shape[0] / 2))
