@@ -3598,7 +3598,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/novel_predict",
     "viash_version" : "0.9.7",
-    "git_commit" : "0659ffa8cac7c29d8137f59005ab77011a4f6a57",
+    "git_commit" : "0a0174dafe9d43d5b7fecd85f813ed37607220ae",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3909,10 +3909,13 @@ dataset_test = ModalityMatchingDataset(input_test_mod1_, None, is_train=False)
 dataloader_test = DataLoader(dataset_test, 32, shuffle = False, num_workers = 4)
 
 outputs = []
+# the weights are loaded with map_location='cpu', so move the model onto the device
+# we selected above -- otherwise this component requests a GPU and never uses it
+model = model.to(device)
 model.eval()
 with torch.no_grad():
     for x in dataloader_test:
-        output = model(x.float())
+        output = model(x.float().to(device))
         outputs.append(output.detach().cpu().numpy())
 
 outputs = np.concatenate(outputs)

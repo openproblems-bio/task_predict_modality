@@ -3692,7 +3692,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/cellmapper_scvi",
     "viash_version" : "0.9.7",
-    "git_commit" : "0659ffa8cac7c29d8137f59005ab77011a4f6a57",
+    "git_commit" : "0a0174dafe9d43d5b7fecd85f813ed37607220ae",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
