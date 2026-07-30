@@ -10,6 +10,9 @@ info:
 resources:
   - path: script.py
     type: python_script
+test_resources:
+  - path: /resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal
+    dest: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal
 engines:
   - type: docker
     image: openproblems/base_pytorch_nvidia:1
