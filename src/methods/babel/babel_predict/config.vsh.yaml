@@ -1,0 +1,28 @@
+__merge__: /src/api/comp_method_predict.yaml
+name: babel_predict
+info:
+  test_setup:
+    multiome:
+      input_test_mod1: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap/test_mod1.h5ad
+      input_train_mod2: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap/train_mod2.h5ad
+      input_model: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap/models/babel/output_model.pkl
+resources:
+  - path: script.py
+    type: python_script
+  - path: ../model.py
+    dest: model.py
+test_resources:
+  - path: /resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap
+    dest: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap
+engines:
+  - type: docker
+    image: openproblems/base_pytorch_nvidia:1
+    setup:
+      - type: python
+        packages:
+          - scikit-learn>=1.1
+runners:
+  - type: executable
+  - type: nextflow
+    directives:
+      label: [highmem, hightime, midcpu, gpu]
