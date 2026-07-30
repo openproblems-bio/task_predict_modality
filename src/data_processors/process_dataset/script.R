@@ -32,6 +32,11 @@ cat("Reading input data\n")
 ad1 <- anndata::read_h5ad(if (!par$swap) par$input_mod1 else par$input_mod2)
 ad2 <- anndata::read_h5ad(if (!par$swap) par$input_mod2 else par$input_mod1)
 
+# input checks -- used to balance the subsample of test cells further down
+if (!"cell_type" %in% colnames(ad1$obs)) {
+  stop("obs['cell_type'] is required but missing from the input dataset")
+}
+
 # use heuristic to determine modality
 # TODO: should be removed once modality is stored in the uns
 determine_modality <- function(ad, mod1 = TRUE) {
@@ -85,7 +90,9 @@ if (ad2_mod == "ATAC") {
   # subset to make the task computationally feasible
   if (ncol(ad2) > 10000) {
     poss_ix <- which(Matrix::colSums(ad2$layers[["normalized"]]) > 0)
-    sel_ix <- sort(sample(poss_ix, 10000))
+    # sample by position -- sample(x, n) errors when n > length(x), and treats a
+    # length-1 x as seq_len(x)
+    sel_ix <- sort(poss_ix[sample.int(length(poss_ix), min(10000, length(poss_ix)))])
     ad2 <- ad2[, sel_ix]$copy()
     ad2_var <- ad2_var[sel_ix, , drop = FALSE]
   }
@@ -98,8 +105,26 @@ if (ad2_mod == "ATAC") {
 }
 
 cat("Creating train/test split\n")
-is_train <- which(ad1$obs[["is_train"]] == "train")
-is_test <- which(!ad1$obs[["is_train"]] == "train")
+if ("is_train" %in% colnames(ad1$obs)) {
+  is_train <- which(ad1$obs[["is_train"]] == "train")
+  is_test <- which(ad1$obs[["is_train"]] != "train")
+} else {
+  # No predefined split -- obs['is_train'] carries the NeurIPS 2021 competition
+  # split and other datasets have no reason to have it. Hold out a quarter of the
+  # batches instead, so the test cells come from donors the method has not seen.
+  batches <- unique(as.character(ad1$obs[["batch"]]))
+  if (length(batches) > 1) {
+    test_batches <- sample(batches, max(1, floor(length(batches) / 4)))
+    cat("No obs['is_train'], holding out batches: ", paste(test_batches, collapse = ", "), "\n", sep = "")
+    in_test <- as.character(ad1$obs[["batch"]]) %in% test_batches
+  } else {
+    cat("No obs['is_train'] and only one batch, holding out a quarter of the cells\n")
+    in_test <- seq_len(nrow(ad1)) %in% sample.int(nrow(ad1), max(1, floor(nrow(ad1) / 4)))
+  }
+  is_train <- which(!in_test)
+  is_test <- which(in_test)
+}
+cat("Train cells: ", length(is_train), ", test cells: ", length(is_test), "\n", sep = "")
 
 # sample cells
 if (length(is_test) > 1000) {
