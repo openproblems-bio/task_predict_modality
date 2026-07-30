@@ -79,7 +79,7 @@ test_batches = {'s1d2', 's3d7'}
 if len(test_batches.intersection(set(batch))) == 0:
   all_batches = batch.cat.categories.tolist()
   rng = np.random.default_rng(par['seed'])
-  test_batches = set(rng.choice(all_batches, math.ceil(len(all_batches) * 0.25), replace=False))
+  test_batches = set(map(str, rng.choice(all_batches, math.ceil(len(all_batches) * 0.25), replace=False)))
 print(f"Using {sorted(test_batches)} as internal validation batches", flush=True)
 train_ix = [ k for k,v in enumerate(batch) if v not in test_batches ]
 test_ix = [ k for k,v in enumerate(batch) if v in test_batches ]
