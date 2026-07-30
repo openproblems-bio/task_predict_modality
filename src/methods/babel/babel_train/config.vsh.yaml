@@ -28,6 +28,8 @@ arguments:
     type: integer
     default: 100
     description: Maximum training epochs (early stopping applies).
+    info:
+      test_default: 2
   - name: "--lr"
     type: double
     default: 0.001
