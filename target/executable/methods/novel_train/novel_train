@@ -449,9 +449,9 @@ RUN pip install --upgrade pip && \
   pip install --upgrade --no-cache-dir "scikit-learn" "networkx"
 
 LABEL org.opencontainers.image.description="Companion container for running component methods novel_train"
-LABEL org.opencontainers.image.created="2026-07-30T07:22:17Z"
+LABEL org.opencontainers.image.created="2026-07-30T09:19:04Z"
 LABEL org.opencontainers.image.source="https://github.com/openproblems-bio/task_predict_modality"
-LABEL org.opencontainers.image.revision="d995beb12e96a6a58e163d010332002c1cb23732"
+LABEL org.opencontainers.image.revision="882548eb6097f23039fac872b9ff226978d5fe5e"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER
@@ -589,6 +589,7 @@ function ViashHelp {
   echo ""
   echo "    --output"
   echo "        type: file, required parameter, output, file must exist"
+  echo "        example: model"
   echo ""
   echo "Viash built in Computational Requirements:"
   echo "    ---cpus=INT"

@@ -3424,6 +3424,9 @@ meta = [
           "name" : "--output",
           "label" : "Pretrained model",
           "summary" : "A pretrained model for predicting the expression of one modality from another.",
+          "example" : [
+            "model"
+          ],
           "must_exist" : true,
           "create_parent" : true,
           "required" : true,
@@ -3551,7 +3554,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/novel_train",
     "viash_version" : "0.9.7",
-    "git_commit" : "d995beb12e96a6a58e163d010332002c1cb23732",
+    "git_commit" : "882548eb6097f23039fac872b9ff226978d5fe5e",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
