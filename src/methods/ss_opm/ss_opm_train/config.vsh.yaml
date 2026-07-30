@@ -1,8 +1,39 @@
 __merge__: ../../../api/comp_method_train.yaml
 name: ss_opm_train
+arguments:
+  - name: "--n_epochs"
+    type: integer
+    default: 40
+    description: Number of training epochs.
+    info:
+      test_default: 2
+  - name: "--burnin_length_epoch"
+    type: integer
+    default: 10
+    description: |
+      Epochs before the training-length ratio starts ramping up. Must be below
+      `--n_epochs`, otherwise every epoch stays at ratio 0.
+    info:
+      test_default: 0
+  - name: "--cell_type_col"
+    type: string
+    required: false
+    description: |
+      Column in `obs` holding cell type labels. ss_opm uses them for the `cell_ratio_*`
+      features. This task's file format does not carry cell types, so it is unset by
+      default and the ratios fall back to uniform; set it when plugging in a dataset
+      that does have them.
+  - name: "--day_pattern"
+    type: string
+    default: 'd(\d+)'
+    description: |
+      Regex whose first capture group is the collection day within a batch label. The
+      default matches the NeurIPS 2021 `s{site}d{day}` naming. Batches that do not match
+      get day 0, i.e. the model sees a single constant day rather than failing.
 resources:
   - type: python_script
     path: script.py
+  - path: ../ss_opm_common.py
 engines:
   - type: docker
     image: openproblems/base_pytorch_nvidia:1

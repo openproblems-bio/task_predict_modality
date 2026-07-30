@@ -1,8 +1,30 @@
 __merge__: ../../../api/comp_method_predict.yaml
 name: ss_opm_predict
+
+info:
+  test_setup:
+    with_model:
+      input_model: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/models/ss_opm
+arguments:
+  - name: "--cell_type_col"
+    type: string
+    required: false
+    description: |
+      Column in `obs` holding cell type labels. ss_opm uses them for the `cell_ratio_*`
+      features. This task's file format does not carry cell types, so it is unset by
+      default and the ratios fall back to uniform; set it when plugging in a dataset
+      that does have them.
+  - name: "--day_pattern"
+    type: string
+    default: 'd(\d+)'
+    description: |
+      Regex whose first capture group is the collection day within a batch label. The
+      default matches the NeurIPS 2021 `s{site}d{day}` naming. Batches that do not match
+      get day 0, i.e. the model sees a single constant day rather than failing.
 resources:
   - type: python_script
     path: script.py
+  - path: ../ss_opm_common.py
 engines:
   - type: docker
     image: openproblems/base_pytorch_nvidia:1

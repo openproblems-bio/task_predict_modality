@@ -22,12 +22,19 @@ par = {
     'input_train_mod2': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/train_mod2.h5ad',
     'input_test_mod1': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/test_mod1.h5ad',
     'output': 'output/models/ss_opm',
+    'cell_type_col': None,
+    'day_pattern': r'd(\d+)',
+    'n_epochs': 40,
+    'burnin_length_epoch': 10,
 }
 meta = {
     'name': 'ss_opm_train',
-    'resources_dir': 'src/methods/ss_opm/ss_opm_train',
+    'resources_dir': 'src/methods/ss_opm',
 }
 ## VIASH END
+
+sys.path.append(meta['resources_dir'])
+from ss_opm_common import build_metadata, to_sparse_csr
 
 # Monkey-patch the source utility modules so ALL callers (pre_post_processing,
 # IterativeSVDImputator, etc.) use safe versions that handle all-zero/all-NaN rows.
@@ -82,69 +89,6 @@ SEED = 42
 set_seed(SEED)
 
 
-def build_metadata(adata, task_type):
-    """Build a metadata DataFrame compatible with ss_opm from an H5AD AnnData.
-
-    The original ss_opm model expects metadata columns derived from the Kaggle
-    competition dataset (technology, donor, day, cell_type, plus per-cell stats).
-    Here we derive what we can from the H5AD obs and compute per-cell statistics
-    directly from the normalized expression layer.
-    """
-    obs = pd.DataFrame(index=adata.obs_names)
-
-    obs['batch'] = adata.obs['batch'].values
-
-    # Extract day from batch name (format: s{site}d{day}, e.g. 's1d1' -> 1)
-    obs['day'] = adata.obs['batch'].str.extract(r'd(\d+)', expand=False).astype(float).fillna(0).values
-
-    # Per-cell statistics from the normalized expression layer
-    X = adata.layers['normalized']
-    if scipy.sparse.issparse(X):
-        X_dense = X.toarray()
-    else:
-        X_dense = np.asarray(X, dtype=float)
-
-    obs['nonzero_ratio'] = (X_dense != 0).mean(axis=1)
-    obs['nonzero_q25'] = np.percentile(X_dense, 25, axis=1)
-    obs['nonzero_q50'] = np.percentile(X_dense, 50, axis=1)
-    obs['nonzero_q75'] = np.percentile(X_dense, 75, axis=1)
-    obs['mean'] = X_dense.mean(axis=1)
-    obs['std'] = X_dense.std(axis=1)
-
-    # Group ID: one group per unique batch (proxy for the original donor+day+technology groups)
-    unique_batches = adata.obs['batch'].unique().tolist()
-    batch_to_group = {b: i for i, b in enumerate(unique_batches)}
-    obs['group'] = adata.obs['batch'].map(batch_to_group).astype(int).values
-
-    # Cell type: all 'hidden' (no cell type labels available in this format)
-    obs['cell_type'] = 'hidden'
-
-    # Donor: constant 0 (no donor info; gender_id defaults to 0 = "female")
-    obs['donor'] = 0
-
-    # Technology: constant (not used in the batch group assignment above)
-    obs['technology'] = 'unknown'
-
-    if task_type == 'cite':
-        # Uniform cell-type ratios (no cell type labels available)
-        for ct in ['HSC', 'EryP', 'NeuP', 'MasP', 'MkP', 'BP', 'MoP']:
-            obs[f'cell_ratio_{ct}'] = 1.0 / 7
-        # Cell count per batch
-        batch_counts = adata.obs['batch'].value_counts()
-        obs['cell_count'] = adata.obs['batch'].map(batch_counts).astype(float).values
-        # Batch singular vectors: zero-filled (not computable without the full Kaggle dataset)
-        for i in range(8):
-            obs[f'batch_sv{i}'] = 0.0
-
-    return obs
-
-
-def to_sparse_csr(X):
-    if scipy.sparse.issparse(X):
-        return X.tocsr()
-    return scipy.sparse.csr_matrix(X)
-
-
 # ---- Load data ----
 print('Loading data...', flush=True)
 input_train_mod1 = ad.read_h5ad(par['input_train_mod1'])
@@ -164,7 +108,12 @@ train_targets = to_sparse_csr(input_train_mod2.layers['normalized'])
 n_vars_mod1 = train_inputs.shape[1]
 n_vars_mod2 = train_targets.shape[1]
 
-train_metadata = build_metadata(input_train_mod1, task_type)
+train_metadata = build_metadata(
+    input_train_mod1,
+    task_type,
+    cell_type_col=par['cell_type_col'],
+    day_pattern=par['day_pattern'],
+)
 
 # Store mod2 var for the predict step
 mod2_var = input_train_mod2.var.copy()
@@ -179,7 +128,12 @@ if par.get('input_test_mod1'):
     print('Loading test data for SVD fitting...', flush=True)
     input_test_mod1 = ad.read_h5ad(par['input_test_mod1'])
     test_inputs = to_sparse_csr(input_test_mod1.layers['normalized'])
-    test_metadata = build_metadata(input_test_mod1, task_type)
+    test_metadata = build_metadata(
+        input_test_mod1,
+        task_type,
+        cell_type_col=par['cell_type_col'],
+        day_pattern=par['day_pattern'],
+    )
     del input_test_mod1
     gc.collect()
 
@@ -205,6 +159,8 @@ model_params = EncoderDecoder.get_params(
     task_type=task_type,
     device=device,
 )
+model_params['epoch'] = par['n_epochs']
+model_params['burnin_length_epoch'] = par['burnin_length_epoch']
 
 # ---- Fit preprocessing ----
 print('Fitting preprocessing...', flush=True)

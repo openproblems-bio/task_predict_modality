@@ -17,58 +17,17 @@ par = {
     'input_test_mod1': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/test_mod1.h5ad',
     'input_model': 'output/models/ss_opm',
     'output': 'output/prediction.h5ad',
+    'cell_type_col': None,
+    'day_pattern': r'd(\d+)',
 }
 meta = {
     'name': 'ss_opm_predict',
-    'resources_dir': 'src/methods/ss_opm/ss_opm_predict',
+    'resources_dir': 'src/methods/ss_opm',
 }
 ## VIASH END
 
-def build_metadata(adata, task_type):
-    """Build a metadata DataFrame compatible with ss_opm from an H5AD AnnData.
-
-    Mirrors the function in the train script; only used for the input preprocessing
-    path (targets are None at predict time, so group IDs are not critical).
-    """
-    obs = pd.DataFrame(index=adata.obs_names)
-
-    obs['batch'] = adata.obs['batch'].values
-    obs['day'] = adata.obs['batch'].str.extract(r'd(\d+)', expand=False).astype(float).fillna(0).values
-
-    X = adata.layers['normalized']
-    if scipy.sparse.issparse(X):
-        X_dense = X.toarray()
-    else:
-        X_dense = np.asarray(X, dtype=float)
-
-    obs['nonzero_ratio'] = (X_dense != 0).mean(axis=1)
-    obs['nonzero_q25'] = np.percentile(X_dense, 25, axis=1)
-    obs['nonzero_q50'] = np.percentile(X_dense, 50, axis=1)
-    obs['nonzero_q75'] = np.percentile(X_dense, 75, axis=1)
-    obs['mean'] = X_dense.mean(axis=1)
-    obs['std'] = X_dense.std(axis=1)
-
-    # Group: 0 for all test cells (group is not used during input-only preprocessing)
-    obs['group'] = 0
-    obs['cell_type'] = 'hidden'
-    obs['donor'] = 0
-    obs['technology'] = 'unknown'
-
-    if task_type == 'cite':
-        for ct in ['HSC', 'EryP', 'NeuP', 'MasP', 'MkP', 'BP', 'MoP']:
-            obs[f'cell_ratio_{ct}'] = 1.0 / 7
-        obs['cell_count'] = float(adata.n_obs)
-        for i in range(8):
-            obs[f'batch_sv{i}'] = 0.0
-
-    return obs
-
-
-def to_sparse_csr(X):
-    if scipy.sparse.issparse(X):
-        return X.tocsr()
-    return scipy.sparse.csr_matrix(X)
-
+sys.path.append(meta['resources_dir'])
+from ss_opm_common import build_metadata, to_sparse_csr
 
 # ---- Load task info ----
 with open(os.path.join(par['input_model'], 'task_info.pickle'), 'rb') as f:
@@ -82,7 +41,13 @@ print(f'Task type: {task_type}, mod2: {mod2}', flush=True)
 print('Loading test data...', flush=True)
 input_test_mod1 = ad.read_h5ad(par['input_test_mod1'])
 test_inputs = to_sparse_csr(input_test_mod1.layers['normalized'])
-test_metadata = build_metadata(input_test_mod1, task_type)
+test_metadata = build_metadata(
+    input_test_mod1,
+    task_type,
+    cell_type_col=par['cell_type_col'],
+    group_by_batch=False,
+    day_pattern=par['day_pattern'],
+)
 
 # ---- Load model and preprocessing artifacts ----
 print('Loading model...', flush=True)
@@ -130,7 +95,7 @@ output = ad.AnnData(
     var=mod2_var,
     uns={
         "dataset_id": dataset_id,
-        "method_id": meta["name"],
+        "method_id": "ss_opm",
     },
 )
 output.write_h5ad(par['output'], compression="gzip")
