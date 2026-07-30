@@ -1,0 +1,35 @@
+__merge__: ../../../api/comp_method.yaml
+name: babel
+label: BABEL
+summary: "Cross-modal autoencoder predicting scRNA-seq expression from scATAC-seq accessibility (Wu et al. 2021)"
+description: |
+  BABEL is a deep autoencoder that learns modality-specific encoders and decoders for
+  paired scRNA-seq and scATAC-seq measurements. RNA is encoded/decoded with dense
+  layers; ATAC accessibility is encoded with a chromosome-split architecture
+  (per-chromosome sub-networks, matching genomic locality) that groups peaks by
+  chromosome parsed from their genomic-coordinate names (e.g. "chr1:1000-2000").
+  The full architecture is bidirectional (RNA->RNA, RNA->ATAC, ATAC->RNA, ATAC->ATAC),
+  trained jointly with a negative binomial reconstruction loss for RNA counts and a
+  binary cross-entropy loss for binarized ATAC accessibility, but this component only
+  exposes the ATAC->RNA (GEX) prediction direction. The RNA->ATAC direction was found
+  to collapse to a per-peak base-rate prediction that ignores the RNA input -- a known
+  failure mode of unweighted binary cross-entropy under the extreme class imbalance
+  typical of ATAC accessibility data (~3% positive) -- confirmed via near-zero
+  discrimination between accessible/inaccessible peaks even after training to
+  convergence, and is intentionally disabled rather than silently returned.
+references:
+  doi:
+    - https://doi.org/10.1073/pnas.202307011
+links:
+  repository: https://github.com/wukevin/babel
+info:
+  preferred_normalization: log_cp10k
+resources:
+  - path: main.nf
+    type: nextflow_script
+    entrypoint: run_wf
+dependencies:
+  - name: methods/babel_train
+  - name: methods/babel_predict
+runners:
+  - type: nextflow

@@ -16,7 +16,7 @@ info:
   variants: 
     cellmapper-pca:
       fallback_representation: joint_pca
-      mask_var: None
+      mask_var: null
       kernel_method: hnoca
     cellmapper-pca-hvg:
       fallback_representation: joint_pca
@@ -28,7 +28,7 @@ info:
       kernel_method: gauss
     cellmapper-cca:
       fallback_representation: fast_cca
-      mask_var: None
+      mask_var: null
       kernel_method: hnoca
     cellmapper-cca-hvg:
       fallback_representation: fast_cca
@@ -66,7 +66,7 @@ engines:
     setup:
       - type: python
         packages: 
-          - cellmapper>=0.2.2
+          - cellmapper>=0.2.6
 runners:
   - type: executable
   - type: nextflow

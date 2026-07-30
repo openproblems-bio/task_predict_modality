@@ -19,6 +19,9 @@ methods = [
   guanlab_dengkw_pm,
   novel,
   simple_mlp,
+  babel,
+  senkin_tmp,
+  scbutterfly,
   ss_opm
 ]
 
@@ -165,17 +168,17 @@ workflow run_wf {
 
   // extract the dataset metadata
   meta_ch = dataset_ch
-    // only keep one of the normalization methods
-    | filter{ id, state ->
-      state.rna_norm == "log_cp10k"
-    }
     | joinStates { ids, states ->
-      // store the dataset metadata in a file
-      def dataset_uns = states.collect{state ->
-        def uns = state.dataset_uns_mod2.clone()
-        uns.remove("normalization_id")
-        uns
-      }
+      // store the dataset metadata in a file, one entry per dataset rather than
+      // one per normalization
+      def seen_dataset_ids = [] as Set
+      def dataset_uns = states
+        .findAll{state -> seen_dataset_ids.add(state.dataset_uns_mod2.dataset_id) }
+        .collect{state ->
+          def uns = state.dataset_uns_mod2.clone()
+          uns.remove("normalization_id")
+          uns
+        }
       def dataset_uns_yaml_blob = toYamlBlob(dataset_uns)
       def dataset_uns_file = tempFile("dataset_uns.yaml")
       dataset_uns_file.write(dataset_uns_yaml_blob)

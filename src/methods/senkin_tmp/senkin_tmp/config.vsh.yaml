@@ -1,0 +1,27 @@
+__merge__: ../../../api/comp_method.yaml
+name: senkin_tmp
+label: "senkin & tmp"
+summary: "LightGBM + bidirectional GRU ensemble for CITE-seq protein prediction (OpenProblems 2022 2nd place)"
+description: |
+  Two-stage method from the OpenProblems NeurIPS 2021 competition. Stage 1 trains four
+  LightGBM models on different RNA feature representations (log-normalized, CLR-TSVD,
+  custom sqrt-normalized, and raw counts). Stage 2 refines predictions with two neural
+  network architectures: a bidirectional GRU with cosine-similarity loss and a dense
+  bidirectional GRU with MSE loss. Final predictions are a weighted blend (55% cosine,
+  45% MSE) of per-fold averaged outputs.
+references:
+  doi:
+    - 10.64898/2026.02.24.707614
+links:
+  repository: https://github.com/lueckenlab/senkin-tmp-cite-pred
+info:
+  preferred_normalization: log_cp10k
+resources:
+  - path: main.nf
+    type: nextflow_script
+    entrypoint: run_wf
+dependencies:
+  - name: methods/senkin_tmp_train
+  - name: methods/senkin_tmp_predict
+runners:
+  - type: nextflow
