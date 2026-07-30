@@ -76,6 +76,7 @@ dependencies:
   - name: methods/simple_mlp
   - name: methods/babel
   - name: methods/senkin_tmp
+  - name: methods/scbutterfly
   - name: metrics/correlation
   - name: metrics/mse
 runners:
