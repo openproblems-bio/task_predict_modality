@@ -95,10 +95,13 @@ dataset_test = ModalityMatchingDataset(input_test_mod1_, None, is_train=False)
 dataloader_test = DataLoader(dataset_test, 32, shuffle = False, num_workers = 4)
 
 outputs = []
+# the weights are loaded with map_location='cpu', so move the model onto the device
+# we selected above -- otherwise this component requests a GPU and never uses it
+model = model.to(device)
 model.eval()
 with torch.no_grad():
     for x in dataloader_test:
-        output = model(x.float())
+        output = model(x.float().to(device))
         outputs.append(output.detach().cpu().numpy())
 
 outputs = np.concatenate(outputs)
