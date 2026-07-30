@@ -32,6 +32,10 @@
 
 ## BUG FIXES
 
+* `cellmapper_scvi`: Bump the base image from `openproblems/base_pytorch_nvidia:1.0.0` to `:1`. The pinned tag was on Python 3.10, which caps cellmapper at 0.2.3 -- and 0.2.3 builds the `map_obsm` output key as `f"{key}_{prediction_postfix}"`, so the `"_pred"` postfix produced `mod2__pred` and every run raised `KeyError: 'mod2_pred'`. On the sliding tag (Python 3.12) cellmapper 0.2.6 installs, which builds the key without the extra underscore, and the existing postfix is correct (PR #53).
+
+* `cellmapper_linear`: Use `prediction_postfix="_pred"` so both cellmapper components read `obsm["mod2_pred"]`. Both now require `cellmapper>=0.2.6`, since the key format depends on the version (PR #53).
+
 * `process_dataset`: Fall back to holding out a quarter of the batches when the dataset has no `obs["is_train"]`, rather than silently producing four empty h5ads. `obs["is_train"]` carries the NeurIPS 2021 competition split and stays optional; `obs["cell_type"]` is now declared and required (PR #28).
 
 * Fix the component paths, build paths and `rename_keys` separator in the helper scripts, which prevented `scripts/create_datasets/test_resources.sh` and both `run_test.sh` scripts from running at all (PR #22).

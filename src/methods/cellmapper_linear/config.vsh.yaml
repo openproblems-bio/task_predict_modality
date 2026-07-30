@@ -66,7 +66,8 @@ engines:
     setup:
       - type: python
         packages: 
-          - cellmapper>=0.2.2
+          # >= 0.2.6 builds the map_obsm output key as f"{key}{prediction_postfix}"
+          - cellmapper>=0.2.6
 runners:
   - type: executable
   - type: nextflow
