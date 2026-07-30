@@ -1,0 +1,62 @@
+__merge__: ../../../api/comp_method_train.yaml
+name: scbutterfly_train
+info:
+  test_setup:
+    quick:
+      input_train_mod1: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap/train_mod1.h5ad
+      input_train_mod2: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap/train_mod2.h5ad
+      input_test_mod1: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap/test_mod1.h5ad
+      rna_pretrain_epoch: 2
+      atac_pretrain_epoch: 2
+      translator_epoch: 2
+      patience: 5
+      n_top_genes: 500
+resources:
+  - path: script.py
+    type: python_script
+  - path: ../butterfly_common.py
+  - path: ../chrom_utils.py
+test_resources:
+  - path: /resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap
+    dest: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap
+arguments:
+  - name: "--rna_pretrain_epoch"
+    type: integer
+    default: 100
+    description: RNA autoencoder pretraining epochs (R2R_pretrain_epoch).
+  - name: "--atac_pretrain_epoch"
+    type: integer
+    default: 100
+    description: ATAC autoencoder pretraining epochs (A2A_pretrain_epoch).
+  - name: "--translator_epoch"
+    type: integer
+    default: 200
+    description: Translator training epochs.
+  - name: "--patience"
+    type: integer
+    default: 50
+    description: Early-stopping patience for the translator.
+  - name: "--batch_size"
+    type: integer
+    default: 64
+    description: Training batch size.
+  - name: "--n_top_genes"
+    type: integer
+    default: 3000
+    description: Number of highly variable genes kept by scButterfly RNA preprocessing.
+engines:
+  - type: docker
+    image: python:3.9
+    setup:
+      - type: docker
+        run:
+          - pip install --no-cache-dir torch==1.13.1 torchvision==0.14.1 --index-url https://download.pytorch.org/whl/cu117
+          - pip install --no-cache-dir --no-deps scButterfly
+          - pip install --no-cache-dir "numpy==1.23.5" "scipy==1.9.3" "pandas<2" "scanpy==1.9.3" "anndata==0.8.0" "scikit-learn>=1.1" numba tqdm matplotlib adjustText bamnostic pysam legacy-api-wrap
+          - pip install --no-cache-dir --no-deps episcanpy==0.3.2
+          - pip install --no-cache-dir "git+https://github.com/openproblems-bio/core.git#subdirectory=packages/python/openproblems"
+runners:
+  - type: executable
+  - type: nextflow
+    directives:
+      label: [highmem, hightime, midcpu, gpu]
