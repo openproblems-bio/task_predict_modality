@@ -3448,6 +3448,18 @@ meta = [
           "direction" : "input",
           "multiple" : false,
           "multiple_sep" : ";"
+        },
+        {
+          "type" : "integer",
+          "name" : "--seed",
+          "description" : "Seed for choosing the internal validation batches, when the dataset does not contain the batches used in the competition.",
+          "default" : [
+            1
+          ],
+          "required" : false,
+          "direction" : "input",
+          "multiple" : false,
+          "multiple_sep" : ";"
         }
       ]
     }
@@ -3569,7 +3581,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/novel_train",
     "viash_version" : "0.9.7",
-    "git_commit" : "221a0290600aeb9e3f38e533d0029ee1ff13052d",
+    "git_commit" : "e044f8d2180b6fba1162d6e5fc06158e54ea653d",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3787,7 +3799,8 @@ par = {
   'input_train_mod2': $( if [ ! -z ${VIASH_PAR_INPUT_TRAIN_MOD2+x} ]; then echo "r'${VIASH_PAR_INPUT_TRAIN_MOD2//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
   'input_test_mod1': $( if [ ! -z ${VIASH_PAR_INPUT_TEST_MOD1+x} ]; then echo "r'${VIASH_PAR_INPUT_TEST_MOD1//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
   'output': $( if [ ! -z ${VIASH_PAR_OUTPUT+x} ]; then echo "r'${VIASH_PAR_OUTPUT//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
-  'n_epochs': $( if [ ! -z ${VIASH_PAR_N_EPOCHS+x} ]; then echo "int(r'${VIASH_PAR_N_EPOCHS//\\'/\\'\\"\\'\\"r\\'}')"; else echo None; fi )
+  'n_epochs': $( if [ ! -z ${VIASH_PAR_N_EPOCHS+x} ]; then echo "int(r'${VIASH_PAR_N_EPOCHS//\\'/\\'\\"\\'\\"r\\'}')"; else echo None; fi ),
+  'seed': $( if [ ! -z ${VIASH_PAR_SEED+x} ]; then echo "int(r'${VIASH_PAR_SEED//\\'/\\'\\"\\'\\"r\\'}')"; else echo None; fi )
 }
 meta = {
   'name': $( if [ ! -z ${VIASH_META_NAME+x} ]; then echo "r'${VIASH_META_NAME//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
@@ -3861,7 +3874,9 @@ test_batches = {'s1d2', 's3d7'}
 # if none of phase1_batch is in batch, sample 25% of batch categories rounded up
 if len(test_batches.intersection(set(batch))) == 0:
   all_batches = batch.cat.categories.tolist()
-  test_batches = set(np.random.choice(all_batches, math.ceil(len(all_batches) * 0.25), replace=False))
+  rng = np.random.default_rng(par['seed'])
+  test_batches = set(map(str, rng.choice(all_batches, math.ceil(len(all_batches) * 0.25), replace=False)))
+print(f"Using {sorted(test_batches)} as internal validation batches", flush=True)
 train_ix = [ k for k,v in enumerate(batch) if v not in test_batches ]
 test_ix = [ k for k,v in enumerate(batch) if v in test_batches ]
 

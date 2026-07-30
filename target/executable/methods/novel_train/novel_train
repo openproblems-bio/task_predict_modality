@@ -449,9 +449,9 @@ RUN pip install --upgrade pip && \
   pip install --upgrade --no-cache-dir "scikit-learn" "networkx"
 
 LABEL org.opencontainers.image.description="Companion container for running component methods novel_train"
-LABEL org.opencontainers.image.created="2026-07-30T17:07:55Z"
+LABEL org.opencontainers.image.created="2026-07-30T17:34:41Z"
 LABEL org.opencontainers.image.source="https://github.com/openproblems-bio/task_predict_modality"
-LABEL org.opencontainers.image.revision="221a0290600aeb9e3f38e533d0029ee1ff13052d"
+LABEL org.opencontainers.image.revision="e044f8d2180b6fba1162d6e5fc06158e54ea653d"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER
@@ -596,6 +596,12 @@ function ViashHelp {
   echo "        default: 100"
   echo "        Number of training epochs."
   echo ""
+  echo "    --seed"
+  echo "        type: integer"
+  echo "        default: 1"
+  echo "        Seed for choosing the internal validation batches, when the dataset does"
+  echo "        not contain the batches used in the competition."
+  echo ""
   echo "Viash built in Computational Requirements:"
   echo "    ---cpus=INT"
   echo "        Number of CPUs to use"
@@ -699,6 +705,17 @@ while [[ $# -gt 0 ]]; do
         --n_epochs=*)
             [ -n "$VIASH_PAR_N_EPOCHS" ] && ViashError Bad arguments for option \'--n_epochs=*\': \'$VIASH_PAR_N_EPOCHS\' \& \'$2\' - you should provide exactly one argument for this option. && exit 1
             VIASH_PAR_N_EPOCHS=$(ViashRemoveFlags "$1")
+            shift 1
+            ;;
+        --seed)
+            [ -n "$VIASH_PAR_SEED" ] && ViashError Bad arguments for option \'--seed\': \'$VIASH_PAR_SEED\' \& \'$2\' - you should provide exactly one argument for this option. && exit 1
+            VIASH_PAR_SEED="$2"
+            [ $# -lt 2 ] && ViashError Not enough arguments passed to --seed. Use "--help" to get more information on the parameters. && exit 1
+            shift 2
+            ;;
+        --seed=*)
+            [ -n "$VIASH_PAR_SEED" ] && ViashError Bad arguments for option \'--seed=*\': \'$VIASH_PAR_SEED\' \& \'$2\' - you should provide exactly one argument for this option. && exit 1
+            VIASH_PAR_SEED=$(ViashRemoveFlags "$1")
             shift 1
             ;;
         ---engine)
@@ -912,6 +929,9 @@ fi
 if [ -z ${VIASH_PAR_N_EPOCHS+x} ]; then
   VIASH_PAR_N_EPOCHS="100"
 fi
+if [ -z ${VIASH_PAR_SEED+x} ]; then
+  VIASH_PAR_SEED="1"
+fi
 
 # check whether required files exist
 if [ ! -z "$VIASH_PAR_INPUT_TRAIN_MOD1" ] && [ ! -e "$VIASH_PAR_INPUT_TRAIN_MOD1" ]; then
@@ -931,6 +951,12 @@ fi
 if [[ -n "$VIASH_PAR_N_EPOCHS" ]]; then
   if ! [[ "$VIASH_PAR_N_EPOCHS" =~ ^[-+]?[0-9]+$ ]]; then
     ViashError '--n_epochs' has to be an integer. Use "--help" to get more information on the parameters.
+    exit 1
+  fi
+fi
+if [[ -n "$VIASH_PAR_SEED" ]]; then
+  if ! [[ "$VIASH_PAR_SEED" =~ ^[-+]?[0-9]+$ ]]; then
+    ViashError '--seed' has to be an integer. Use "--help" to get more information on the parameters.
     exit 1
   fi
 fi
@@ -1127,7 +1153,8 @@ par = {
   'input_train_mod2': $( if [ ! -z ${VIASH_PAR_INPUT_TRAIN_MOD2+x} ]; then echo "r'${VIASH_PAR_INPUT_TRAIN_MOD2//\'/\'\"\'\"r\'}'"; else echo None; fi ),
   'input_test_mod1': $( if [ ! -z ${VIASH_PAR_INPUT_TEST_MOD1+x} ]; then echo "r'${VIASH_PAR_INPUT_TEST_MOD1//\'/\'\"\'\"r\'}'"; else echo None; fi ),
   'output': $( if [ ! -z ${VIASH_PAR_OUTPUT+x} ]; then echo "r'${VIASH_PAR_OUTPUT//\'/\'\"\'\"r\'}'"; else echo None; fi ),
-  'n_epochs': $( if [ ! -z ${VIASH_PAR_N_EPOCHS+x} ]; then echo "int(r'${VIASH_PAR_N_EPOCHS//\'/\'\"\'\"r\'}')"; else echo None; fi )
+  'n_epochs': $( if [ ! -z ${VIASH_PAR_N_EPOCHS+x} ]; then echo "int(r'${VIASH_PAR_N_EPOCHS//\'/\'\"\'\"r\'}')"; else echo None; fi ),
+  'seed': $( if [ ! -z ${VIASH_PAR_SEED+x} ]; then echo "int(r'${VIASH_PAR_SEED//\'/\'\"\'\"r\'}')"; else echo None; fi )
 }
 meta = {
   'name': $( if [ ! -z ${VIASH_META_NAME+x} ]; then echo "r'${VIASH_META_NAME//\'/\'\"\'\"r\'}'"; else echo None; fi ),
@@ -1201,7 +1228,9 @@ test_batches = {'s1d2', 's3d7'}
 # if none of phase1_batch is in batch, sample 25% of batch categories rounded up
 if len(test_batches.intersection(set(batch))) == 0:
   all_batches = batch.cat.categories.tolist()
-  test_batches = set(np.random.choice(all_batches, math.ceil(len(all_batches) * 0.25), replace=False))
+  rng = np.random.default_rng(par['seed'])
+  test_batches = set(map(str, rng.choice(all_batches, math.ceil(len(all_batches) * 0.25), replace=False)))
+print(f"Using {sorted(test_batches)} as internal validation batches", flush=True)
 train_ix = [ k for k,v in enumerate(batch) if v not in test_batches ]
 test_ix = [ k for k,v in enumerate(batch) if v in test_batches ]
 

@@ -24,7 +24,8 @@ par = {
   'input_train_mod1': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/normal/train_mod1.h5ad',
   'input_train_mod2': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/normal/train_mod2.h5ad',
   'output': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/normal/models/novel',
-  'n_epochs': 100
+  'n_epochs': 100,
+  'seed': 1
 }
 meta = {
   'resources_dir': 'src/methods/novel',
@@ -77,7 +78,9 @@ test_batches = {'s1d2', 's3d7'}
 # if none of phase1_batch is in batch, sample 25% of batch categories rounded up
 if len(test_batches.intersection(set(batch))) == 0:
   all_batches = batch.cat.categories.tolist()
-  test_batches = set(np.random.choice(all_batches, math.ceil(len(all_batches) * 0.25), replace=False))
+  rng = np.random.default_rng(par['seed'])
+  test_batches = set(map(str, rng.choice(all_batches, math.ceil(len(all_batches) * 0.25), replace=False)))
+print(f"Using {sorted(test_batches)} as internal validation batches", flush=True)
 train_ix = [ k for k,v in enumerate(batch) if v not in test_batches ]
 test_ix = [ k for k,v in enumerate(batch) if v in test_batches ]
 

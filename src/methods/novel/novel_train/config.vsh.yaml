@@ -7,6 +7,10 @@ arguments:
     description: Number of training epochs.
     info:
       test_default: 2
+  - name: "--seed"
+    type: "integer"
+    default: 1
+    description: "Seed for choosing the internal validation batches, when the dataset does not contain the batches used in the competition."
 resources:
   - path: script.py
     type: python_script
