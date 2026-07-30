@@ -204,9 +204,9 @@ class ModelRegressionGex2Adt(nn.Module):
 def rmse(y, y_pred):
     return np.sqrt(np.mean(np.square(y - y_pred)))
 
-def train_and_valid(model, optimizer, loss_fn, dataloader_train, dataloader_test, name_model, device):
+def train_and_valid(model, optimizer, loss_fn, dataloader_train, dataloader_test, name_model, device, n_epochs=100):
     best_score = 100000
-    for i in range(100):
+    for i in range(n_epochs):
         train_losses = []
         model.train()
 
