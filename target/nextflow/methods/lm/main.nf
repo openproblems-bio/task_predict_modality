@@ -3615,7 +3615,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/lm",
     "viash_version" : "0.9.7",
-    "git_commit" : "0a0174dafe9d43d5b7fecd85f813ed37607220ae",
+    "git_commit" : "d995beb12e96a6a58e163d010332002c1cb23732",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3870,7 +3870,7 @@ ix <- seq_len(nrow(input_train_mod1))
 dr_train <- dr[ix, , drop = FALSE]
 dr_test <- dr[-ix, , drop = FALSE]
 
-# add an intercept column -- fastLm() uses the design matrix as is
+# add an intercept column
 dr_train <- cbind(intercept = 1, dr_train)
 dr_test <- cbind(intercept = 1, dr_test)
 

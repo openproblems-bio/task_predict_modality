@@ -3476,7 +3476,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/metrics/correlation",
     "viash_version" : "0.9.7",
-    "git_commit" : "0a0174dafe9d43d5b7fecd85f813ed37607220ae",
+    "git_commit" : "d995beb12e96a6a58e163d010332002c1cb23732",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3740,9 +3740,7 @@ pv_sd2 <- proxyC::colSds(pv)
 tv_sd1 <- proxyC::rowSds(tv)
 pv_sd1 <- proxyC::rowSds(pv)
 
-# correlate matching rows (margin 1) or columns (margin 2) of two matrices.
-# dynutils::calculate_similarity() would do this too, but it ends in as.matrix(),
-# densifying an n x n / p x p matrix just so we can read its diagonal.
+# correlate matching rows (margin 1) or columns (margin 2) of two matrices
 paired_similarity <- function(x, y, margin, method) {
   if (margin == 1) {
     x <- Matrix::t(x)
@@ -3788,8 +3786,7 @@ mean_spearman_per_gene <- mean(spearman_vec_2)
 tv_vec <- as.vector(tv)
 pv_vec <- as.vector(pv)
 
-# a constant prediction has no correlation to speak of -- score it as 0, the same
-# substitution the per-cell and per-gene metrics make above. cor() would return NA.
+# zero variance -- score as 0, like the per-cell and per-gene metrics above
 if (sd(tv_vec) == 0 || sd(pv_vec) == 0) {
   overall_pearson <- 0
   overall_spearman <- 0

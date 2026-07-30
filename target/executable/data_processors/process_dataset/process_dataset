@@ -446,9 +446,9 @@ function ViashDockerfile {
 FROM openproblems/base_r:1
 ENTRYPOINT []
 LABEL org.opencontainers.image.description="Companion container for running component data_processors process_dataset"
-LABEL org.opencontainers.image.created="2026-07-30T06:51:45Z"
+LABEL org.opencontainers.image.created="2026-07-30T07:22:17Z"
 LABEL org.opencontainers.image.source="https://github.com/openproblems-bio/task_predict_modality"
-LABEL org.opencontainers.image.revision="0a0174dafe9d43d5b7fecd85f813ed37607220ae"
+LABEL org.opencontainers.image.revision="d995beb12e96a6a58e163d010332002c1cb23732"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER
@@ -1318,8 +1318,7 @@ if (ad2_mod == "ATAC") {
   # subset to make the task computationally feasible
   if (ncol(ad2) > 10000) {
     poss_ix <- which(Matrix::colSums(ad2\$layers[["normalized"]]) > 0)
-    # sample by position -- sample(x, n) errors when n > length(x), and treats a
-    # length-1 x as seq_len(x)
+    # sample by position -- sample(x, n) treats a length-1 x as seq_len(x)
     sel_ix <- sort(poss_ix[sample.int(length(poss_ix), min(10000, length(poss_ix)))])
     ad2 <- ad2[, sel_ix]\$copy()
     ad2_var <- ad2_var[sel_ix, , drop = FALSE]
@@ -1337,9 +1336,8 @@ if ("is_train" %in% colnames(ad1\$obs)) {
   is_train <- which(ad1\$obs[["is_train"]] == "train")
   is_test <- which(ad1\$obs[["is_train"]] != "train")
 } else {
-  # No predefined split -- obs['is_train'] carries the NeurIPS 2021 competition
-  # split and other datasets have no reason to have it. Hold out a quarter of the
-  # batches instead, so the test cells come from donors the method has not seen.
+  # no predefined split -- hold out a quarter of the batches, so the test cells
+  # come from donors the method has not seen
   batches <- unique(as.character(ad1\$obs[["batch"]]))
   if (length(batches) > 1) {
     test_batches <- sample(batches, max(1, floor(length(batches) / 4)))

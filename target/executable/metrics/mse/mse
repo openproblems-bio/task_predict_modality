@@ -446,9 +446,9 @@ function ViashDockerfile {
 FROM openproblems/base_python:1
 ENTRYPOINT []
 LABEL org.opencontainers.image.description="Companion container for running component metrics mse"
-LABEL org.opencontainers.image.created="2026-07-30T06:51:46Z"
+LABEL org.opencontainers.image.created="2026-07-30T07:22:18Z"
 LABEL org.opencontainers.image.source="https://github.com/openproblems-bio/task_predict_modality"
-LABEL org.opencontainers.image.revision="0a0174dafe9d43d5b7fecd85f813ed37607220ae"
+LABEL org.opencontainers.image.revision="d995beb12e96a6a58e163d010332002c1cb23732"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER
@@ -1102,8 +1102,7 @@ if ad_sol.shape != ad_pred.shape:
 
 logging.info("Computing MSE metrics")
 
-# coerce to sparse -- a method is free to return a dense layer, and
-# sparse - dense yields a np.matrix, which has no .power()
+# coerce to sparse -- sparse minus dense yields a np.matrix, which has no .power()
 tmp = csr_matrix(ad_sol.layers["normalized"]) - csr_matrix(ad_pred.layers["normalized"])
 rmse = np.sqrt(tmp.power(2).mean())
 mae = np.abs(tmp).mean()

@@ -3416,7 +3416,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/metrics/mse",
     "viash_version" : "0.9.7",
-    "git_commit" : "0a0174dafe9d43d5b7fecd85f813ed37607220ae",
+    "git_commit" : "d995beb12e96a6a58e163d010332002c1cb23732",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3659,8 +3659,7 @@ if ad_sol.shape != ad_pred.shape:
 
 logging.info("Computing MSE metrics")
 
-# coerce to sparse -- a method is free to return a dense layer, and
-# sparse - dense yields a np.matrix, which has no .power()
+# coerce to sparse -- sparse minus dense yields a np.matrix, which has no .power()
 tmp = csr_matrix(ad_sol.layers["normalized"]) - csr_matrix(ad_pred.layers["normalized"])
 rmse = np.sqrt(tmp.power(2).mean())
 mae = np.abs(tmp).mean()
