@@ -86,7 +86,7 @@
 
 * `novel_predict`: Test `uns["removed_vars"]` for length rather than truthiness. It round-trips through h5ad as an array, so the check raised "The truth value of an array with more than one element is ambiguous" as soon as training dropped more than one all-zero feature (PR #59).
 
-* `senkin_tmp_train`: Build on `openproblems/base_tensorflow_nvidia:1` and ask for a `gpu`. The pip-installed TensorFlow was built against CUDA 12 while `base_pytorch_nvidia` ships CUDA 13, so it silently trained on CPU and hit its walltime on every dataset (PR #59).
+* `senkin_tmp_train`: Build on `nvidia/cuda:12.8.1-cudnn-runtime-ubuntu24.04` with `tensorflow[and-cuda]`, and ask for a `gpu`. TensorFlow was installed on a PyTorch base shipping CUDA 13 while TF is built against CUDA 12, so it silently trained on CPU and hit its walltime on all eight datasets. `openproblems/base_tensorflow_nvidia:1` reaches the GPU but is frozen at TF 2.17, below the 2.20 the method requires -- nvcr no longer publishes TensorFlow images, so that base wants rebuilding on a CUDA image in openproblems-bio/core (PR #59).
 
 * `ss_opm`: Compute the per-cell statistics in `build_metadata()` one row block at a time. Densifying the whole normalized layer asked for a 222 GiB allocation on the multiome datasets, which fits on no node (PR #59).
 
