@@ -2,8 +2,6 @@ import logging
 import pickle
 import sys
 
-from exit_codes import exit_non_applicable
-
 import anndata as ad
 import numpy as np
 import scanpy as sc
@@ -35,6 +33,7 @@ meta = {"name": "babel", "resources_dir": "src/methods/babel"}
 sys.path.append(meta["resources_dir"])
 
 from chrom_utils import parse_chrom_groups
+from exit_codes import exit_non_applicable
 from model import AssymSplicedAutoEncoder
 from losses import QuadLoss
 
