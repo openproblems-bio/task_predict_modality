@@ -27,7 +27,7 @@ engines:
     image: openproblems/base_r:1
     setup:
       - type: r
-        cran: [ lmds, RcppArmadillo, pbapply]
+        cran: [ lmds ]
 runners:
   - type: executable
   - type: nextflow
