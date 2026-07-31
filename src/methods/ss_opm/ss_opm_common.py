@@ -4,6 +4,9 @@ import numpy as np
 import pandas as pd
 import scipy.sparse
 
+# cells per block when densifying the expression matrix for per-cell statistics
+ROW_BLOCK = 1000
+
 # the cell types the original ss_opm model was trained against. only used to name the
 # cell_ratio_* columns it expects; the ratios themselves are derived from the data when
 # cell type labels are available.
@@ -66,16 +69,26 @@ def build_metadata(
     obs["batch"] = adata.obs["batch"].values
     obs["day"] = extract_day(adata.obs["batch"], day_pattern).fillna(0).values
 
-    # per-cell statistics from the normalized expression layer
+    # per-cell statistics from the normalized expression layer, densified one row
+    # block at a time -- the whole matrix is 222 GiB on the multiome datasets
     X = adata.layers["normalized"]
-    X_dense = X.toarray() if scipy.sparse.issparse(X) else np.asarray(X, dtype=float)
+    names = ("nonzero_ratio", "nonzero_q25", "nonzero_q50", "nonzero_q75", "mean", "std")
+    stats = {name: np.empty(adata.n_obs, dtype=float) for name in names}
 
-    obs["nonzero_ratio"] = (X_dense != 0).mean(axis=1)
-    obs["nonzero_q25"] = np.percentile(X_dense, 25, axis=1)
-    obs["nonzero_q50"] = np.percentile(X_dense, 50, axis=1)
-    obs["nonzero_q75"] = np.percentile(X_dense, 75, axis=1)
-    obs["mean"] = X_dense.mean(axis=1)
-    obs["std"] = X_dense.std(axis=1)
+    for start in range(0, adata.n_obs, ROW_BLOCK):
+        end = min(start + ROW_BLOCK, adata.n_obs)
+        block = X[start:end]
+        block = block.toarray() if scipy.sparse.issparse(block) else np.asarray(block, dtype=float)
+
+        stats["nonzero_ratio"][start:end] = (block != 0).mean(axis=1)
+        stats["nonzero_q25"][start:end] = np.percentile(block, 25, axis=1)
+        stats["nonzero_q50"][start:end] = np.percentile(block, 50, axis=1)
+        stats["nonzero_q75"][start:end] = np.percentile(block, 75, axis=1)
+        stats["mean"][start:end] = block.mean(axis=1)
+        stats["std"][start:end] = block.std(axis=1)
+
+    for name in names:
+        obs[name] = stats[name]
 
     if group_by_batch:
         batches = adata.obs["batch"].unique().tolist()
