@@ -3416,7 +3416,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/metrics/mse",
     "viash_version" : "0.9.7",
-    "git_commit" : "8b3661dd824ea556725af4b43399cfa315613c71",
+    "git_commit" : "cdd4aaa27287a7dd1d9dcd7fb929b938fa0aec7e",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3660,7 +3660,16 @@ if ad_sol.shape != ad_pred.shape:
 logging.info("Computing MSE metrics")
 
 # coerce to sparse -- sparse minus dense yields a np.matrix, which has no .power()
-tmp = csr_matrix(ad_sol.layers["normalized"]) - csr_matrix(ad_pred.layers["normalized"])
+sol = csr_matrix(ad_sol.layers["normalized"])
+pred = csr_matrix(ad_pred.layers["normalized"])
+
+# score non-finite predictions as zero, rather than returning a NaN metric
+non_finite = ~np.isfinite(pred.data)
+if non_finite.any():
+  logging.info("Prediction contains %d non-finite values, scoring them as 0", non_finite.sum())
+  pred.data[non_finite] = 0
+
+tmp = sol - pred
 rmse = np.sqrt(tmp.power(2).mean())
 mae = np.abs(tmp).mean()
 

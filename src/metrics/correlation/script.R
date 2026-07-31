@@ -33,6 +33,14 @@ cat("Computing correlation metrics\n")
 tv <- ad_sol$layers[["normalized"]]
 pv <- ad_pred$layers[["normalized"]]
 
+# score non-finite predictions as zero, like the zero-variance case below
+pv_values <- if (methods::is(pv, "sparseMatrix")) pv@x else pv
+non_finite <- !is.finite(pv_values)
+if (any(non_finite)) {
+  cat("Prediction contains", sum(non_finite), "non-finite values, scoring them as 0\n")
+  if (methods::is(pv, "sparseMatrix")) pv@x[non_finite] <- 0 else pv[non_finite] <- 0
+}
+
 # precompute sds
 tv_sd2 <- proxyC::colSds(tv)
 pv_sd2 <- proxyC::colSds(pv)
@@ -65,8 +73,6 @@ spearman_vec_1 <- paired_similarity(tv, pv, margin = 1, method = "spearman")
 
 pearson_vec_1[tv_sd1 == 0 | pv_sd1 == 0] <- 0
 spearman_vec_1[tv_sd1 == 0 | pv_sd1 == 0] <- 0
-# pearson_vec_1[!is.finite(pearson_vec_1) | pearson_vec_1 > 10] <- 0
-# spearman_vec_1[!is.finite(spearman_vec_1) | spearman_vec_1 > 10] <- 0
 
 mean_pearson_per_cell <- mean(pearson_vec_1)
 mean_spearman_per_cell <- mean(spearman_vec_1)
@@ -76,8 +82,6 @@ spearman_vec_2 <- paired_similarity(tv, pv, margin = 2, method = "spearman")
 
 pearson_vec_2[tv_sd2 == 0 | pv_sd2 == 0] <- 0
 spearman_vec_2[tv_sd2 == 0 | pv_sd2 == 0] <- 0
-# pearson_vec_2[!is.finite(pearson_vec_2) | pearson_vec_2 > 10] <- 0
-# spearman_vec_2[!is.finite(spearman_vec_2) | spearman_vec_2 > 10] <- 0
 
 mean_pearson_per_gene <- mean(pearson_vec_2)
 mean_spearman_per_gene <- mean(spearman_vec_2)

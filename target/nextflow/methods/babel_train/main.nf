@@ -3532,6 +3532,10 @@ meta = [
       "type" : "file",
       "path" : "../chrom_utils.py",
       "dest" : "chrom_utils.py"
+    },
+    {
+      "type" : "file",
+      "path" : "/src/utils/exit_codes.py"
     }
   ],
   "test_resources" : [
@@ -3653,7 +3657,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/babel_train",
     "viash_version" : "0.9.7",
-    "git_commit" : "8b3661dd824ea556725af4b43399cfa315613c71",
+    "git_commit" : "cdd4aaa27287a7dd1d9dcd7fb929b938fa0aec7e",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3902,6 +3906,7 @@ dep = {
 sys.path.append(meta["resources_dir"])
 
 from chrom_utils import parse_chrom_groups
+from exit_codes import exit_non_applicable
 from model import AssymSplicedAutoEncoder
 from losses import QuadLoss
 
@@ -3995,14 +4000,14 @@ modality1 = adata_mod1_train.uns.get("modality")
 modality2 = adata_mod2_train.uns.get("modality")
 
 if {modality1, modality2} != {"GEX", "ATAC"}:
-    raise ValueError(
+    exit_non_applicable(
         f"babel only supports GEX<->ATAC translation, got modalities "
         f"({modality1!r}, {modality2!r}). This is a direct port of BABEL "
         "(Wu et al. 2021), whose architecture is not adapted for other modality pairs."
     )
 
 if modality1 != "ATAC":
-    raise ValueError(
+    exit_non_applicable(
         f"babel only supports ATAC->GEX prediction (input_train_mod1 must be ATAC, "
         f"input_train_mod2 must be GEX), got mod1={modality1!r}, mod2={modality2!r}. "
         "The GEX->ATAC direction of this BABEL port collapses to a per-peak base-rate "

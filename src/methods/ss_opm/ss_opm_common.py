@@ -4,6 +4,9 @@ import numpy as np
 import pandas as pd
 import scipy.sparse
 
+# cells per block when densifying the expression matrix for per-cell statistics
+ROW_BLOCK = 1000
+
 # the cell types the original ss_opm model was trained against. only used to name the
 # cell_ratio_* columns it expects; the ratios themselves are derived from the data when
 # cell type labels are available.
@@ -66,16 +69,26 @@ def build_metadata(
     obs["batch"] = adata.obs["batch"].values
     obs["day"] = extract_day(adata.obs["batch"], day_pattern).fillna(0).values
 
-    # per-cell statistics from the normalized expression layer
+    # per-cell statistics from the normalized expression layer, densified one row
+    # block at a time -- the whole matrix is 222 GiB on the multiome datasets
     X = adata.layers["normalized"]
-    X_dense = X.toarray() if scipy.sparse.issparse(X) else np.asarray(X, dtype=float)
+    names = ("nonzero_ratio", "nonzero_q25", "nonzero_q50", "nonzero_q75", "mean", "std")
+    stats = {name: np.empty(adata.n_obs, dtype=float) for name in names}
 
-    obs["nonzero_ratio"] = (X_dense != 0).mean(axis=1)
-    obs["nonzero_q25"] = np.percentile(X_dense, 25, axis=1)
-    obs["nonzero_q50"] = np.percentile(X_dense, 50, axis=1)
-    obs["nonzero_q75"] = np.percentile(X_dense, 75, axis=1)
-    obs["mean"] = X_dense.mean(axis=1)
-    obs["std"] = X_dense.std(axis=1)
+    for start in range(0, adata.n_obs, ROW_BLOCK):
+        end = min(start + ROW_BLOCK, adata.n_obs)
+        block = X[start:end]
+        block = block.toarray() if scipy.sparse.issparse(block) else np.asarray(block, dtype=float)
+
+        stats["nonzero_ratio"][start:end] = (block != 0).mean(axis=1)
+        stats["nonzero_q25"][start:end] = np.percentile(block, 25, axis=1)
+        stats["nonzero_q50"][start:end] = np.percentile(block, 50, axis=1)
+        stats["nonzero_q75"][start:end] = np.percentile(block, 75, axis=1)
+        stats["mean"][start:end] = block.mean(axis=1)
+        stats["std"][start:end] = block.std(axis=1)
+
+    for name in names:
+        obs[name] = stats[name]
 
     if group_by_batch:
         batches = adata.obs["batch"].unique().tolist()
@@ -107,3 +120,44 @@ def build_metadata(
             obs[f"batch_sv{i}"] = 0.0
 
     return obs
+
+
+def _safe_median_normalize(values, ignore_zero=True, log=False):
+    """Median-normalize rows, substituting 1 (identity) when the median is 0 or NaN."""
+    arr = np.asarray(values.toarray() if hasattr(values, 'toarray') else values, dtype=float).copy()
+    for_median = arr.copy()
+    if ignore_zero:
+        for_median[for_median == 0] = np.nan
+    med = np.nanquantile(for_median, q=0.5, axis=1)
+    # Use 1 as fallback so rows with zero/undefined median are left unchanged
+    med = np.where((med == 0) | ~np.isfinite(med), 1.0, med)
+    if log:
+        return arr - med[:, None]
+    else:
+        return arr / med[:, None]
+
+
+def _safe_row_normalize(v):
+    """Row-standardize; rows with std=0 are mean-subtracted only (result is zeros)."""
+    mu = np.mean(v, axis=1)
+    sigma = np.std(v, axis=1)
+    sigma = np.where(sigma == 0, 1.0, sigma)
+    return (v - mu[:, None]) / sigma[:, None]
+
+
+def apply_runtime_patches():
+    """Swap in all-zero-row-safe normalizers for every caller inside ss_opm.
+
+    Train and predict run the same preprocessing chain, so both have to call this
+    before `PrePostProcessing.preprocess()`.
+    """
+    import ss_opm.utility.nonzero_median_normalize as _mnm_module
+    import ss_opm.utility.row_normalize as _rn_module
+    import ss_opm.pre_post_processing.pre_post_processing as _pp_module
+
+    # patch the source modules so every 'from X import Y' binding stays in sync
+    _mnm_module.median_normalize = _safe_median_normalize
+    _rn_module.row_normalize = _safe_row_normalize
+    # and the names already bound inside pre_post_processing's namespace
+    _pp_module.median_normalize = _safe_median_normalize
+    _pp_module.row_normalize = _safe_row_normalize

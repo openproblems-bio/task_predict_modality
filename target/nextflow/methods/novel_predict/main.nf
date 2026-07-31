@@ -3601,7 +3601,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/novel_predict",
     "viash_version" : "0.9.7",
-    "git_commit" : "8b3661dd824ea556725af4b43399cfa315613c71",
+    "git_commit" : "cdd4aaa27287a7dd1d9dcd7fb929b938fa0aec7e",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3865,8 +3865,8 @@ n_vars_mod2 = input_train_mod2.uns["model_dim"]["mod2"]
 input_test_mod1.X = input_test_mod1.layers['normalized'].tocsr()
 
 # Remove vars that were removed from training set. Mostly only applicable for testing.
-if input_train_mod2.uns.get("removed_vars"):
-  rem_var = input_train_mod2.uns["removed_vars"]
+rem_var = input_train_mod2.uns.get("removed_vars")
+if rem_var is not None and len(rem_var) > 0:
   input_test_mod1 = input_test_mod1[:, ~input_test_mod1.var_names.isin(rem_var)]
 
 del input_train_mod2

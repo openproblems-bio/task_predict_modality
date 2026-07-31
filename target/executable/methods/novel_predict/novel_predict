@@ -449,9 +449,9 @@ RUN pip install --upgrade pip && \
   pip install --upgrade --no-cache-dir "scikit-learn" "networkx"
 
 LABEL org.opencontainers.image.description="Companion container for running component methods novel_predict"
-LABEL org.opencontainers.image.created="2026-07-31T11:57:48Z"
+LABEL org.opencontainers.image.created="2026-07-31T21:39:35Z"
 LABEL org.opencontainers.image.source="https://github.com/openproblems-bio/task_predict_modality"
-LABEL org.opencontainers.image.revision="8b3661dd824ea556725af4b43399cfa315613c71"
+LABEL org.opencontainers.image.revision="cdd4aaa27287a7dd1d9dcd7fb929b938fa0aec7e"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER
@@ -1170,8 +1170,8 @@ n_vars_mod2 = input_train_mod2.uns["model_dim"]["mod2"]
 input_test_mod1.X = input_test_mod1.layers['normalized'].tocsr()
 
 # Remove vars that were removed from training set. Mostly only applicable for testing.
-if input_train_mod2.uns.get("removed_vars"):
-  rem_var = input_train_mod2.uns["removed_vars"]
+rem_var = input_train_mod2.uns.get("removed_vars")
+if rem_var is not None and len(rem_var) > 0:
   input_test_mod1 = input_test_mod1[:, ~input_test_mod1.var_names.isin(rem_var)]
 
 del input_train_mod2

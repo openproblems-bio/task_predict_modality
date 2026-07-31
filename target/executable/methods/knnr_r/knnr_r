@@ -449,9 +449,9 @@ RUN Rscript -e 'options(warn = 2); if (!requireNamespace("remotes", quietly = TR
   Rscript -e 'options(warn = 2); remotes::install_cran(c("lmds", "FNN", "proxyC"), repos = "https://cran.rstudio.com")'
 
 LABEL org.opencontainers.image.description="Companion container for running component methods knnr_r"
-LABEL org.opencontainers.image.created="2026-07-31T11:57:48Z"
+LABEL org.opencontainers.image.created="2026-07-31T21:39:35Z"
 LABEL org.opencontainers.image.source="https://github.com/cran/FNN"
-LABEL org.opencontainers.image.revision="8b3661dd824ea556725af4b43399cfa315613c71"
+LABEL org.opencontainers.image.revision="cdd4aaa27287a7dd1d9dcd7fb929b938fa0aec7e"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER

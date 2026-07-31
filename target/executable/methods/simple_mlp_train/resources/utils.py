@@ -1,3 +1,4 @@
+import numpy as np
 import yaml
 from collections import namedtuple
 
@@ -11,8 +12,18 @@ def to_site_donor(data):
 
 
 def split(tr1, tr2, fold):
-    df = to_site_donor(tr1) 
-    mask = df['site'] == f's{fold+1}'
+    df = to_site_donor(tr1)
+    mask = (df['site'] == f's{fold+1}').values
+
+    # batch labels outside the NeurIPS 2021 s{site}d{donor} naming match no site, which
+    # would leave the validation half empty; hold out every third batch instead
+    if not mask.any():
+        batches = sorted(df['batch'].unique())
+        if len(batches) >= 3:
+            mask = df['batch'].isin(batches[fold::3]).values
+        else:
+            mask = np.arange(len(df)) % 3 == fold
+
     maskr = ~mask
 
     Xt = tr1[mask].layers["normalized"].toarray()

@@ -9,6 +9,8 @@ that shared construction so train and predict stay in lock-step.
 
 import logging
 
+from exit_codes import exit_non_applicable
+
 import anndata as ad
 import numpy as np
 import scanpy as sc
@@ -58,11 +60,11 @@ def apply_runtime_patches():
 
 
 def detect_direction(train_mod1, train_mod2):
-    """Return ('GEX2ATAC'|'ATAC2GEX', mod1, mod2), raising on non-Multiome data."""
+    """Return ('GEX2ATAC'|'ATAC2GEX', mod1, mod2), exiting 99 on non-Multiome data."""
     mod1 = train_mod1.uns["modality"]
     mod2 = train_mod2.uns["modality"]
     if {mod1, mod2} != {"GEX", "ATAC"}:
-        raise ValueError(
+        exit_non_applicable(
             f"scbutterfly only supports Multiome GEX<->ATAC, got mod1={mod1}, mod2={mod2}"
         )
     direction = "GEX2ATAC" if mod2 == "ATAC" else "ATAC2GEX"

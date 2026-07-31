@@ -443,16 +443,23 @@ function ViashDockerfile {
 
   if [[ "$engine_id" == "docker" ]]; then
     cat << 'VIASHDOCKER'
-FROM openproblems/base_pytorch_nvidia:1
+FROM nvidia/cuda:12.8.1-cudnn-runtime-ubuntu24.04
 ENTRYPOINT []
-RUN pip install --no-cache-dir --no-deps git+https://github.com/lueckenlab/senkin-tmp-cite-pred.git
-RUN pip install --upgrade pip && \
-  pip install --upgrade --no-cache-dir "lightgbm>=4.0" "tensorflow>=2.12" "scikit-learn>=1.1" "mudata>=0.2" "muon>=0.1" "fast-array-utils"
+RUN apt-get update && \
+  DEBIAN_FRONTEND=noninteractive apt-get install -y python3 python3-venv procps git libgomp1 && \
+  rm -rf /var/lib/apt/lists/*
 
+RUN python3 -m venv /opt/venv
+ENV PATH=/opt/venv/bin:$PATH
+RUN pip install --upgrade pip && \
+  pip install --upgrade --no-cache-dir "tensorflow[and-cuda]>=2.20" "anndata" "scanpy" "pyyaml" "requests" "jsonschema" "lightgbm>=4.0" "scikit-learn>=1.1" "mudata>=0.2" "muon>=0.1" "fast-array-utils" && \
+  pip install --upgrade --no-cache-dir "git+https://github.com/openproblems-bio/core#subdirectory=packages/python/openproblems"
+
+RUN pip install --no-cache-dir --no-deps git+https://github.com/lueckenlab/senkin-tmp-cite-pred.git
 LABEL org.opencontainers.image.description="Companion container for running component methods senkin_tmp_train"
-LABEL org.opencontainers.image.created="2026-07-31T11:57:47Z"
+LABEL org.opencontainers.image.created="2026-07-31T21:39:35Z"
 LABEL org.opencontainers.image.source="https://github.com/openproblems-bio/task_predict_modality"
-LABEL org.opencontainers.image.revision="8b3661dd824ea556725af4b43399cfa315613c71"
+LABEL org.opencontainers.image.revision="cdd4aaa27287a7dd1d9dcd7fb929b938fa0aec7e"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER

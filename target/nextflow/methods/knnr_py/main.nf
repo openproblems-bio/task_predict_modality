@@ -3615,7 +3615,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/knnr_py",
     "viash_version" : "0.9.7",
-    "git_commit" : "8b3661dd824ea556725af4b43399cfa315613c71",
+    "git_commit" : "cdd4aaa27287a7dd1d9dcd7fb929b938fa0aec7e",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {

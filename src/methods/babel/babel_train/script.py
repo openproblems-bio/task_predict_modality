@@ -33,6 +33,7 @@ meta = {"name": "babel", "resources_dir": "src/methods/babel"}
 sys.path.append(meta["resources_dir"])
 
 from chrom_utils import parse_chrom_groups
+from exit_codes import exit_non_applicable
 from model import AssymSplicedAutoEncoder
 from losses import QuadLoss
 
@@ -126,14 +127,14 @@ modality1 = adata_mod1_train.uns.get("modality")
 modality2 = adata_mod2_train.uns.get("modality")
 
 if {modality1, modality2} != {"GEX", "ATAC"}:
-    raise ValueError(
+    exit_non_applicable(
         f"babel only supports GEX<->ATAC translation, got modalities "
         f"({modality1!r}, {modality2!r}). This is a direct port of BABEL "
         "(Wu et al. 2021), whose architecture is not adapted for other modality pairs."
     )
 
 if modality1 != "ATAC":
-    raise ValueError(
+    exit_non_applicable(
         f"babel only supports ATAC->GEX prediction (input_train_mod1 must be ATAC, "
         f"input_train_mod2 must be GEX), got mod1={modality1!r}, mod2={modality2!r}. "
         "The GEX->ATAC direction of this BABEL port collapses to a per-peak base-rate "

@@ -3564,7 +3564,8 @@ meta = [
         "label" : [
           "highmem",
           "hightime",
-          "midcpu"
+          "midcpu",
+          "gpu"
         ],
         "tag" : "$id"
       },
@@ -3596,27 +3597,58 @@ meta = [
     {
       "type" : "docker",
       "id" : "docker",
-      "image" : "openproblems/base_pytorch_nvidia:1",
+      "image" : "nvidia/cuda:12.8.1-cudnn-runtime-ubuntu24.04",
       "namespace_separator" : "/",
       "setup" : [
         {
+          "type" : "apt",
+          "packages" : [
+            "python3",
+            "python3-venv",
+            "procps",
+            "git",
+            "libgomp1"
+          ],
+          "interactive" : false
+        },
+        {
           "type" : "docker",
           "run" : [
-            "pip install --no-cache-dir --no-deps git+https://github.com/lueckenlab/senkin-tmp-cite-pred.git"
+            "python3 -m venv /opt/venv"
+          ]
+        },
+        {
+          "type" : "docker",
+          "env" : [
+            "PATH=/opt/venv/bin:$PATH"
           ]
         },
         {
           "type" : "python",
           "user" : false,
           "packages" : [
+            "tensorflow[and-cuda]>=2.20",
+            "anndata",
+            "scanpy",
+            "pyyaml",
+            "requests",
+            "jsonschema",
             "lightgbm>=4.0",
-            "tensorflow>=2.12",
             "scikit-learn>=1.1",
             "mudata>=0.2",
             "muon>=0.1",
             "fast-array-utils"
           ],
+          "github" : [
+            "openproblems-bio/core#subdirectory=packages/python/openproblems"
+          ],
           "upgrade" : true
+        },
+        {
+          "type" : "docker",
+          "run" : [
+            "pip install --no-cache-dir --no-deps git+https://github.com/lueckenlab/senkin-tmp-cite-pred.git"
+          ]
         }
       ]
     }
@@ -3627,7 +3659,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/senkin_tmp_train",
     "viash_version" : "0.9.7",
-    "git_commit" : "8b3661dd824ea556725af4b43399cfa315613c71",
+    "git_commit" : "cdd4aaa27287a7dd1d9dcd7fb929b938fa0aec7e",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -4468,7 +4500,8 @@ meta["defaults"] = [
   "label" : [
     "highmem",
     "hightime",
-    "midcpu"
+    "midcpu",
+    "gpu"
   ],
   "tag" : "$id"
 }'''),
