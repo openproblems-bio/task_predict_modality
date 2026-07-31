@@ -32,14 +32,13 @@ arguments:
     description: TSVD components for reducing LightGBM predictions before NN input.
 engines:
   - type: docker
-    image: openproblems/base_pytorch_nvidia:1
+    image: openproblems/base_tensorflow_nvidia:1
     setup:
       - type: docker
         run: pip install --no-cache-dir --no-deps git+https://github.com/lueckenlab/senkin-tmp-cite-pred.git
       - type: python
         packages:
           - lightgbm>=4.0
-          - tensorflow>=2.12
           - scikit-learn>=1.1
           - mudata>=0.2
           - muon>=0.1
@@ -48,4 +47,4 @@ runners:
   - type: executable
   - type: nextflow
     directives:
-      label: [highmem, hightime, midcpu]
+      label: [highmem, hightime, midcpu, gpu]
