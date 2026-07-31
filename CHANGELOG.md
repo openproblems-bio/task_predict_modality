@@ -90,6 +90,14 @@
 
 * `ss_opm`: Compute the per-cell statistics in `build_metadata()` one row block at a time. Densifying the whole normalized layer asked for a 222 GiB allocation on the multiome datasets, which fits on no node (PR #59).
 
+* `ss_opm_predict`: Apply the all-zero-row-safe `median_normalize()` and `row_normalize()` that `ss_opm_train` already monkey-patched in. Predict ran the originals, so an all-zero row produced a `NaN` median and the preprocessing chain handed `NaN` to `TruncatedSVD`. Both now call `apply_runtime_patches()` from `ss_opm_common` (PR #59).
+
+* `simple_mlp_train`: Hold out every third batch when the batch labels do not follow the NeurIPS 2021 `s{site}d{donor}` naming. `split()` matched `site` against `s1`/`s2`/`s3`, so on the 2022 pbmc datasets every fold got an empty validation half, `valid_RMSE` was never logged, and `.predict(ckpt_path="best")` found no checkpoint (PR #59).
+
+* `guanlab_dengkw_pm`: Limit the BLAS thread pool to `meta["cpus"]`. Nothing constrains cores on the cluster, so kernel ridge sized its pool from the node's 64 cores against a 30-core allocation (PR #59).
+
+* `cellmapper_linear`, `cellmapper_scvi`: Require `cellmapper>=0.2.6,<0.3`. The package has twice renamed the `map_obsm` output key under a compatible-looking version bump, each time breaking these components on every dataset (PR #59).
+
 # task_predict_modality 0.1.1
 
 ## NEW FUNCTIONALITY
