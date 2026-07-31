@@ -36,6 +36,14 @@
 
 * `novel_train`: Store only the metadata `novel_predict` needs in the model artifact, instead of a full copy of `train_mod2` (PR #47).
 
+* `lm`: Fit every column of mod2 in one `solve()` of the normal equations instead of calling `RcppArmadillo::fastLm()` once per column. Every column shares the same design matrix, so the old loop redid an `n x n_pcs` decomposition for each of the ~229k ATAC peaks. Predictions are unchanged; `RcppArmadillo` and `pbapply` are no longer needed (PR #58).
+
+* `novel_predict`, `simple_mlp_predict`, `ss_opm_predict`, `babel_predict`: Ask for `midgpu` rather than `gpu`. All four peak below 4 GB, so they fit the `de.NBI GPU T4 medium` flavour and no longer occupy a whole large node. The train steps stay on `gpu` (PR #58).
+
+* `knnr_py`, `knnr_r`, `cellmapper_linear`: Ask for `highmem` rather than `midmem`, and `lowcpu` rather than `midcpu` for the latter two. `knnr_py` peaks at 82 GB and `cellmapper_linear` at 68 GB against a 50 GB request, and both were OOM-killed on the larger datasets (PR #58).
+
+* `solution`, `zeros`: Ask for `lowmem` rather than `midmem` -- they use 0.5 GB and 11 GB of the 50 GB they asked for (PR #58).
+
 ## BUG FIXES
 
 * `guanlab_dengkw_pm`: Restore the consensus scheme of the original submission -- five reshuffles of the batches into two halves, ten kernel ridge models averaged. The port had replaced it with a single fixed two-way split for ADT pairs and leave-one-batch-out otherwise, so the result depended on the order the batches happened to come in. `--n_repeats` and `--seed` are now arguments; the unused `--distance_method` and `--n_pcs` are gone (PR #32).

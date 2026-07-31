@@ -3599,9 +3599,7 @@ meta = [
         {
           "type" : "r",
           "cran" : [
-            "lmds",
-            "RcppArmadillo",
-            "pbapply"
+            "lmds"
           ],
           "bioc_force_install" : false,
           "warnings_as_errors" : true
@@ -3615,7 +3613,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/lm",
     "viash_version" : "0.9.7",
-    "git_commit" : "e044f8d2180b6fba1162d6e5fc06158e54ea653d",
+    "git_commit" : "8b3661dd824ea556725af4b43399cfa315613c71",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3807,7 +3805,6 @@ tempscript=".viash_script.R"
 cat > "$tempscript" << VIASHMAIN
 cat("Loading dependencies\\\\n")
 requireNamespace("anndata", quietly = TRUE)
-requireNamespace("pbapply", quietly = TRUE)
 library(Matrix, warn.conflicts = FALSE, quietly = TRUE)
 
 ## VIASH START
@@ -3881,24 +3878,14 @@ gc()
 cat("Reading mod2 files\\\\n")
 X_mod2 <- anndata::read_h5ad(par\\$input_train_mod2)\\$layers[["normalized"]]
 
-cat("Predicting for each column in modality 2\\\\n")
-preds <- pbapply::pblapply(
-  seq_len(ncol(X_mod2)),
-  function(i) {
-    y <- X_mod2[, i]
-    uy <- unique(y)
-    if (length(uy) > 1) {
-      fit <- RcppArmadillo::fastLm(dr_train, y)
-      # fit <- lm(y ~ ., dr_train)
-      stats::predict(fit, dr_test)
-    } else {
-      rep(uy, nrow(dr_test))
-    }
-  }
+cat("Predicting every column in modality 2 at once\\\\n")
+coefficients <- solve(
+  crossprod(dr_train),
+  as.matrix(crossprod(dr_train, X_mod2))
 )
 
 cat("Creating outputs object\\\\n")
-prediction <- Matrix::Matrix(do.call(cbind, preds), sparse = TRUE)
+prediction <- Matrix::Matrix(dr_test %*% coefficients, sparse = TRUE)
 rownames(prediction) <- rownames(dr_test)
 colnames(prediction) <- colnames(X_mod2)
 

@@ -3675,7 +3675,7 @@ meta = [
       "directives" : {
         "label" : [
           "midtime",
-          "midmem",
+          "lowmem",
           "lowcpu"
         ],
         "tag" : "$id"
@@ -3718,7 +3718,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/control_methods/zeros",
     "viash_version" : "0.9.7",
-    "git_commit" : "e044f8d2180b6fba1162d6e5fc06158e54ea653d",
+    "git_commit" : "8b3661dd824ea556725af4b43399cfa315613c71",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -4353,7 +4353,7 @@ meta["defaults"] = [
   },
   "label" : [
     "midtime",
-    "midmem",
+    "lowmem",
     "lowcpu"
   ],
   "tag" : "$id"

@@ -328,6 +328,7 @@ run_pipeline() {
         --output_metric_info '$id/metric_info.json'
         --output_results '$id/results.json'
         --output_quality_control '$id/quality_control.json'
+        --output_task_info '$id/task_info.json'
         --publish_dir "$output_dir"
     )
     
