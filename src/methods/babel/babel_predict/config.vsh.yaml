@@ -25,4 +25,4 @@ runners:
   - type: executable
   - type: nextflow
     directives:
-      label: [highmem, hightime, midcpu, gpu]
+      label: [highmem, hightime, midcpu, midgpu]
