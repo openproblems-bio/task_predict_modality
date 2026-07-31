@@ -5,6 +5,7 @@ from scipy.sparse import csc_matrix
 from sklearn.decomposition import TruncatedSVD
 from sklearn.gaussian_process.kernels import RBF
 from sklearn.kernel_ridge import KernelRidge
+from threadpoolctl import threadpool_limits
 
 ## VIASH START
 par = {
@@ -23,6 +24,10 @@ meta = {
 
 sys.path.append(meta['resources_dir'])
 from exit_codes import exit_non_applicable
+
+# BLAS otherwise sizes its pool from the node's core count, not the cores allotted to us
+if meta.get('cpus'):
+    threadpool_limits(meta['cpus'])
 
 
 ## Removed PCA and normalization steps, as they arr already performed with the input data

@@ -27,7 +27,16 @@ if ad_sol.shape != ad_pred.shape:
 logging.info("Computing MSE metrics")
 
 # coerce to sparse -- sparse minus dense yields a np.matrix, which has no .power()
-tmp = csr_matrix(ad_sol.layers["normalized"]) - csr_matrix(ad_pred.layers["normalized"])
+sol = csr_matrix(ad_sol.layers["normalized"])
+pred = csr_matrix(ad_pred.layers["normalized"])
+
+# score non-finite predictions as zero, rather than returning a NaN metric
+non_finite = ~np.isfinite(pred.data)
+if non_finite.any():
+  logging.info("Prediction contains %d non-finite values, scoring them as 0", non_finite.sum())
+  pred.data[non_finite] = 0
+
+tmp = sol - pred
 rmse = np.sqrt(tmp.power(2).mean())
 mae = np.abs(tmp).mean()
 
