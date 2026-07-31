@@ -27,7 +27,9 @@ meta = {
 ## VIASH END
 
 sys.path.append(meta['resources_dir'])
-from ss_opm_common import build_metadata, to_sparse_csr
+from ss_opm_common import apply_runtime_patches, build_metadata, to_sparse_csr
+
+apply_runtime_patches()
 
 # ---- Load task info ----
 with open(os.path.join(par['input_model'], 'task_info.pickle'), 'rb') as f:
