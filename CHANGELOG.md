@@ -80,6 +80,16 @@
 
 * `novel_predict`: Move the model and the input batch onto the selected device. It picked `cuda:0` when a GPU was present but never used it, so the component requested a GPU node and ran inference on CPU (PR #54).
 
+* `correlation`, `mse`: Score non-finite predictions as zero instead of halting. `sd()` on a prediction holding `NaN` returns `NA`, so `correlation` died on `if (NA)` rather than scoring the method, and `mse` wrote a `NaN` score. A method emitting `NaN` should land at the bottom of the scale, not take the metric down with it (PR #59).
+
+* `babel_train`, `scbutterfly`: Exit 99 for the modality pairs they do not support, rather than raising a `ValueError`. Both are GEX<->ATAC only, so on the four CITE datasets they failed with exit 1 and were retried three times each (PR #59).
+
+* `novel_predict`: Test `uns["removed_vars"]` for length rather than truthiness. It round-trips through h5ad as an array, so the check raised "The truth value of an array with more than one element is ambiguous" as soon as training dropped more than one all-zero feature (PR #59).
+
+* `senkin_tmp_train`: Build on `openproblems/base_tensorflow_nvidia:1` and ask for a `gpu`. The pip-installed TensorFlow was built against CUDA 12 while `base_pytorch_nvidia` ships CUDA 13, so it silently trained on CPU and hit its walltime on every dataset (PR #59).
+
+* `ss_opm`: Compute the per-cell statistics in `build_metadata()` one row block at a time. Densifying the whole normalized layer asked for a 222 GiB allocation on the multiome datasets, which fits on no node (PR #59).
+
 # task_predict_modality 0.1.1
 
 ## NEW FUNCTIONALITY
