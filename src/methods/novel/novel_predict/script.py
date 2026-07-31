@@ -48,8 +48,8 @@ n_vars_mod2 = input_train_mod2.uns["model_dim"]["mod2"]
 input_test_mod1.X = input_test_mod1.layers['normalized'].tocsr()
 
 # Remove vars that were removed from training set. Mostly only applicable for testing.
-if input_train_mod2.uns.get("removed_vars"):
-  rem_var = input_train_mod2.uns["removed_vars"]
+rem_var = input_train_mod2.uns.get("removed_vars")
+if rem_var is not None and len(rem_var) > 0:
   input_test_mod1 = input_test_mod1[:, ~input_test_mod1.var_names.isin(rem_var)]
 
 del input_train_mod2
