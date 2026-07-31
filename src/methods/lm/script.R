@@ -1,6 +1,5 @@
 cat("Loading dependencies\n")
 requireNamespace("anndata", quietly = TRUE)
-requireNamespace("pbapply", quietly = TRUE)
 library(Matrix, warn.conflicts = FALSE, quietly = TRUE)
 
 ## VIASH START
@@ -42,24 +41,14 @@ gc()
 cat("Reading mod2 files\n")
 X_mod2 <- anndata::read_h5ad(par$input_train_mod2)$layers[["normalized"]]
 
-cat("Predicting for each column in modality 2\n")
-preds <- pbapply::pblapply(
-  seq_len(ncol(X_mod2)),
-  function(i) {
-    y <- X_mod2[, i]
-    uy <- unique(y)
-    if (length(uy) > 1) {
-      fit <- RcppArmadillo::fastLm(dr_train, y)
-      # fit <- lm(y ~ ., dr_train)
-      stats::predict(fit, dr_test)
-    } else {
-      rep(uy, nrow(dr_test))
-    }
-  }
+cat("Predicting every column in modality 2 at once\n")
+coefficients <- solve(
+  crossprod(dr_train),
+  as.matrix(crossprod(dr_train, X_mod2))
 )
 
 cat("Creating outputs object\n")
-prediction <- Matrix::Matrix(do.call(cbind, preds), sparse = TRUE)
+prediction <- Matrix::Matrix(dr_test %*% coefficients, sparse = TRUE)
 rownames(prediction) <- rownames(dr_test)
 colnames(prediction) <- colnames(X_mod2)
 
