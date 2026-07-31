@@ -39,10 +39,11 @@ engines:
     image: openproblems/base_python:1
     setup:
       - type: python
-        packages: 
+        packages:
           - scikit-learn
           - pandas
           - numpy
+          - threadpoolctl
 runners:
   - type: executable
   - type: nextflow

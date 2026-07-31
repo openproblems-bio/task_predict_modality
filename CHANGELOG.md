@@ -80,6 +80,24 @@
 
 * `novel_predict`: Move the model and the input batch onto the selected device. It picked `cuda:0` when a GPU was present but never used it, so the component requested a GPU node and ran inference on CPU (PR #54).
 
+* `correlation`, `mse`: Score non-finite predictions as zero instead of halting. `sd()` on a prediction holding `NaN` returns `NA`, so `correlation` died on `if (NA)` rather than scoring the method, and `mse` wrote a `NaN` score. A method emitting `NaN` should land at the bottom of the scale, not take the metric down with it (PR #59).
+
+* `babel_train`, `scbutterfly`: Exit 99 for the modality pairs they do not support, rather than raising a `ValueError`. Both are GEX<->ATAC only, so on the four CITE datasets they failed with exit 1 and were retried three times each (PR #59).
+
+* `novel_predict`: Test `uns["removed_vars"]` for length rather than truthiness. It round-trips through h5ad as an array, so the check raised "The truth value of an array with more than one element is ambiguous" as soon as training dropped more than one all-zero feature (PR #59).
+
+* `senkin_tmp_train`: Build on `nvidia/cuda:12.8.1-cudnn-runtime-ubuntu24.04` with `tensorflow[and-cuda]`, and ask for a `gpu`. TensorFlow was installed on a PyTorch base shipping CUDA 13 while TF is built against CUDA 12, so it silently trained on CPU and hit its walltime on all eight datasets. `openproblems/base_tensorflow_nvidia:1` reaches the GPU but is frozen at TF 2.17, below the 2.20 the method requires -- nvcr no longer publishes TensorFlow images, so that base wants rebuilding on a CUDA image in openproblems-bio/core (PR #59).
+
+* `ss_opm`: Compute the per-cell statistics in `build_metadata()` one row block at a time. Densifying the whole normalized layer asked for a 222 GiB allocation on the multiome datasets, which fits on no node (PR #59).
+
+* `ss_opm_predict`: Apply the all-zero-row-safe `median_normalize()` and `row_normalize()` that `ss_opm_train` already monkey-patched in. Predict ran the originals, so an all-zero row produced a `NaN` median and the preprocessing chain handed `NaN` to `TruncatedSVD`. Both now call `apply_runtime_patches()` from `ss_opm_common` (PR #59).
+
+* `simple_mlp_train`: Hold out every third batch when the batch labels do not follow the NeurIPS 2021 `s{site}d{donor}` naming. `split()` matched `site` against `s1`/`s2`/`s3`, so on the 2022 pbmc datasets every fold got an empty validation half, `valid_RMSE` was never logged, and `.predict(ckpt_path="best")` found no checkpoint (PR #59).
+
+* `guanlab_dengkw_pm`: Limit the BLAS thread pool to `meta["cpus"]`. Nothing constrains cores on the cluster, so kernel ridge sized its pool from the node's 64 cores against a 30-core allocation (PR #59).
+
+* `cellmapper_linear`, `cellmapper_scvi`: Require `cellmapper>=0.2.6,<0.3`. The package has twice renamed the `map_obsm` output key under a compatible-looking version bump, each time breaking these components on every dataset (PR #59).
+
 # task_predict_modality 0.1.1
 
 ## NEW FUNCTIONALITY
