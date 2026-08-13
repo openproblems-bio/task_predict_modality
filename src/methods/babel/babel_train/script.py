@@ -73,13 +73,12 @@ def _row_tensor(mat, idx):
 
 
 class PairedDataset(Dataset):
-    def __init__(self, x1, x2_per_chrom, y1, y2, size_factors1):
+    def __init__(self, x1, x2_per_chrom, y1, size_factors1):
         # Store the RNA/ATAC matrices sparse (CSR); rows are densified on demand in
         # __getitem__ so the full dense matrix is never materialized.
         self.x1 = _as_csr(x1)
         self.x2_per_chrom = [_as_csr(c) for c in x2_per_chrom]
         self.y1 = _as_csr(y1)
-        self.y2 = _as_csr(y2)
         self.size_factors1 = torch.from_numpy(size_factors1)
 
     def __len__(self):
@@ -91,7 +90,7 @@ class PairedDataset(Dataset):
             "x2_per_chrom": [_row_tensor(c, idx) for c in self.x2_per_chrom],
             "size_factors1": self.size_factors1[idx],
         }
-        y = torch.cat([_row_tensor(self.y1, idx), _row_tensor(self.y2, idx)])  # dummy combined target, unused directly
+        y = _row_tensor(self.y1, idx)
         return X, y
 
 
@@ -118,16 +117,10 @@ class BabelModule(nn.Module):
 
 
 class BabelNet(skorch.NeuralNet):
-    def __init__(self, *args, n_genes, n_peaks, **kwargs):
-        self._n_genes = n_genes
-        self._n_peaks = n_peaks
-        super().__init__(*args, **kwargs)
-
     def get_loss(self, y_pred, y_true, X=None, training=False):
-        y_true = y_true.to(self.device)
         preds11, preds12, preds21, preds22, _, _ = y_pred
-        target1 = y_true[:, : self._n_genes]
-        target2_bin = y_true[:, self._n_genes : self._n_genes + self._n_peaks]
+        target1 = y_true.to(self.device)
+        target2_bin = torch.cat(X["x2_per_chrom"], dim=1).to(self.device)
         return self.criterion_(preds11, preds12, preds21, preds22, target1, target2_bin)
 
 
@@ -164,15 +157,23 @@ X_rna, Y_rna_counts, size_factors = _rna_matrix(adata_rna)
 X_atac_bin = _atac_binarized(adata_atac)
 
 chrom_counts, chrom_groups = parse_chrom_groups(adata_atac.var_names)
-# Slice peaks per chromosome on a CSC view (fast column indexing); each group stays
-# sparse and is densified per-cell later.
-X_atac_bin_csc = X_atac_bin.tocsc()
-X_atac_per_chrom = [X_atac_bin_csc[:, idxs] for idxs in chrom_groups.values()]
+rna_var_names = list(adata_rna.var_names)
+atac_var_names = list(adata_atac.var_names)
 
 n_genes = X_rna.shape[1]
 n_peaks = X_atac_bin.shape[1]
 
-dataset = PairedDataset(X_rna, X_atac_per_chrom, Y_rna_counts, X_atac_bin, size_factors)
+# drop the inputs; everything needed downstream has been extracted above
+del adata_mod1_train, adata_mod2_train, adata_atac, adata_rna
+
+# slice peaks per chromosome on a CSC view (fast column indexing); each group stays
+# sparse and is densified per-cell later
+X_atac_bin_csc = X_atac_bin.tocsc()
+del X_atac_bin
+X_atac_per_chrom = [_as_csr(X_atac_bin_csc[:, idxs]) for idxs in chrom_groups.values()]
+del X_atac_bin_csc
+
+dataset = PairedDataset(X_rna, X_atac_per_chrom, Y_rna_counts, size_factors)
 
 logger.info("Building model (n_genes=%d, n_peaks=%d, %d chromosome groups)...", n_genes, n_peaks, len(chrom_counts))
 
@@ -181,8 +182,6 @@ net = BabelNet(
     module__input_dim1=n_genes,
     module__input_dim2=chrom_counts,
     module__hidden_dim=par["hidden_dim"],
-    n_genes=n_genes,
-    n_peaks=n_peaks,
     criterion=QuadLoss,
     criterion__loss2_weight=par["loss2_weight"],
     optimizer=torch.optim.Adam,
@@ -219,8 +218,8 @@ bundle = {
     "chrom_groups": chrom_groups,
     "hidden_dim": par["hidden_dim"],
     "direction": direction,
-    "rna_var_names": list(adata_rna.var_names),
-    "atac_var_names": list(adata_atac.var_names),
+    "rna_var_names": rna_var_names,
+    "atac_var_names": atac_var_names,
     "size_factor_median": float(np.median(np.asarray(Y_rna_counts.sum(axis=1)).ravel())),
 }
 
