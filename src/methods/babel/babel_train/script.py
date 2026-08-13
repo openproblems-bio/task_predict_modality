@@ -157,13 +157,21 @@ X_rna, Y_rna_counts, size_factors = _rna_matrix(adata_rna)
 X_atac_bin = _atac_binarized(adata_atac)
 
 chrom_counts, chrom_groups = parse_chrom_groups(adata_atac.var_names)
-# Slice peaks per chromosome on a CSC view (fast column indexing); each group stays
-# sparse and is densified per-cell later.
-X_atac_bin_csc = X_atac_bin.tocsc()
-X_atac_per_chrom = [X_atac_bin_csc[:, idxs] for idxs in chrom_groups.values()]
+rna_var_names = list(adata_rna.var_names)
+atac_var_names = list(adata_atac.var_names)
 
 n_genes = X_rna.shape[1]
 n_peaks = X_atac_bin.shape[1]
+
+# drop the inputs; everything needed downstream has been extracted above
+del adata_mod1_train, adata_mod2_train, adata_atac, adata_rna
+
+# slice peaks per chromosome on a CSC view (fast column indexing); each group stays
+# sparse and is densified per-cell later
+X_atac_bin_csc = X_atac_bin.tocsc()
+del X_atac_bin
+X_atac_per_chrom = [_as_csr(X_atac_bin_csc[:, idxs]) for idxs in chrom_groups.values()]
+del X_atac_bin_csc
 
 dataset = PairedDataset(X_rna, X_atac_per_chrom, Y_rna_counts, size_factors)
 
@@ -210,8 +218,8 @@ bundle = {
     "chrom_groups": chrom_groups,
     "hidden_dim": par["hidden_dim"],
     "direction": direction,
-    "rna_var_names": list(adata_rna.var_names),
-    "atac_var_names": list(adata_atac.var_names),
+    "rna_var_names": rna_var_names,
+    "atac_var_names": atac_var_names,
     "size_factor_median": float(np.median(np.asarray(Y_rna_counts.sum(axis=1)).ravel())),
 }
 
