@@ -3984,7 +3984,7 @@ meta = [
     "engine" : "native",
     "output" : "target/nextflow/workflows/process_datasets",
     "viash_version" : "0.9.7",
-    "git_commit" : "cdd4aaa27287a7dd1d9dcd7fb929b938fa0aec7e",
+    "git_commit" : "7085ef1d2dfb1d1ce1ef5697b57668c9f4bc87e6",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
