@@ -3612,7 +3612,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/senkin_tmp_predict",
     "viash_version" : "0.9.7",
-    "git_commit" : "7085ef1d2dfb1d1ce1ef5697b57668c9f4bc87e6",
+    "git_commit" : "58b3a7d52ca3bb969bb876a2ac0147fc0e477629",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
