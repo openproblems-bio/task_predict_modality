@@ -79,7 +79,10 @@ X_bin = (counts > 0).astype(np.float32)
 per_chrom = [X_bin[:, idxs].tocsr() for idxs in chrom_groups.values()]
 
 n_cells = X_bin.shape[0]
-chunk_size = 4096
+# the per-chromosome tensors together span the full peak width, and exist on the host
+# and the device at once -- cap one chunk's dense footprint at ~512 MiB rather than at
+# a fixed cell count
+chunk_size = int(np.clip(512 * 1024**2 // (X_bin.shape[1] * 4), 1, 4096))
 pred_chunks = []
 with torch.no_grad():
     for start in range(0, n_cells, chunk_size):
