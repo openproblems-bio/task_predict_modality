@@ -445,15 +445,16 @@ function ViashDockerfile {
     cat << 'VIASHDOCKER'
 FROM python:3.9
 ENTRYPOINT []
+RUN pip install --no-cache-dir --upgrade pip
 RUN pip install --no-cache-dir torch==1.13.1 torchvision==0.14.1 --index-url https://download.pytorch.org/whl/cu117
 RUN pip install --no-cache-dir --no-deps scButterfly
 RUN pip install --no-cache-dir "numpy==1.23.5" "scipy==1.9.3" "pandas<2" "scanpy==1.9.3" "anndata==0.8.0" "scikit-learn>=1.1" numba tqdm matplotlib adjustText bamnostic pysam legacy-api-wrap
 RUN pip install --no-cache-dir --no-deps episcanpy==0.3.2
 RUN pip install --no-cache-dir "git+https://github.com/openproblems-bio/core.git#subdirectory=packages/python/openproblems"
 LABEL org.opencontainers.image.description="Companion container for running component methods scbutterfly_predict"
-LABEL org.opencontainers.image.created="2026-08-14T04:20:04Z"
+LABEL org.opencontainers.image.created="2026-08-14T05:35:23Z"
 LABEL org.opencontainers.image.source="https://github.com/openproblems-bio/task_predict_modality"
-LABEL org.opencontainers.image.revision="c425a67276b58c01edcc2dd66996aa2e99357723"
+LABEL org.opencontainers.image.revision="bde9deeb34cd6cdd79afe03ef507fd8e3c713696"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER
