@@ -98,6 +98,8 @@
 
 * `cellmapper_linear`, `cellmapper_scvi`: Require `cellmapper>=0.2.6,<0.3`. The package has twice renamed the `map_obsm` output key under a compatible-looking version bump, each time breaking these components on every dataset (PR #59).
 
+* `scbutterfly_train`, `scbutterfly_predict`: Upgrade pip before installing torch. The pip shipped in `python:3.9` rejects the `typing_extensions` wheel over the underscore in its metadata name, falls back to the sdist, and cannot build it because `flit_core` is not on the PyTorch index -- so the image stopped building the moment `typing_extensions` started requiring `flit_core>=3.11` (PR #64).
+
 # task_predict_modality 0.1.1
 
 ## NEW FUNCTIONALITY

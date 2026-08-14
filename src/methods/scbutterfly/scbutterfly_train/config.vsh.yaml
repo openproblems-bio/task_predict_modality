@@ -51,6 +51,7 @@ engines:
     setup:
       - type: docker
         run:
+          - pip install --no-cache-dir --upgrade pip
           - pip install --no-cache-dir torch==1.13.1 torchvision==0.14.1 --index-url https://download.pytorch.org/whl/cu117
           - pip install --no-cache-dir --no-deps scButterfly
           - pip install --no-cache-dir "numpy==1.23.5" "scipy==1.9.3" "pandas<2" "scanpy==1.9.3" "anndata==0.8.0" "scikit-learn>=1.1" numba tqdm matplotlib adjustText bamnostic pysam legacy-api-wrap
