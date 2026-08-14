@@ -3843,7 +3843,7 @@ meta = [
     "engine" : "native",
     "output" : "target/nextflow/workflows/run_benchmark",
     "viash_version" : "0.9.7",
-    "git_commit" : "58b3a7d52ca3bb969bb876a2ac0147fc0e477629",
+    "git_commit" : "ef7a42095c906e792689c7b0fb77a4ff980d81b6",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
