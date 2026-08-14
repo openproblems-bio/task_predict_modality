@@ -1,0 +1,65 @@
+cat("Loading dependencies\n")
+requireNamespace("anndata", quietly = TRUE)
+library(Matrix, warn.conflicts = FALSE, quietly = TRUE)
+
+## VIASH START
+path <- "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/normal/"
+par <- list(
+  input_train_mod1 = paste0(path, "train_mod1.h5ad"),
+  input_test_mod1 = paste0(path, "test_mod1.h5ad"),
+  input_train_mod2 = paste0(path, "train_mod2.h5ad"),
+  output = "output.h5ad",
+  n_pcs = 4L
+)
+meta <- list(name = "foo")
+## VIASH END
+
+cat("Reading mod1 files\n")
+input_train_mod1 <- anndata::read_h5ad(par$input_train_mod1)
+input_test_mod1 <- anndata::read_h5ad(par$input_test_mod1)
+
+
+cat("Performing DR on the mod1 values\n")
+dr <- lmds::lmds(
+  rbind(input_train_mod1$layers[["normalized"]], input_test_mod1$layers[["normalized"]]), 
+  ndim = par$n_pcs,
+  distance_method = par$distance_method
+)
+
+ix <- seq_len(nrow(input_train_mod1))
+dr_train <- dr[ix, , drop = FALSE]
+dr_test <- dr[-ix, , drop = FALSE]
+
+# add an intercept column
+dr_train <- cbind(intercept = 1, dr_train)
+dr_test <- cbind(intercept = 1, dr_test)
+
+rm(input_test_mod1)
+gc()
+
+
+cat("Reading mod2 files\n")
+X_mod2 <- anndata::read_h5ad(par$input_train_mod2)$layers[["normalized"]]
+
+cat("Predicting every column in modality 2 at once\n")
+coefficients <- solve(
+  crossprod(dr_train),
+  as.matrix(crossprod(dr_train, X_mod2))
+)
+
+cat("Creating outputs object\n")
+prediction <- Matrix::Matrix(dr_test %*% coefficients, sparse = TRUE)
+rownames(prediction) <- rownames(dr_test)
+colnames(prediction) <- colnames(X_mod2)
+
+out <- anndata::AnnData(
+  layers = list(normalized = prediction),
+  shape = dim(prediction),
+  uns = list(
+    dataset_id = input_train_mod1$uns[["dataset_id"]],
+    method_id = meta$name
+  )
+)
+
+cat("Writing predictions to file\n")
+zzz <- out$write_h5ad(par$output, compression = "gzip")

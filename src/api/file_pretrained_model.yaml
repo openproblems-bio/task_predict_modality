@@ -1,0 +1,4 @@
+type: file
+example: "model"
+label: "Pretrained model"
+summary: "A pretrained model for predicting the expression of one modality from another."

@@ -1,0 +1,36 @@
+__merge__: ../../api/comp_method.yaml
+name: knnr_py
+label: KNNR (Py)
+summary: K-nearest neighbor regression in Python.
+description: K-nearest neighbor regression in Python.
+references:
+  doi: 10.2307/1403797
+links:
+  documentation: https://scikit-learn.org/stable/modules/neighbors.html
+  repository: https://github.com/scikit-learn/scikit-learn
+info:
+  preferred_normalization: log_cp10k
+arguments:
+  - name: "--distance_method"
+    type: "string"
+    default: "minkowski"
+    description: The distance metric to use. Possible values include `euclidean` and `minkowski`.
+  - name: "--n_pcs"
+    type: "integer"
+    default: 50
+    description: Number of components to use for dimensionality reduction.
+  - name: "--n_neighbors"
+    type: "integer"
+    default: 100
+    description: Number of neighbors to use.
+resources:
+  - type: python_script
+    path: script.py
+engines:
+  - type: docker
+    image: openproblems/base_python:1
+runners:
+  - type: executable
+  - type: nextflow
+    directives:
+      label: [hightime, highmem, midcpu]

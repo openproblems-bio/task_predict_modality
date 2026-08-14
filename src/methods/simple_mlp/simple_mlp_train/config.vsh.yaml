@@ -1,0 +1,28 @@
+__merge__: /src/api/comp_method_train.yaml
+name: simple_mlp_train
+arguments:
+  - name: "--n_epochs"
+    type: integer
+    required: false
+    description: Number of training epochs. Defaults to the value in the bundled model config.
+    info:
+      test_default: 2
+resources:
+  - type: python_script
+    path: script.py
+  - path: ../resources/
+engines:
+  - type: docker
+    image: openproblems/base_pytorch_nvidia:1
+    setup:
+      - type: python
+        pypi:
+          - scikit-learn
+          - scanpy
+          - pytorch-lightning
+runners:
+  - type: executable
+    # docker_run_args: ["--gpus all --ipc=host"]
+  - type: nextflow
+    directives:
+      label: [highmem, hightime, midcpu, gpu, highsharedmem]

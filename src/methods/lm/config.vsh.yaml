@@ -1,0 +1,35 @@
+__merge__: ../../api/comp_method.yaml
+name: lm
+label: Linear Model
+summary: Linear model regression.
+description: A linear model regression method.
+references:
+  doi: 10.2307/2346786
+links:
+  documentation: https://cran.r-project.org/package=RcppArmadillo
+  repository: https://github.com/RcppCore/RcppArmadillo
+info:
+  preferred_normalization: log_cp10k
+arguments:
+  - name: "--distance_method"
+    type: "string"
+    default: "spearman"
+    description: The distance method to use. Possible values are euclidean, pearson, spearman and others.
+  - name: "--n_pcs"
+    type: "integer"
+    default: 50
+    description: Number of principal components to use.
+resources:
+  - type: r_script
+    path: script.R
+engines:
+  - type: docker
+    image: openproblems/base_r:1
+    setup:
+      - type: r
+        cran: [ lmds ]
+runners:
+  - type: executable
+  - type: nextflow
+    directives:
+      label: [hightime, highmem, lowcpu]

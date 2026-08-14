@@ -1,0 +1,117 @@
+cat("Load dependencies\n")
+library(testthat, quietly = TRUE, warn.conflicts = FALSE)
+library(Matrix, quietly = TRUE, warn.conflicts = FALSE)
+requireNamespace("anndata", quietly = TRUE)
+
+## VIASH START
+par <- list(
+  input_test_mod2 = "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal/test_mod2.h5ad",
+  input_prediction = "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal/prediction.h5ad",
+  output = "output/scores.h5ad"
+)
+## VIASH END
+
+cat("Reading solution file\n")
+ad_sol <- anndata::read_h5ad(par$input_test_mod2)
+
+cat("Reading prediction file\n")
+ad_pred <- anndata::read_h5ad(par$input_prediction)
+
+cat("Check prediction format\n")
+expect_equal(
+  ad_sol$uns$dataset_id, ad_pred$uns$dataset_id,
+  info = "Prediction and solution have differing dataset_ids"
+)
+
+expect_true(
+  isTRUE(all.equal(dim(ad_sol), dim(ad_pred))),
+  info = "Dataset and prediction anndata objects should have the same shape / dimensions."
+)
+
+cat("Computing correlation metrics\n")
+# Wrangle data
+tv <- ad_sol$layers[["normalized"]]
+pv <- ad_pred$layers[["normalized"]]
+
+# score non-finite predictions as zero, like the zero-variance case below
+pv_values <- if (methods::is(pv, "sparseMatrix")) pv@x else pv
+non_finite <- !is.finite(pv_values)
+if (any(non_finite)) {
+  cat("Prediction contains", sum(non_finite), "non-finite values, scoring them as 0\n")
+  if (methods::is(pv, "sparseMatrix")) pv@x[non_finite] <- 0 else pv[non_finite] <- 0
+}
+
+# precompute sds
+tv_sd2 <- proxyC::colSds(tv)
+pv_sd2 <- proxyC::colSds(pv)
+tv_sd1 <- proxyC::rowSds(tv)
+pv_sd1 <- proxyC::rowSds(pv)
+
+# correlate matching rows (margin 1) or columns (margin 2) of two matrices
+paired_similarity <- function(x, y, margin, method) {
+  if (margin == 1) {
+    x <- Matrix::t(x)
+    y <- Matrix::t(y)
+  }
+  if (method == "spearman") {
+    x <- dynutils:::spearman_rank_sparse(x)
+    y <- dynutils:::spearman_rank_sparse(y)
+  }
+  sim <- proxyC::simil(
+    x = x, y = y, method = "correlation",
+    margin = 2, diag = TRUE, drop0 = TRUE, use_nan = FALSE
+  )
+  out <- Matrix::diag(sim)
+  out[is.nan(out)] <- 0
+  out[out > 1] <- 1
+  out
+}
+
+# Compute metrics
+pearson_vec_1 <- paired_similarity(tv, pv, margin = 1, method = "pearson")
+spearman_vec_1 <- paired_similarity(tv, pv, margin = 1, method = "spearman")
+
+pearson_vec_1[tv_sd1 == 0 | pv_sd1 == 0] <- 0
+spearman_vec_1[tv_sd1 == 0 | pv_sd1 == 0] <- 0
+
+mean_pearson_per_cell <- mean(pearson_vec_1)
+mean_spearman_per_cell <- mean(spearman_vec_1)
+
+pearson_vec_2 <- paired_similarity(tv, pv, margin = 2, method = "pearson")
+spearman_vec_2 <- paired_similarity(tv, pv, margin = 2, method = "spearman")
+
+pearson_vec_2[tv_sd2 == 0 | pv_sd2 == 0] <- 0
+spearman_vec_2[tv_sd2 == 0 | pv_sd2 == 0] <- 0
+
+mean_pearson_per_gene <- mean(pearson_vec_2)
+mean_spearman_per_gene <- mean(spearman_vec_2)
+
+tv_vec <- as.vector(tv)
+pv_vec <- as.vector(pv)
+
+# zero variance -- score as 0, like the per-cell and per-gene metrics above
+if (sd(tv_vec) == 0 || sd(pv_vec) == 0) {
+  overall_pearson <- 0
+  overall_spearman <- 0
+} else {
+  overall_pearson <- cor(tv_vec, pv_vec, method = "pearson")
+  overall_spearman <- cor(tv_vec, pv_vec, method = "spearman")
+}
+
+metric_ids <- c("mean_pearson_per_cell", "mean_spearman_per_cell", "mean_pearson_per_gene", "mean_spearman_per_gene", "overall_pearson", "overall_spearman")
+metric_values <- c(mean_pearson_per_cell, mean_spearman_per_cell, mean_pearson_per_gene, mean_spearman_per_gene, overall_pearson, overall_spearman)
+
+cat("Create output object\n")
+out <- anndata::AnnData(
+  obs = data.frame(row.names = rownames(ad_sol), pearson = pearson_vec_1, spearman = spearman_vec_1),
+  var = data.frame(row.names = colnames(ad_sol), pearson = pearson_vec_2, spearman = spearman_vec_2),
+  uns = list(
+    dataset_id = ad_pred$uns$dataset_id,
+    method_id = ad_pred$uns$method_id,
+    metric_ids = metric_ids,
+    metric_values = metric_values
+  )
+)
+
+cat("Write output to h5ad file\n")
+zzz <- out$write_h5ad(par$output, compression = "gzip")

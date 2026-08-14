@@ -1,0 +1,163 @@
+"""Helpers shared by ss_opm_train and ss_opm_predict."""
+
+import numpy as np
+import pandas as pd
+import scipy.sparse
+
+# cells per block when densifying the expression matrix for per-cell statistics
+ROW_BLOCK = 1000
+
+# the cell types the original ss_opm model was trained against. only used to name the
+# cell_ratio_* columns it expects; the ratios themselves are derived from the data when
+# cell type labels are available.
+CITE_CELL_TYPES = ["HSC", "EryP", "NeuP", "MasP", "MkP", "BP", "MoP"]
+
+# number of batch singular-vector columns the cite model expects
+N_BATCH_SV = 8
+
+
+def to_sparse_csr(X):
+    if scipy.sparse.issparse(X):
+        return X.tocsr()
+    return scipy.sparse.csr_matrix(X)
+
+
+def extract_day(batch, pattern=r"d(\d+)"):
+    """Pull the day out of a batch label.
+
+    The NeurIPS 2021 batches are named `s{site}d{day}`, e.g. `s1d2`. Datasets that
+    label their batches differently yield NaN, which the caller fills with 0 -- the
+    model then sees a single constant day rather than failing.
+    """
+    return batch.astype(str).str.extract(pattern, expand=False).astype(float)
+
+
+def build_metadata(
+    adata,
+    task_type,
+    cell_type_col=None,
+    group_by_batch=True,
+    day_pattern=r"d(\d+)",
+):
+    """Build the metadata frame ss_opm expects from an AnnData.
+
+    ss_opm was written against the Kaggle competition tables, which carry columns this
+    task's API does not: `file_train_mod1.yaml` and `file_test_mod1.yaml` guarantee only
+    `batch`. Everything else is either derived from `batch`, computed from the expression
+    matrix, or filled with a neutral constant.
+
+    Parameters
+    ----------
+    adata
+        Input modality, with a `normalized` layer and `obs["batch"]`.
+    task_type
+        Either `"cite"` or `"multi"`; the cite model expects extra columns.
+    cell_type_col
+        Column in `adata.obs` holding cell type labels. When given, it drives both
+        `cell_type` and the `cell_ratio_*` columns. When None -- the case for every
+        dataset this task currently ships -- cell types are `"hidden"` and the ratios
+        are uniform.
+    group_by_batch
+        Assign one group per batch. Set False to put every cell in group 0, which is
+        what the predict path wants, since targets are absent and the group IDs are
+        only used to look up target statistics.
+    day_pattern
+        Regex whose first capture group is the day within a batch label.
+    """
+    obs = pd.DataFrame(index=adata.obs_names)
+
+    obs["batch"] = adata.obs["batch"].values
+    obs["day"] = extract_day(adata.obs["batch"], day_pattern).fillna(0).values
+
+    # per-cell statistics from the normalized expression layer, densified one row
+    # block at a time -- the whole matrix is 222 GiB on the multiome datasets
+    X = adata.layers["normalized"]
+    names = ("nonzero_ratio", "nonzero_q25", "nonzero_q50", "nonzero_q75", "mean", "std")
+    stats = {name: np.empty(adata.n_obs, dtype=float) for name in names}
+
+    for start in range(0, adata.n_obs, ROW_BLOCK):
+        end = min(start + ROW_BLOCK, adata.n_obs)
+        block = X[start:end]
+        block = block.toarray() if scipy.sparse.issparse(block) else np.asarray(block, dtype=float)
+
+        stats["nonzero_ratio"][start:end] = (block != 0).mean(axis=1)
+        stats["nonzero_q25"][start:end] = np.percentile(block, 25, axis=1)
+        stats["nonzero_q50"][start:end] = np.percentile(block, 50, axis=1)
+        stats["nonzero_q75"][start:end] = np.percentile(block, 75, axis=1)
+        stats["mean"][start:end] = block.mean(axis=1)
+        stats["std"][start:end] = block.std(axis=1)
+
+    for name in names:
+        obs[name] = stats[name]
+
+    if group_by_batch:
+        batches = adata.obs["batch"].unique().tolist()
+        obs["group"] = adata.obs["batch"].map({b: i for i, b in enumerate(batches)}).astype(int).values
+    else:
+        obs["group"] = 0
+
+    # cell type labels, when the caller can supply them
+    if cell_type_col is not None and cell_type_col in adata.obs:
+        obs["cell_type"] = adata.obs[cell_type_col].astype(str).values
+    else:
+        obs["cell_type"] = "hidden"
+
+    # donor and technology are not in this task's file format; gender_id defaults to 0
+    obs["donor"] = 0
+    obs["technology"] = "unknown"
+
+    if task_type == "cite":
+        ratios = obs["cell_type"].value_counts(normalize=True)
+        for cell_type in CITE_CELL_TYPES:
+            obs[f"cell_ratio_{cell_type}"] = ratios.get(cell_type, 1.0 / len(CITE_CELL_TYPES))
+
+        batch_counts = adata.obs["batch"].value_counts()
+        obs["cell_count"] = adata.obs["batch"].map(batch_counts).astype(float).values
+
+        # the originals are singular vectors of the full Kaggle batch matrix, which we
+        # cannot reconstruct from a single dataset
+        for i in range(N_BATCH_SV):
+            obs[f"batch_sv{i}"] = 0.0
+
+    return obs
+
+
+def _safe_median_normalize(values, ignore_zero=True, log=False):
+    """Median-normalize rows, substituting 1 (identity) when the median is 0 or NaN."""
+    arr = np.asarray(values.toarray() if hasattr(values, 'toarray') else values, dtype=float).copy()
+    for_median = arr.copy()
+    if ignore_zero:
+        for_median[for_median == 0] = np.nan
+    med = np.nanquantile(for_median, q=0.5, axis=1)
+    # Use 1 as fallback so rows with zero/undefined median are left unchanged
+    med = np.where((med == 0) | ~np.isfinite(med), 1.0, med)
+    if log:
+        return arr - med[:, None]
+    else:
+        return arr / med[:, None]
+
+
+def _safe_row_normalize(v):
+    """Row-standardize; rows with std=0 are mean-subtracted only (result is zeros)."""
+    mu = np.mean(v, axis=1)
+    sigma = np.std(v, axis=1)
+    sigma = np.where(sigma == 0, 1.0, sigma)
+    return (v - mu[:, None]) / sigma[:, None]
+
+
+def apply_runtime_patches():
+    """Swap in all-zero-row-safe normalizers for every caller inside ss_opm.
+
+    Train and predict run the same preprocessing chain, so both have to call this
+    before `PrePostProcessing.preprocess()`.
+    """
+    import ss_opm.utility.nonzero_median_normalize as _mnm_module
+    import ss_opm.utility.row_normalize as _rn_module
+    import ss_opm.pre_post_processing.pre_post_processing as _pp_module
+
+    # patch the source modules so every 'from X import Y' binding stays in sync
+    _mnm_module.median_normalize = _safe_median_normalize
+    _rn_module.row_normalize = _safe_row_normalize
+    # and the names already bound inside pre_post_processing's namespace
+    _pp_module.median_normalize = _safe_median_normalize
+    _pp_module.row_normalize = _safe_row_normalize
