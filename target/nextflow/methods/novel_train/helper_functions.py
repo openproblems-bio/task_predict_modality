@@ -75,9 +75,7 @@ class lsiTransformer():
         X_norm = np.log1p(X_norm * 1e4)
         X_lsi = self.pcaTransformer.transform(X_norm)
         X_lsi -= X_lsi.mean(axis=1, keepdims=True)
-        lsi_std = X_lsi.std(axis=1, ddof=1, keepdims=True)
-        lsi_std[lsi_std == 0] = 1
-        X_lsi /= lsi_std
+        X_lsi /= X_lsi.std(axis=1, ddof=1, keepdims=True)
         lsi_df = pd.DataFrame(X_lsi, index = adata_use.obs_names)
         return lsi_df
 
@@ -207,7 +205,7 @@ def rmse(y, y_pred):
     return np.sqrt(np.mean(np.square(y - y_pred)))
 
 def train_and_valid(model, optimizer, loss_fn, dataloader_train, dataloader_test, name_model, device, n_epochs=100):
-    best_score = None
+    best_score = 100000
     for i in range(n_epochs):
         train_losses = []
         model.train()
@@ -233,12 +231,7 @@ def train_and_valid(model, optimizer, loss_fn, dataloader_train, dataloader_test
         cat_targets = np.concatenate(targets)
         cat_outputs[cat_outputs<0.0] = 0
 
-        score = rmse(cat_targets,cat_outputs)
-        if best_score is None or score < best_score:
+        if best_score > rmse(cat_targets,cat_outputs):
             torch.save(model.state_dict(), name_model)
-            best_score = score
-    if best_score is None or not np.isfinite(best_score):
-        raise RuntimeError(
-            f"validation rmse never became finite (best: {best_score}), so no usable model was saved"
-        )
+            best_score = rmse(cat_targets,cat_outputs)
     print("best rmse: ", best_score)

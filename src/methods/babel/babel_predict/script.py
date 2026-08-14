@@ -25,6 +25,10 @@ sys.path.append(meta["resources_dir"])
 from model import AssymSplicedAutoEncoder
 
 
+def _to_dense(X):
+    return X.toarray() if issparse(X) else np.asarray(X)
+
+
 def _lognorm_per_cell(pred_counts, target_sum=1e4):
     """Convert the NB decoder's raw-count-scale mean prediction into the same
     log1p(normalized-to-target_sum) space used for the "normalized" layer
@@ -70,31 +74,12 @@ if list(adata_test_mod1.var_names) != bundle["atac_var_names"]:
         "Test ATAC var_names do not match the peak order the model was trained with; "
         "reindexing across mismatched peak sets is not supported."
     )
-# Binarize the test ATAC while keeping it sparse, pre-slice peaks per chromosome, and
-# run inference in cell chunks so the full dense matrix (and a whole-matrix GPU tensor)
-# is never materialized -- the same reason babel_train stays sparse.
-counts = adata_test_mod1.layers.get("counts", adata_test_mod1.X)
-counts = counts.tocsc() if issparse(counts) else csc_matrix(counts)
-X_bin = (counts > 0).astype(np.float32)
-per_chrom = [X_bin[:, idxs].tocsr() for idxs in chrom_groups.values()]
-
-n_cells = X_bin.shape[0]
-# the per-chromosome tensors together span the full peak width, and exist on the host
-# and the device at once -- cap one chunk's dense footprint at ~512 MiB rather than at
-# a fixed cell count
-chunk_size = int(np.clip(512 * 1024**2 // (X_bin.shape[1] * 4), 1, 4096))
-pred_chunks = []
+X_bin = (_to_dense(adata_test_mod1.layers.get("counts", adata_test_mod1.X)) > 0).astype(np.float32)
+X_per_chrom = [torch.from_numpy(X_bin[:, idxs]).to(device) for idxs in chrom_groups.values()]
 with torch.no_grad():
-    for start in range(0, n_cells, chunk_size):
-        end = min(start + chunk_size, n_cells)
-        x_pc = [
-            torch.from_numpy(c[start:end].toarray().astype(np.float32)).to(device)
-            for c in per_chrom
-        ]
-        encoded = model.encoder2(x_pc)
-        pred_mean, _, _ = model.decoder1(encoded)
-        pred_chunks.append(pred_mean.cpu().numpy())
-pred = _lognorm_per_cell(np.concatenate(pred_chunks, axis=0))
+    encoded = model.encoder2(X_per_chrom)
+    pred_mean, _, _ = model.decoder1(encoded)
+pred = _lognorm_per_cell(pred_mean.cpu().numpy())
 out_var = adata_train_mod2.var
 
 logger.info("Writing predictions...")

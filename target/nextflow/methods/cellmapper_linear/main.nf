@@ -3662,7 +3662,7 @@ meta = [
           "type" : "python",
           "user" : false,
           "packages" : [
-            "cellmapper>=0.2.6"
+            "cellmapper>=0.2.6,<0.3"
           ],
           "upgrade" : true
         }
@@ -3675,7 +3675,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/cellmapper_linear",
     "viash_version" : "0.9.7",
-    "git_commit" : "ef7a42095c906e792689c7b0fb77a4ff980d81b6",
+    "git_commit" : "c425a67276b58c01edcc2dd66996aa2e99357723",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {

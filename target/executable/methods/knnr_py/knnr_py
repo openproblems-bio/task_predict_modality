@@ -446,9 +446,9 @@ function ViashDockerfile {
 FROM openproblems/base_python:1
 ENTRYPOINT []
 LABEL org.opencontainers.image.description="Companion container for running component methods knnr_py"
-LABEL org.opencontainers.image.created="2026-08-14T04:10:39Z"
+LABEL org.opencontainers.image.created="2026-08-14T04:20:03Z"
 LABEL org.opencontainers.image.source="https://github.com/scikit-learn/scikit-learn"
-LABEL org.opencontainers.image.revision="ef7a42095c906e792689c7b0fb77a4ff980d81b6"
+LABEL org.opencontainers.image.revision="c425a67276b58c01edcc2dd66996aa2e99357723"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER
