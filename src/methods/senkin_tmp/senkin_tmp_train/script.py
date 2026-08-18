@@ -1,6 +1,7 @@
 import gc
 import logging
 import pickle
+import sys
 
 import anndata as ad
 import numpy as np
@@ -29,8 +30,11 @@ par = {
     "nn_epochs": 100,
     "n_tsvd_components": 100,
 }
-meta = {"name": "senkin_tmp"}
+meta = {"name": "senkin_tmp", "resources_dir": "src/methods/senkin_tmp/senkin_tmp_train"}
 ## VIASH END
+
+sys.path.append(meta["resources_dir"])
+from exit_codes import exit_non_applicable
 
 
 def _to_dense(X):
@@ -59,6 +63,17 @@ logger.info("Reading input files...")
 adata_rna_train  = ad.read_h5ad(par["input_train_mod1"])
 adata_prot_train = ad.read_h5ad(par["input_train_mod2"])
 adata_rna_test   = ad.read_h5ad(par["input_test_mod1"])
+
+# senkin is a CITE-seq method that predicts protein (ADT) from RNA (GEX); it treats
+# mod1 as RNA and mod2 as protein. Skip the datasets/directions it cannot handle
+# (e.g. Multiome, or the ADT->GEX swap) instead of running for hours and OOMing.
+_mod1 = adata_rna_train.uns.get("modality")
+_mod2 = adata_prot_train.uns.get("modality")
+if _mod1 != "GEX" or _mod2 != "ADT":
+    exit_non_applicable(
+        f"senkin only supports predicting protein (ADT) from RNA (GEX); "
+        f"got mod1={_mod1!r}, mod2={_mod2!r}."
+    )
 
 adata_rna_train.obs  = _parse_batch(adata_rna_train.obs)
 adata_prot_train.obs = _parse_batch(adata_prot_train.obs)
@@ -132,6 +147,15 @@ folds = KFold(n_splits=par["n_folds"], shuffle=True, random_state=666)
 n_tsvd       = par["n_tsvd_components"]
 boost_rounds = par["lgbm_boost_rounds"]
 early_stop   = par["lgbm_early_stopping"]
+
+# Pin LightGBM to the allocated cores. Its default (num_threads=0) spawns one thread
+# per core the container *sees* (the whole node) while the job is cgroup-throttled to
+# meta["cpus"], so the threads oversubscribe and thrash -- the same class of slowdown
+# fixed for guanlab in #59. Leave the library default when cpus is unknown (local runs).
+_n_threads = meta.get("cpus")
+if _n_threads:
+    for _p in (lgbm_params_1, lgbm_params_2, lgbm_params_3, lgbm_params_4):
+        _p["num_threads"] = _n_threads
 
 # Protein targets
 Y_prot_raw = _to_dense(adata_prot_train.layers.get("counts", adata_prot_train.X)).astype(np.float64)
