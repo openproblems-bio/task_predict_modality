@@ -81,6 +81,7 @@ authors:
     roles: [ author ]
     info:
       github: VladimirShitov
+      orcid: 0000-0002-1960-8812
   - name: Xueer Chen
     roles: [ contributor ]
     info:
