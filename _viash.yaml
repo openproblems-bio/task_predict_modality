@@ -45,6 +45,11 @@ authors:
     roles: [ author ]
     info:
       github: Pseudomanifold
+  - name: Benjamin Frey
+    roles: [ author ]
+    info:
+      github: benjaminfreyuu
+      orcid: 0009-0004-7649-8340
   - name: Christopher Lance
     roles: [ author ]
     info:
@@ -73,6 +78,11 @@ authors:
     info:
       github: rcannood
       orcid: "0000-0003-3641-729X"
+  - name: Vladimir Shitov
+    roles: [ author ]
+    info:
+      github: VladimirShitov
+      orcid: 0000-0002-1960-8812
   - name: Xueer Chen
     roles: [ contributor ]
     info:
