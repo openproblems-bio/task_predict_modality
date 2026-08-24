@@ -74,12 +74,12 @@ authors:
     info:
       github: LouiseDck
   - name: Robrecht Cannoodt
-    roles: [ author, maintainer ]
+    roles: [ author ]
     info:
       github: rcannood
       orcid: "0000-0003-3641-729X"
   - name: Vladimir Shitov
-    roles: [ author ]
+    roles: [ author, maintainer ]
     info:
       github: VladimirShitov
       orcid: 0000-0002-1960-8812
