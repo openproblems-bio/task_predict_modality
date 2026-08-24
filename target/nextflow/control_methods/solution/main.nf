@@ -3718,7 +3718,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/control_methods/solution",
     "viash_version" : "0.9.7",
-    "git_commit" : "bde9deeb34cd6cdd79afe03ef507fd8e3c713696",
+    "git_commit" : "2de55e9efe7fa8d5560ca1b6c515ab196ab83070",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3785,6 +3785,16 @@ meta = [
         }
       },
       {
+        "name" : "Benjamin Frey",
+        "roles" : [
+          "author"
+        ],
+        "info" : {
+          "github" : "benjaminfreyuu",
+          "orcid" : "0009-0004-7649-8340"
+        }
+      },
+      {
         "name" : "Christopher Lance",
         "roles" : [
           "author"
@@ -3835,12 +3845,22 @@ meta = [
       {
         "name" : "Robrecht Cannoodt",
         "roles" : [
-          "author",
-          "maintainer"
+          "author"
         ],
         "info" : {
           "github" : "rcannood",
           "orcid" : "0000-0003-3641-729X"
+        }
+      },
+      {
+        "name" : "Vladimir Shitov",
+        "roles" : [
+          "author",
+          "maintainer"
+        ],
+        "info" : {
+          "github" : "VladimirShitov",
+          "orcid" : "0000-0002-1960-8812"
         }
       },
       {
