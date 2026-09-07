@@ -18,7 +18,7 @@ engines:
     image: openproblems/base_pytorch_nvidia:1
     setup:
       - type: docker
-        run: pip install --no-cache-dir --no-deps git+https://github.com/lueckenlab/senkin-tmp-cite-pred.git
+        run: pip install --no-cache-dir --no-deps git+https://github.com/lueckenlab/senkin-tmp-cite-pred.git@fix/match-original-pipeline
       - type: python
         packages:
           - lightgbm>=4.0
@@ -31,4 +31,4 @@ runners:
   - type: executable
   - type: nextflow
     directives:
-      label: [highmem, hightime, midcpu]
+      label: [lowmem, lowtime, lowcpu]
