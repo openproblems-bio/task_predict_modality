@@ -18,7 +18,7 @@ engines:
     image: openproblems/base_pytorch_nvidia:1
     setup:
       - type: docker
-        run: pip install --no-cache-dir --no-deps git+https://github.com/lueckenlab/senkin-tmp-cite-pred.git@4372e3d635136bb2de62cf01ccb5e68e08ff1c7e
+        run: pip install --no-cache-dir --no-deps git+https://github.com/lueckenlab/senkin-tmp-cite-pred.git@4249aa0c81753c1dd97ea4f1aa089a78817e0ee8
       - type: python
         packages:
           - lightgbm>=4.0
