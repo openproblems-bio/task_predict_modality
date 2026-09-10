@@ -5,7 +5,7 @@ import sys
 import anndata as ad
 import numpy as np
 import scanpy as sc
-from scipy.sparse import issparse
+from scipy.sparse import csc_matrix, csr_matrix, issparse
 import skorch
 import torch
 from torch import nn
@@ -38,36 +38,48 @@ from model import AssymSplicedAutoEncoder
 from losses import QuadLoss
 
 
-def _to_dense(X):
-    return X.toarray() if issparse(X) else np.asarray(X)
+def _as_csr(X):
+    return X.tocsr() if issparse(X) else csr_matrix(X)
 
 
 def _rna_matrix(adata):
-    counts = _to_dense(adata.layers.get("counts", adata.X)).astype(np.float32)
+    # Keep everything sparse; the full ATAC/RNA matrices are only densified one cell
+    # at a time in PairedDataset.__getitem__ (mirrors the original BABEL data loader).
+    # Densifying up front OOMs on real ATAC data (e.g. 130k cells x 229k peaks would
+    # need ~222 GiB dense).
+    counts = _as_csr(adata.layers.get("counts", adata.X)).astype(np.float32)
     if "normalized" in adata.layers:
-        X = _to_dense(adata.layers["normalized"]).astype(np.float32)
+        X = _as_csr(adata.layers["normalized"]).astype(np.float32)
     else:
         tmp = ad.AnnData(counts.copy())
         sc.pp.normalize_total(tmp)
         sc.pp.log1p(tmp)
-        X = tmp.X.astype(np.float32)
-    size_factors = counts.sum(axis=1, keepdims=True)
+        X = _as_csr(tmp.X).astype(np.float32)
+    size_factors = np.asarray(counts.sum(axis=1)).reshape(-1, 1)
     med = np.median(size_factors[size_factors > 0]) if np.any(size_factors > 0) else 1.0
     size_factors = size_factors / (med if med > 0 else 1.0)
     return X, counts, size_factors.astype(np.float32)
 
 
 def _atac_binarized(adata):
-    counts = _to_dense(adata.layers.get("counts", adata.X))
+    counts = _as_csr(adata.layers.get("counts", adata.X))
     return (counts > 0).astype(np.float32)
+
+
+def _row_tensor(mat, idx):
+    """Densify a single row of a sparse matrix into a 1-D float32 tensor
+    (mirrors BABEL's per-cell `utils.ensure_arr(X[i]).flatten()`)."""
+    return torch.from_numpy(mat[idx].toarray().ravel().astype(np.float32))
 
 
 class PairedDataset(Dataset):
     def __init__(self, x1, x2_per_chrom, y1, y2, size_factors1):
-        self.x1 = torch.from_numpy(x1)
-        self.x2_per_chrom = [torch.from_numpy(c) for c in x2_per_chrom]
-        self.y1 = torch.from_numpy(y1)
-        self.y2 = torch.from_numpy(y2)
+        # Store the RNA/ATAC matrices sparse (CSR); rows are densified on demand in
+        # __getitem__ so the full dense matrix is never materialized.
+        self.x1 = _as_csr(x1)
+        self.x2_per_chrom = [_as_csr(c) for c in x2_per_chrom]
+        self.y1 = _as_csr(y1)
+        self.y2 = _as_csr(y2)
         self.size_factors1 = torch.from_numpy(size_factors1)
 
     def __len__(self):
@@ -75,11 +87,11 @@ class PairedDataset(Dataset):
 
     def __getitem__(self, idx):
         X = {
-            "x1": self.x1[idx],
-            "x2_per_chrom": [c[idx] for c in self.x2_per_chrom],
+            "x1": _row_tensor(self.x1, idx),
+            "x2_per_chrom": [_row_tensor(c, idx) for c in self.x2_per_chrom],
             "size_factors1": self.size_factors1[idx],
         }
-        y = torch.cat([self.y1[idx], self.y2[idx]])  # dummy combined target, unused directly
+        y = torch.cat([_row_tensor(self.y1, idx), _row_tensor(self.y2, idx)])  # dummy combined target, unused directly
         return X, y
 
 
@@ -152,7 +164,10 @@ X_rna, Y_rna_counts, size_factors = _rna_matrix(adata_rna)
 X_atac_bin = _atac_binarized(adata_atac)
 
 chrom_counts, chrom_groups = parse_chrom_groups(adata_atac.var_names)
-X_atac_per_chrom = [X_atac_bin[:, idxs] for idxs in chrom_groups.values()]
+# Slice peaks per chromosome on a CSC view (fast column indexing); each group stays
+# sparse and is densified per-cell later.
+X_atac_bin_csc = X_atac_bin.tocsc()
+X_atac_per_chrom = [X_atac_bin_csc[:, idxs] for idxs in chrom_groups.values()]
 
 n_genes = X_rna.shape[1]
 n_peaks = X_atac_bin.shape[1]
@@ -206,7 +221,7 @@ bundle = {
     "direction": direction,
     "rna_var_names": list(adata_rna.var_names),
     "atac_var_names": list(adata_atac.var_names),
-    "size_factor_median": float(np.median(Y_rna_counts.sum(axis=1))),
+    "size_factor_median": float(np.median(np.asarray(Y_rna_counts.sum(axis=1)).ravel())),
 }
 
 with open(par["output"], "wb") as f:
