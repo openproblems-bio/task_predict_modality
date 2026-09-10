@@ -1,8 +1,18 @@
 __merge__: ../../../api/comp_method_train.yaml
 name: senkin_tmp_train
+info:
+  # The api default test inputs are bmmc_cite/swap (ADT->GEX). senkin predicts protein
+  # (ADT) from RNA (GEX), so point the component test at the 'normal' (GEX->ADT)
+  # direction, otherwise the new modality guard correctly exits non-applicable.
+  test_setup:
+    normal_direction:
+      input_train_mod1: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal/train_mod1.h5ad
+      input_train_mod2: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal/train_mod2.h5ad
+      input_test_mod1: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal/test_mod1.h5ad
 resources:
   - path: script.py
     type: python_script
+  - path: /src/utils/exit_codes.py
 arguments:
   - name: "--n_folds"
     type: integer
@@ -62,3 +72,9 @@ runners:
   - type: nextflow
     directives:
       label: [highmem, hightime, midcpu, gpu]
+# Override the api default (bmmc_cite/swap = ADT->GEX). senkin only supports GEX->ADT.
+test_resources:
+  - type: python_script
+    path: /common/component_tests/run_and_check_output.py
+  - path: /resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal
+    dest: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal
