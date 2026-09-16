@@ -1,27 +1,32 @@
 import gc
 import logging
 import pickle
+import sys
 
 import anndata as ad
 import numpy as np
-from scipy.sparse import issparse
-from sklearn.decomposition import PCA
+from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.model_selection import KFold
-import tensorflow as tf
 
-from senkin_tmp_cite_pred.preprocess import remove_constant_vars, senkin_normalize, get_top_correlated_features, log_normalize, clr_tsvd
+from senkin_tmp_cite_pred.preprocess import (
+    clr_tsvd,
+    get_top_correlated_features,
+    log_normalize,
+    remove_constant_vars,
+    senkin_normalize,
+    to_dense,
+)
 from senkin_tmp_cite_pred.lgbm_models import get_lgbm_predictions, lgbm_params_1, lgbm_params_2, lgbm_params_3, lgbm_params_4
-from senkin_tmp_cite_pred.nn_models import cite_cos_sim_model, cite_mse_model, nn_kfold, zscore
-from senkin_tmp_cite_pred.metrics import cosine_similarity_loss
+from senkin_tmp_cite_pred.nn_models import cite_cos_sim_model, cite_mse_model, nn_kfold, prepare_nn_inputs, zscore
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 ## VIASH START
 par = {
-    "input_train_mod1": "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/train_mod1.h5ad",
-    "input_train_mod2": "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/train_mod2.h5ad",
-    "input_test_mod1":  "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap/test_mod1.h5ad",
+    "input_train_mod1": "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal/train_mod1.h5ad",
+    "input_train_mod2": "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal/train_mod2.h5ad",
+    "input_test_mod1":  "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal/test_mod1.h5ad",
     "output": "output_model.pkl",
     "n_folds": 5,
     "lgbm_boost_rounds": 10000,
@@ -29,199 +34,204 @@ par = {
     "nn_epochs": 100,
     "n_tsvd_components": 100,
 }
-meta = {"name": "senkin_tmp"}
+meta = {"name": "senkin_tmp", "resources_dir": "src/methods/senkin_tmp/senkin_tmp_train", "cpus": None}
 ## VIASH END
 
+sys.path.append(meta["resources_dir"])
+from exit_codes import exit_non_applicable
 
-def _to_dense(X):
-    return X.toarray() if issparse(X) else np.array(X)
-
-
-def _parse_batch(obs, batch_col="batch"):
-    if batch_col not in obs.columns:
-        obs["day"] = "unknown"
-        obs["donor"] = "unknown"
-        return obs
-    def _split(b):
-        b = str(b)
-        d_idx = b.find("d")
-        if d_idx > 0:
-            return b[1:d_idx], b[d_idx + 1:]
-        return b, b
-    obs["day"], obs["donor"] = zip(*obs[batch_col].astype(str).map(_split))
-    return obs
-
+# The original solution corrected batch effects per day and computed gene-protein correlations per donor and day.
+# The benchmark datasets only carry a generic `batch` column (e.g. "s1d1" in NeurIPS 2021, "day_donor" in
+# NeurIPS 2022), which is used for both purposes here. Nothing dataset specific is assumed about its format.
+BATCH_KEY = "batch"
+SEED = 42
 
 # ---------------------------------------------------------------------------
 # Load data
 # ---------------------------------------------------------------------------
 logger.info("Reading input files...")
-adata_rna_train  = ad.read_h5ad(par["input_train_mod1"])
+adata_rna_train = ad.read_h5ad(par["input_train_mod1"])
 adata_prot_train = ad.read_h5ad(par["input_train_mod2"])
-adata_rna_test   = ad.read_h5ad(par["input_test_mod1"])
+adata_rna_test = ad.read_h5ad(par["input_test_mod1"])
 
-adata_rna_train.obs  = _parse_batch(adata_rna_train.obs)
-adata_prot_train.obs = _parse_batch(adata_prot_train.obs)
-adata_rna_test.obs   = _parse_batch(adata_rna_test.obs)
+# senkin is a CITE-seq method that predicts protein (ADT) from RNA (GEX); it treats
+# mod1 as RNA and mod2 as protein. Skip the datasets/directions it cannot handle
+# (e.g. Multiome, or the ADT->GEX swap) instead of running for hours and OOMing.
+_mod1 = adata_rna_train.uns.get("modality")
+_mod2 = adata_prot_train.uns.get("modality")
+if _mod1 != "GEX" or _mod2 != "ADT":
+    exit_non_applicable(
+        f"senkin only supports predicting protein (ADT) from RNA (GEX); "
+        f"got mod1={_mod1!r}, mod2={_mod2!r}."
+    )
 
-# Mark split membership before concatenating
-adata_rna_train.obs["split"] = "train"
-adata_rna_test.obs["split"]  = "test"
+# Align protein cells with RNA cells
+adata_prot_train = adata_prot_train[adata_rna_train.obs_names].copy()
+
+for adata in (adata_rna_train, adata_rna_test):
+    if BATCH_KEY not in adata.obs.columns:
+        adata.obs[BATCH_KEY] = "all"
+    adata.obs[BATCH_KEY] = adata.obs[BATCH_KEY].astype(str)
+adata_prot_train.obs[BATCH_KEY] = adata_rna_train.obs[BATCH_KEY].values
 
 # Concatenate train + test RNA so the original pipeline sees both at once
-import scanpy as sc
-adata_rna_all = sc.concat([adata_rna_train, adata_rna_test], axis=0)
+# (all unsupervised transformations were fit on train and test cells together)
+adata_rna_train.obs["split"] = "train"
+adata_rna_test.obs["split"] = "test"
+adata_rna_all = ad.concat([adata_rna_train, adata_rna_test], axis=0, join="inner", merge="same")
 adata_rna_all.X = adata_rna_all.layers["counts"]
+adata_rna_all.obs[BATCH_KEY] = adata_rna_all.obs[BATCH_KEY].astype(str)
+del adata_rna_all.layers["counts"]
+if "normalized" in adata_rna_all.layers:
+    del adata_rna_all.layers["normalized"]
 
 # ---------------------------------------------------------------------------
 # Preprocessing on combined train+test RNA
 # ---------------------------------------------------------------------------
 logger.info("Preprocessing RNA (train + test combined)...")
 
-adata_rna_all_filt = remove_constant_vars(adata_rna_all)
-X_counts_all = _to_dense(adata_rna_all_filt.layers.get("counts", adata_rna_all_filt.X))
+adata_rna_all = remove_constant_vars(adata_rna_all)
+train_idx = np.flatnonzero((adata_rna_all.obs["split"] == "train").values)
+test_idx = np.flatnonzero((adata_rna_all.obs["split"] == "test").values)
+n_train, n_test = len(train_idx), len(test_idx)
+logger.info(f"{n_train} train cells, {n_test} test cells, {adata_rna_all.n_vars} non-constant genes")
 
-train_mask = adata_rna_all_filt.obs["split"] == "train"
-test_mask  = adata_rna_all_filt.obs["split"] == "test"
+# Log-normalize the way the competition inputs were normalized: log1p(counts per million)
+X_lognorm_all = log_normalize(adata_rna_all, target_sum=1e6).tocsr()
 
-# Log-normalize (CP10K + log1p) via the senkin_tmp_cite_pred library helper.
-# log_normalize preserves the input sparsity, so densify for the array math below.
-X_lognorm_all = _to_dense(log_normalize(adata_rna_all_filt, target_sum=1e4)).astype(np.float64)
-
-# CLR-TSVD via the library helper (random_state=42 for reproducible components)
 logger.info("Computing CLR-TSVD...")
-X_clr_tsvd_all = clr_tsvd(adata_rna_all_filt, n_components=200, random_state=42)
+X_clr_tsvd_all = clr_tsvd(adata_rna_all, n_components=200, random_state=SEED)
 
-# SenKin normalization + PCA — fit on all
-logger.info("Computing SenKin normalization and PCA...")
-X_sqrt_norm_all = np.asarray(senkin_normalize(adata_rna_all_filt, batch_key="day"))
-n_pca = min(100, min(X_sqrt_norm_all.shape) - 1)
-pca_model = PCA(n_components=n_pca, random_state=42)
-X_pca_all = pca_model.fit_transform(X_sqrt_norm_all)
+# Custom sqrt normalization with per-batch median correction, reduced with TSVD (100) and PCA (64) as in the original
+logger.info("Computing SenKin normalization, TSVD and PCA...")
+X_sqrt_norm_all = senkin_normalize(adata_rna_all, batch_key=BATCH_KEY)
+n_sqrt_tsvd = min(100, min(X_sqrt_norm_all.shape) - 1)
+X_sqrt_tsvd_all = TruncatedSVD(n_components=n_sqrt_tsvd, algorithm="arpack", random_state=SEED).fit_transform(X_sqrt_norm_all)
+n_sqrt_pca = min(64, min(X_sqrt_norm_all.shape) - 1)
+X_sqrt_pca_all = PCA(n_components=n_sqrt_pca, copy=False, random_state=SEED).fit_transform(X_sqrt_norm_all)
+del X_sqrt_norm_all
+gc.collect()
 
-# Correlated gene selection — computed on train cells only (no label leakage)
+# Correlated gene selection: computed on train cells only (no label leakage), on log-normalized RNA and
+# normalized proteins, per batch. As in the original, the raw counts of the selected genes are used as features.
 logger.info("Selecting correlated features...")
-adata_rna_train_filt = adata_rna_all_filt[train_mask]
-Y_prot_train = _to_dense(adata_prot_train.layers.get("normalized", adata_prot_train.X)).astype(np.float64)
-# get_top_correlated_features hardcodes .layers["dsb"]; alias our normalized layer
-_added_dsb = "dsb" not in adata_prot_train.layers
-if _added_dsb:
-    adata_prot_train.layers["dsb"] = adata_prot_train.layers.get("normalized", adata_prot_train.X)
-# Use "day" as group key — benchmark data has no "donor" column
-_group_key = "donor" if "donor" in adata_rna_train_filt.obs.columns else "day"
-top_corr_genes = get_top_correlated_features(adata_rna_train_filt, adata_prot_train, group_key=_group_key)
-if _added_dsb:
-    del adata_prot_train.layers["dsb"]
-all_var_names = list(adata_rna_all_filt.var_names)
-selected_gene_idxs = [all_var_names.index(g) for g in top_corr_genes if g in all_var_names]
-X_raw_selected_all = X_counts_all[:, selected_gene_idxs].astype(np.float64)
+adata_rna_train_filt = adata_rna_all[train_idx].copy()
+adata_rna_train_filt.obsm["X_log_normalized"] = X_lognorm_all[train_idx]
+top_corr_genes = get_top_correlated_features(
+    adata_rna_train_filt,
+    adata_prot_train,
+    group_key=BATCH_KEY,
+    quantile_threshold=0.1,
+    top_n=10,
+    rna_key="X_log_normalized",
+    prot_key="normalized",
+)
+del adata_rna_train_filt
 
-# Split back into train / test portions
-X_lognorm_train    = X_lognorm_all[train_mask]
-X_lognorm_test     = X_lognorm_all[test_mask]
-X_clr_tsvd_train   = X_clr_tsvd_all[train_mask]
-X_clr_tsvd_test    = X_clr_tsvd_all[test_mask]
-X_pca_train        = X_pca_all[train_mask]
-X_pca_test         = X_pca_all[test_mask]
-X_raw_sel_train    = X_raw_selected_all[train_mask]
-X_raw_sel_test     = X_raw_selected_all[test_mask]
-X_counts_train     = X_counts_all[train_mask]
-X_counts_test      = X_counts_all[test_mask]
+# The original solution additionally used a hand-curated list of genes encoding the measured proteins.
+# Generic equivalent: genes whose name matches a protein name.
+def _feature_names(adata):
+    names = adata.var["feature_name"] if "feature_name" in adata.var.columns else adata.var_names.to_series()
+    return names.astype(str).str.upper()
 
-folds = KFold(n_splits=par["n_folds"], shuffle=True, random_state=666)
-n_tsvd       = par["n_tsvd_components"]
-boost_rounds = par["lgbm_boost_rounds"]
-early_stop   = par["lgbm_early_stopping"]
+_gene_names = _feature_names(adata_rna_all)
+_protein_names = set(_feature_names(adata_prot_train))
+known_genes = adata_rna_all.var_names[_gene_names.isin(_protein_names).values].tolist()
+selected_genes = sorted(set(top_corr_genes) | set(known_genes))
+logger.info(f"{len(top_corr_genes)} correlated genes + {len(known_genes)} protein-encoding genes = {len(selected_genes)} selected genes")
+X_raw_selected_all = to_dense(adata_rna_all[:, selected_genes].X, dtype=np.float32)
+
+X_counts_all = adata_rna_all.X.tocsr()
 
 # Protein targets
-Y_prot_raw = _to_dense(adata_prot_train.layers.get("counts", adata_prot_train.X)).astype(np.float64)
+Y_prot_train = to_dense(adata_prot_train.layers["normalized"], dtype=np.float64)
+Y_prot_raw = to_dense(adata_prot_train.layers.get("counts", adata_prot_train.X), dtype=np.float64)
+
+folds = KFold(n_splits=par["n_folds"], shuffle=True, random_state=666)
+n_tsvd = par["n_tsvd_components"]
+boost_rounds = par["lgbm_boost_rounds"]
+early_stop = par["lgbm_early_stopping"]
+
+# Pin LightGBM to the allocated cores. Its default (num_threads=0) spawns one thread
+# per core the container *sees* (the whole node) while the job is cgroup-throttled to
+# meta["cpus"], so the threads oversubscribe and thrash -- the same class of slowdown
+# fixed for guanlab in #59. Leave the library default when cpus is unknown (local runs).
+_n_threads = meta.get("cpus")
+if _n_threads:
+    for _p in (lgbm_params_1, lgbm_params_2, lgbm_params_3, lgbm_params_4):
+        _p["num_threads"] = _n_threads
 
 # ---------------------------------------------------------------------------
 # LightGBM — 4 models, train+test passed together (original design)
 # get_lgbm_predictions concatenates train+test, fits TSVD on combined array
 # ---------------------------------------------------------------------------
-logger.info("Training LightGBM model 1 (log-norm → proteins)...")
-lgbm1_svd_all = get_lgbm_predictions(
-    X_lognorm_train, Y_prot_train, X_lognorm_test,
-    folds, lgbm_params_1,
-    n_tsvd_components=n_tsvd,
-    num_boost_round=boost_rounds,
-    early_stopping_rounds=early_stop,
-)
+def _lgbm(X_all, Y, params, description):
+    logger.info(f"Training LightGBM {description}...")
+    return get_lgbm_predictions(
+        X_all[train_idx], Y, X_all[test_idx], folds, params,
+        n_tsvd_components=n_tsvd, num_boost_round=boost_rounds, early_stopping_rounds=early_stop,
+    )
 
-logger.info("Training LightGBM model 2 (combined → proteins)...")
-X_comb_train = np.concatenate([X_clr_tsvd_train, X_raw_sel_train, X_pca_train], axis=1)
-X_comb_test  = np.concatenate([X_clr_tsvd_test,  X_raw_sel_test,  X_pca_test],  axis=1)
-lgbm2_svd_all = get_lgbm_predictions(
-    X_comb_train, Y_prot_train, X_comb_test,
-    folds, lgbm_params_2,
-    n_tsvd_components=n_tsvd,
-    num_boost_round=boost_rounds,
-    early_stopping_rounds=early_stop,
-)
+lgbm1_svd_all = _lgbm(X_lognorm_all, Y_prot_train, lgbm_params_1, "model 1 (log-normalized RNA -> proteins)")
 
-logger.info("Training LightGBM model 3 (raw counts → proteins)...")
-lgbm3_svd_all = get_lgbm_predictions(
-    X_counts_train, Y_prot_train, X_counts_test,
-    folds, lgbm_params_3,
-    n_tsvd_components=n_tsvd,
-    num_boost_round=boost_rounds,
-    early_stopping_rounds=early_stop,
-)
+X_comb_all = np.concatenate([X_clr_tsvd_all, X_raw_selected_all, X_sqrt_tsvd_all, X_sqrt_pca_all], axis=1)
+lgbm2_svd_all = _lgbm(X_comb_all, Y_prot_train, lgbm_params_2, "model 2 (CLR-TSVD + selected genes + normalized TSVD/PCA -> proteins)")
+del X_comb_all
 
-logger.info("Training LightGBM model 4 (raw counts → raw proteins)...")
-lgbm4_svd_all = get_lgbm_predictions(
-    X_counts_train, Y_prot_raw, X_counts_test,
-    folds, lgbm_params_4,
-    n_tsvd_components=n_tsvd,
-    num_boost_round=boost_rounds,
-    early_stopping_rounds=early_stop,
-)
+lgbm3_svd_all = _lgbm(X_counts_all, Y_prot_train, lgbm_params_3, "model 3 (raw counts -> proteins)")
+lgbm4_svd_all = _lgbm(X_counts_all, Y_prot_raw, lgbm_params_4, "model 4 (raw counts -> raw proteins)")
+del X_counts_all, X_lognorm_all
+gc.collect()
 
-# get_lgbm_predictions returns shape (n_train + n_test, n_tsvd)
-n_train = X_lognorm_train.shape[0]
-n_test  = X_lognorm_test.shape[0]
+# ---------------------------------------------------------------------------
+# Neural networks. Every feature block is z-scored per cell before concatenation, as in the original.
+# ---------------------------------------------------------------------------
+def _nn_inputs(idx):
+    return prepare_nn_inputs(
+        X_clr_tsvd_all[idx], X_raw_selected_all[idx], X_sqrt_tsvd_all[idx], X_sqrt_pca_all[idx],
+        lgbm1_svd_all[idx], lgbm2_svd_all[idx], lgbm3_svd_all[idx], lgbm4_svd_all[idx],
+    )
 
-lgbm1_tr = lgbm1_svd_all[:n_train]; lgbm1_te = lgbm1_svd_all[n_train:]
-lgbm2_tr = lgbm2_svd_all[:n_train]; lgbm2_te = lgbm2_svd_all[n_train:]
-lgbm3_tr = lgbm3_svd_all[:n_train]; lgbm3_te = lgbm3_svd_all[n_train:]
-lgbm4_tr = lgbm4_svd_all[:n_train]; lgbm4_te = lgbm4_svd_all[n_train:]
-
-# Build NN inputs
-nn_X_train = np.concatenate([X_clr_tsvd_train, X_pca_train, X_raw_sel_train, lgbm1_tr, lgbm2_tr, lgbm3_tr, lgbm4_tr], axis=1).astype(np.float32)
-nn_X_test  = np.concatenate([X_clr_tsvd_test,  X_pca_test,  X_raw_sel_test,  lgbm1_te, lgbm2_te, lgbm3_te, lgbm4_te], axis=1).astype(np.float32)
+# get_lgbm_predictions returns train cells first, then test cells
+nn_X_train = _nn_inputs(np.arange(n_train))
+nn_X_test = _nn_inputs(np.arange(n_train, n_train + n_test))
 nn_y_train = Y_prot_train.astype(np.float32)
 
-train_cell_ids = np.array(adata_rna_all_filt.obs_names[train_mask])
-test_cell_ids  = np.array(adata_rna_all_filt.obs_names[test_mask])
+train_cell_ids = np.array(adata_rna_all.obs_names[train_idx])
+test_cell_ids = np.array(adata_rna_all.obs_names[test_idx])
 
-# ---------------------------------------------------------------------------
-# Neural network — use original nn_kfold which saves checkpoint weights
-# ---------------------------------------------------------------------------
 logger.info("Training neural network (cosine model)...")
-import os
-os.makedirs("models", exist_ok=True)
-
 train_preds_cos, test_preds_cos = nn_kfold(
     train_cell_ids, nn_X_train, nn_y_train,
-    test_cell_ids,  nn_X_test,
+    test_cell_ids, nn_X_test,
     cite_cos_sim_model, folds,
     model_name="cite_cos_model",
     BATCH_SIZE=620, EPOCHS=par["nn_epochs"], LR_FACTOR=0.05,
+    models_dir="models",
 )
 
 logger.info("Training neural network (MSE model)...")
 nn_y_train_z = zscore(nn_y_train)
 train_preds_mse, test_preds_mse = nn_kfold(
     train_cell_ids, nn_X_train, nn_y_train_z,
-    test_cell_ids,  nn_X_test,
+    test_cell_ids, nn_X_test,
     cite_mse_model, folds,
     model_name="cite_mse_model",
     BATCH_SIZE=600, EPOCHS=par["nn_epochs"], LR_FACTOR=0.1,
+    models_dir="models",
 )
 
 # Blend — identical to original train_nn_models
+train_preds = zscore(train_preds_cos) * 0.55 + zscore(train_preds_mse) * 0.45
 test_preds = zscore(test_preds_cos) * 0.55 + zscore(test_preds_mse) * 0.45
+
+# The original solution was scored with a per-cell Pearson correlation only, so its predictions are z-scored per
+# cell. The benchmark also computes RMSE/MAE, so bring the predictions back to the scale of the normalized proteins
+# with a single global affine transform fitted on the out-of-fold training predictions. One (slope, intercept) pair
+# for all cells and proteins leaves every per-cell and per-protein correlation untouched.
+slope, intercept = np.polyfit(train_preds.ravel(), Y_prot_train.ravel(), deg=1)
+logger.info(f"Rescaling z-scored predictions to the target scale: slope {slope:.4f}, intercept {intercept:.4f}")
+test_preds = test_preds * slope + intercept
 
 # ---------------------------------------------------------------------------
 # Save bundle — test predictions stored directly, predict script just reads them
@@ -229,7 +239,7 @@ test_preds = zscore(test_preds_cos) * 0.55 + zscore(test_preds_mse) * 0.45
 logger.info("Saving model bundle...")
 bundle = {
     "test_predictions": test_preds.astype(np.float32),  # (n_test, n_proteins)
-    "test_obs": adata_rna_test.obs,
+    "test_obs_names": test_cell_ids,
     "prot_var": adata_prot_train.var,
     "dataset_id": adata_rna_train.uns.get("dataset_id", ""),
 }
