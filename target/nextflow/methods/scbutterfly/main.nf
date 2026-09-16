@@ -3581,7 +3581,7 @@ meta = [
     "engine" : "native",
     "output" : "target/nextflow/methods/scbutterfly",
     "viash_version" : "0.9.7",
-    "git_commit" : "b49c78c39484025e4cc99291ee8a2b0ffcb9713f",
+    "git_commit" : "d12b41384d64872c285e40ce3e8d8ac834542455",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {

@@ -3547,9 +3547,9 @@ meta = [
       "id" : "nextflow",
       "directives" : {
         "label" : [
-          "highmem",
-          "hightime",
-          "midcpu"
+          "lowmem",
+          "lowtime",
+          "lowcpu"
         ],
         "tag" : "$id"
       },
@@ -3612,7 +3612,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/senkin_tmp_predict",
     "viash_version" : "0.9.7",
-    "git_commit" : "b49c78c39484025e4cc99291ee8a2b0ffcb9713f",
+    "git_commit" : "d12b41384d64872c285e40ce3e8d8ac834542455",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3875,9 +3875,15 @@ logger.info("Loading model bundle...")
 with open(par["input_model"], "rb") as f:
     bundle = pickle.load(f)
 
+predictions = bundle["test_predictions"]
+if "test_obs_names" in bundle:
+    # The train step predicted the test cells in the order of input_test_mod1; make sure nothing changed
+    assert (np.asarray(bundle["test_obs_names"]) == adata_rna_test.obs_names.values).all(), "test cells do not match the trained model"
+assert predictions.shape == (adata_rna_test.n_obs, adata_prot_train.n_vars)
+
 logger.info("Writing predictions...")
 adata_out = ad.AnnData(
-    layers={"normalized": csc_matrix(bundle["test_predictions"])},
+    layers={"normalized": csc_matrix(predictions)},
     obs=adata_rna_test.obs,
     var=adata_prot_train.var,
     uns={
@@ -4273,9 +4279,9 @@ meta["defaults"] = [
     "tag" : "build_main"
   },
   "label" : [
-    "highmem",
-    "hightime",
-    "midcpu"
+    "lowmem",
+    "lowtime",
+    "lowcpu"
   ],
   "tag" : "$id"
 }'''),
