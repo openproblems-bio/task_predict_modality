@@ -6,8 +6,12 @@ description: |
   Encoder-decoder MLP method using SVD-based dimensionality reduction for both inputs and
   targets, followed by batch-median correction. The encoder maps (optionally augmented)
   cell embeddings to a latent space; multiple decoder blocks predict target expression in
-  the SVD-compressed space. The method was the winning solution of the NeurIPS 2021
-  Open Problems Multimodal Single-Cell Integration Kaggle competition.
+  the SVD-compressed space. The method was the winning solution of the NeurIPS 2022
+  Open Problems Multimodal Single-Cell Integration Kaggle competition. The inputs the
+  original derived from the competition tables (standardized per-cell and per-batch
+  statistics, the CITE gene masks built from HGNC and Reactome) are rebuilt from the
+  task's files, and the per-cell z-scored output is mapped to the target scale with a
+  global affine transform.
 references:
   doi:
     - 10.1101/2022.04.11.487796
