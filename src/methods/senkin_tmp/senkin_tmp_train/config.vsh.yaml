@@ -88,6 +88,7 @@ engines:
           - jsonschema
           - lightgbm>=4.0
           - scikit-learn>=1.1
+          - joblib>=1.4
           - mudata>=0.2
           - muon>=0.1
           - fast-array-utils
