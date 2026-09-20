@@ -30,7 +30,7 @@ par = {
     "output": "output_model.pkl",
     "n_folds": 5,
     "lgbm_n_folds": 3,
-    "lgbm_boost_rounds": 200,
+    "lgbm_boost_rounds": 100,
     "lgbm_early_stopping": 20,
     "nn_epochs": 100,
     "n_tsvd_components": 100,

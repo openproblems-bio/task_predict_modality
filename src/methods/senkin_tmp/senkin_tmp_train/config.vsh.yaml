@@ -27,12 +27,12 @@ arguments:
       cost in the quality of these features.
   - name: "--lgbm_boost_rounds"
     type: integer
-    default: 200
+    default: 100
     description: |
       Maximum LightGBM boosting rounds (early stopping applies). The original solution used up to
-      10000 rounds at learning rate 0.01, which takes days on the benchmark datasets; 200 rounds at
-      learning rate 0.1 give the same LightGBM quality as 1000 rounds within 0.003 (per-target
-      Pearson) and the same final predictions.
+      10000 rounds at learning rate 0.01, which takes days on the benchmark datasets. At learning
+      rate 0.1, 100 rounds keep the LightGBM per-target quality within 0.015 (NeurIPS 2021) / 0.003
+      (NeurIPS 2022) of 300 rounds, and the final predictions of the networks are unchanged.
     info:
       test_default: 50
   - name: "--lgbm_early_stopping"
