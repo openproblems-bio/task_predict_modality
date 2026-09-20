@@ -23,7 +23,7 @@ from ss_opm_common import (  # noqa: E402
     apply_standardization,
     build_metadata,
     compute_cell_statistics,
-    load_json,
+    load_model_bundle,
     to_sparse_csr,
 )
 
@@ -35,14 +35,12 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using device: {device}", flush=True)
 
 # ---- Load the training bundle ----
-task_info = load_json(os.path.join(par["input_model"], "task_info.json"))
+task_info, batch_singular_vectors = load_model_bundle(par["input_model"])
 task_type = task_info["task_type"]
 print(f"Task type: {task_type}, {task_info['mod1']} -> {task_info['mod2']}", flush=True)
 
 with open(os.path.join(par["input_model"], "pre_post_process.pickle"), "rb") as handle:
     pre_post_process = pickle.load(handle)
-with open(os.path.join(par["input_model"], "batch_singular_vectors.pickle"), "rb") as handle:
-    batch_singular_vectors = pickle.load(handle)
 mod2_var = pd.read_parquet(os.path.join(par["input_model"], "mod2_var.parquet"))
 
 model = EncoderDecoder(params=None)

@@ -140,14 +140,24 @@ def make_targets_gene2idx(target_symbols, hgnc):
 
 def _group_spearman(inputs_column, targets_columns):
     """Spearman correlation and p-value of one gene with several targets, over the cells where the gene is
-    expressed (as in the original scripts). Returns arrays of NaN when there are too few such cells."""
+    expressed (as in the original scripts, which called `scipy.stats.spearmanr` on that subset). Only the gene's
+    row of the correlation matrix is computed; the p-value is spearmanr's two-sided t-test with n - 2 degrees
+    of freedom. NaN when there are too few expressing cells."""
     expressed = inputs_column > 0
+    n_cells = int(expressed.sum())
     n_targets = targets_columns.shape[1]
-    if expressed.sum() < 3:
+    if n_cells < 3:
         return np.full(n_targets, np.nan), np.full(n_targets, np.nan)
-    result = scipy.stats.spearmanr(inputs_column[expressed], targets_columns[expressed])
-    correlations = np.atleast_2d(result.statistic)[0, 1:]
-    p_values = np.atleast_2d(result.pvalue)[0, 1:]
+    input_ranks = scipy.stats.rankdata(inputs_column[expressed])
+    target_ranks = scipy.stats.rankdata(targets_columns[expressed], axis=0)
+    input_centered = input_ranks - input_ranks.mean()
+    target_centered = target_ranks - target_ranks.mean(axis=0)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        correlations = (input_centered @ target_centered) / np.sqrt(
+            (input_centered**2).sum() * (target_centered**2).sum(axis=0)
+        )
+        t_statistics = correlations * np.sqrt((n_cells - 2) / (1 - correlations**2))
+    p_values = 2 * scipy.stats.t.sf(np.abs(t_statistics), n_cells - 2)
     return correlations, p_values
 
 
@@ -461,6 +471,36 @@ def save_json(path, payload):
 def load_json(path):
     with open(path) as handle:
         return json.load(handle)
+
+
+def identity_standardization():
+    return {"mean": {key: 0.0 for key in CELL_STATISTIC_KEYS}, "std": {key: 1.0 for key in CELL_STATISTIC_KEYS}}
+
+
+def load_model_bundle(model_dir):
+    """Task info and batch singular vectors of a trained bundle.
+
+    Bundles written before the metadata rebuild (`task_info.pickle`, no standardization, no rescaling, no batch
+    singular vectors) are still readable, with neutral defaults, so that models pre-trained for the component tests
+    keep working until they are regenerated.
+    """
+    import pickle
+
+    json_path = os.path.join(model_dir, "task_info.json")
+    if os.path.exists(json_path):
+        task_info = load_json(json_path)
+        with open(os.path.join(model_dir, "batch_singular_vectors.pickle"), "rb") as handle:
+            batch_singular_vectors = pickle.load(handle)
+        return task_info, batch_singular_vectors
+
+    with open(os.path.join(model_dir, "task_info.pickle"), "rb") as handle:
+        task_info = pickle.load(handle)
+    task_info.setdefault("mod1", "unknown")
+    task_info.setdefault("day_pattern", DEFAULT_DAY_PATTERN)
+    task_info.setdefault("donor_pattern", DEFAULT_DONOR_PATTERN)
+    task_info.setdefault("cell_statistics_standardization", identity_standardization())
+    task_info.setdefault("prediction_rescaling", {"slope": 1.0, "intercept": 0.0})
+    return task_info, None
 
 
 # ---------------------------------------------------------------------------------------------------------------
