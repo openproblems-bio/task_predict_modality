@@ -184,6 +184,8 @@ def _lgbm(X_all, Y, params, description):
     )
 
 lgbm1_svd_all = _lgbm(X_lognorm_all, Y_prot_train, lgbm_params_1, "model 1 (log-normalized RNA -> proteins)")
+del X_lognorm_all  # not needed any more; keeps the parent's footprint (and hence the memory left for workers) small
+gc.collect()
 
 X_comb_all = np.concatenate([X_clr_tsvd_all, X_raw_selected_all, X_sqrt_tsvd_all, X_sqrt_pca_all], axis=1)
 lgbm2_svd_all = _lgbm(X_comb_all, Y_prot_train, lgbm_params_2, "model 2 (CLR-TSVD + selected genes + normalized TSVD/PCA -> proteins)")
@@ -191,7 +193,7 @@ del X_comb_all
 
 lgbm3_svd_all = _lgbm(X_counts_all, Y_prot_train, lgbm_params_3, "model 3 (raw counts -> proteins)")
 lgbm4_svd_all = _lgbm(X_counts_all, Y_prot_raw, lgbm_params_4, "model 4 (raw counts -> raw proteins)")
-del X_counts_all, X_lognorm_all
+del X_counts_all
 gc.collect()
 
 # ---------------------------------------------------------------------------

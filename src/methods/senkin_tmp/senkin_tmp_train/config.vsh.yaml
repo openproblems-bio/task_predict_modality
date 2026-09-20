@@ -98,7 +98,7 @@ engines:
         github:
           - openproblems-bio/core#subdirectory=packages/python/openproblems
       - type: docker
-        run: pip install --no-cache-dir --no-deps git+https://github.com/lueckenlab/senkin-tmp-cite-pred.git@896f2657d60d67e8abf040c3e193e9d9e0f74f99
+        run: pip install --no-cache-dir --no-deps git+https://github.com/lueckenlab/senkin-tmp-cite-pred.git@be8bee65c146316e579ae092c43247284ba801fe
 runners:
   - type: executable
   - type: nextflow
