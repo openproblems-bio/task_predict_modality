@@ -38,7 +38,7 @@ par = {
     "lgbm_max_bin": 63,
     "lgbm_n_jobs": -1,
 }
-meta = {"name": "senkin_tmp", "resources_dir": "src/methods/senkin_tmp/senkin_tmp_train", "cpus": None}
+meta = {"name": "senkin_tmp", "resources_dir": "src/methods/senkin_tmp/senkin_tmp_train", "cpus": None, "memory_gb": None}
 ## VIASH END
 
 sys.path.append(meta["resources_dir"])
@@ -168,6 +168,8 @@ for _p in (lgbm_params_1, lgbm_params_2, lgbm_params_3, lgbm_params_4):
     _p["learning_rate"] = par["lgbm_learning_rate"]
     _p["max_bin"] = par["lgbm_max_bin"]
 lgbm_n_jobs = par["lgbm_n_jobs"]
+# Let the library keep the LightGBM worker processes within the allocated memory (a tenth is left for the rest).
+lgbm_memory_budget_gb = meta["memory_gb"] * 0.9 if meta.get("memory_gb") else None
 
 # ---------------------------------------------------------------------------
 # LightGBM — 4 models, train+test passed together (original design)
@@ -178,7 +180,7 @@ def _lgbm(X_all, Y, params, description):
     return get_lgbm_predictions(
         X_all[train_idx], Y, X_all[test_idx], lgbm_folds, params,
         n_tsvd_components=n_tsvd, num_boost_round=boost_rounds, early_stopping_rounds=early_stop,
-        n_jobs=lgbm_n_jobs,
+        n_jobs=lgbm_n_jobs, memory_budget_gb=lgbm_memory_budget_gb,
     )
 
 lgbm1_svd_all = _lgbm(X_lognorm_all, Y_prot_train, lgbm_params_1, "model 1 (log-normalized RNA -> proteins)")
