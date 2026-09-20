@@ -17,7 +17,14 @@ arguments:
   - name: "--n_folds"
     type: integer
     default: 5
-    description: Number of cross-validation folds for LightGBM and neural network training.
+    description: Number of cross-validation folds for the neural networks (one network per fold, predictions averaged).
+  - name: "--lgbm_n_folds"
+    type: integer
+    default: 5
+    description: |
+      Number of cross-validation folds for the LightGBM models, whose out-of-fold predictions are
+      features of the neural networks. Fewer folds cut the LightGBM time proportionally at a small
+      cost in the quality of these features.
   - name: "--lgbm_boost_rounds"
     type: integer
     default: 10000
@@ -40,6 +47,27 @@ arguments:
     type: integer
     default: 100
     description: TSVD components for reducing LightGBM predictions before NN input.
+  - name: "--lgbm_learning_rate"
+    type: double
+    default: 0.01
+    description: |
+      LightGBM learning rate. The original solution used 0.01 with up to 10000 rounds, which takes
+      days on the benchmark datasets; a higher rate with fewer rounds reaches the same LightGBM
+      quality in a fraction of the time.
+  - name: "--lgbm_max_bin"
+    type: integer
+    default: 63
+    description: |
+      Number of histogram bins per feature in LightGBM (library default 255). 63 halves the memory
+      of the binned whole-transcriptome inputs held by every worker process (3 instead of 6.6 GB per
+      fold on the NeurIPS 2022 CITE data) at identical validation loss and slightly faster rounds.
+  - name: "--lgbm_n_jobs"
+    type: integer
+    default: -1
+    description: |
+      Number of worker processes training different protein targets in parallel; the allocated CPUs
+      are divided among them. -1 uses one process per allocated CPU (each with one thread), which is
+      several times faster than one target at a time with all threads.
 engines:
   - type: docker
     image: nvidia/cuda:12.8.1-cudnn-runtime-ubuntu24.04

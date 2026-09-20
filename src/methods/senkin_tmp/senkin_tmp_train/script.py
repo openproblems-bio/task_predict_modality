@@ -29,10 +29,14 @@ par = {
     "input_test_mod1":  "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal/test_mod1.h5ad",
     "output": "output_model.pkl",
     "n_folds": 5,
+    "lgbm_n_folds": 5,
     "lgbm_boost_rounds": 10000,
     "lgbm_early_stopping": 100,
     "nn_epochs": 100,
     "n_tsvd_components": 100,
+    "lgbm_learning_rate": 0.01,
+    "lgbm_max_bin": 63,
+    "lgbm_n_jobs": -1,
 }
 meta = {"name": "senkin_tmp", "resources_dir": "src/methods/senkin_tmp/senkin_tmp_train", "cpus": None}
 ## VIASH END
@@ -148,6 +152,7 @@ Y_prot_train = to_dense(adata_prot_train.layers["normalized"], dtype=np.float64)
 Y_prot_raw = to_dense(adata_prot_train.layers.get("counts", adata_prot_train.X), dtype=np.float64)
 
 folds = KFold(n_splits=par["n_folds"], shuffle=True, random_state=666)
+lgbm_folds = KFold(n_splits=par["lgbm_n_folds"], shuffle=True, random_state=666)
 n_tsvd = par["n_tsvd_components"]
 boost_rounds = par["lgbm_boost_rounds"]
 early_stop = par["lgbm_early_stopping"]
@@ -157,9 +162,12 @@ early_stop = par["lgbm_early_stopping"]
 # meta["cpus"], so the threads oversubscribe and thrash -- the same class of slowdown
 # fixed for guanlab in #59. Leave the library default when cpus is unknown (local runs).
 _n_threads = meta.get("cpus")
-if _n_threads:
-    for _p in (lgbm_params_1, lgbm_params_2, lgbm_params_3, lgbm_params_4):
+for _p in (lgbm_params_1, lgbm_params_2, lgbm_params_3, lgbm_params_4):
+    if _n_threads:
         _p["num_threads"] = _n_threads
+    _p["learning_rate"] = par["lgbm_learning_rate"]
+    _p["max_bin"] = par["lgbm_max_bin"]
+lgbm_n_jobs = par["lgbm_n_jobs"]
 
 # ---------------------------------------------------------------------------
 # LightGBM — 4 models, train+test passed together (original design)
@@ -168,8 +176,9 @@ if _n_threads:
 def _lgbm(X_all, Y, params, description):
     logger.info(f"Training LightGBM {description}...")
     return get_lgbm_predictions(
-        X_all[train_idx], Y, X_all[test_idx], folds, params,
+        X_all[train_idx], Y, X_all[test_idx], lgbm_folds, params,
         n_tsvd_components=n_tsvd, num_boost_round=boost_rounds, early_stopping_rounds=early_stop,
+        n_jobs=lgbm_n_jobs,
     )
 
 lgbm1_svd_all = _lgbm(X_lognorm_all, Y_prot_train, lgbm_params_1, "model 1 (log-normalized RNA -> proteins)")
