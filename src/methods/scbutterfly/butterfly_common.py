@@ -7,14 +7,16 @@ deterministic preprocessing as train, then load the saved weights. This module h
 that shared construction so train and predict stay in lock-step.
 """
 
+import contextlib
 import logging
 
 from exit_codes import exit_non_applicable
 
 import anndata as ad
 import numpy as np
+import pandas as pd
 import scanpy as sc
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_matrix, issparse
 
 import chrom_utils
 
@@ -27,6 +29,7 @@ def apply_runtime_patches():
     - legacy ``size_average``/``reduce`` loss kwargs -> ``reduction``
     - BCE on a float32 sigmoid can drift >1.0 -> clamp input to [0,1]
     - scButterfly hardcodes ``.cuda()``; make it a no-op when no GPU is present
+    - ``TFIDF`` builds dense (n_peaks, n_cells) tiles -> sparse equivalent
     """
     import torch
     import torch.nn as nn
@@ -53,10 +56,87 @@ def apply_runtime_patches():
 
     F.binary_cross_entropy = _safe_bce
 
-    if not torch.cuda.is_available():
+    # Log the device up front. `torch.version.cuda` is None for a CPU-only wheel
+    # and e.g. "11.7" for the cu117 one, so the two failure modes — wrong wheel
+    # installed vs. right wheel but no device visible — are distinguishable in the
+    # run log instead of only showing up as an unexplained slow run.
+    logger.info("torch %s (CUDA build: %s)", torch.__version__, torch.version.cuda)
+    if torch.cuda.is_available():
+        logger.info(
+            "CUDA available: %d device(s), using %s",
+            torch.cuda.device_count(), torch.cuda.get_device_name(0),
+        )
+    else:
         logger.warning("CUDA not available — running scButterfly on CPU (slow).")
         torch.Tensor.cuda = lambda self, *a, **k: self
         nn.Module.cuda = lambda self, *a, **k: self
+
+    # Must come after the torch patches above: importing scButterfly.data_processing
+    # pulls in the whole package, including the modules those patches target.
+    from scButterfly import data_processing
+
+    data_processing.TFIDF = _sparse_tfidf
+    logger.info("Patched scButterfly TFIDF with the sparse implementation.")
+
+
+def _sparse_tfidf(count_mat):
+    """Sparse, O(nnz) drop-in for ``scButterfly.data_processing.TFIDF``.
+
+    The upstream version ``np.tile``s the per-cell and per-peak totals into dense
+    ``(n_peaks, n_cells)`` matrices and divides/multiplies densely, so it costs
+    ``O(n_peaks * n_cells)`` no matter how sparse the input is — 37 GiB per array at
+    NeurIPS2021 Multiome scale, with three or four alive at once. That is what puts
+    the component at ~265 GB peak, and what OOMs it on the 2022 Multiome datasets.
+
+    Same arithmetic in the same order, evaluated on the CSR ``.data`` array::
+
+        out[c, p] = X[c, p] / cell_total[c] * log(1 + n_cells / peak_total[p])
+
+    scButterfly binarizes before calling this, so both totals are exact integers in
+    float32 and summation order cannot matter: the result is bit-identical to the
+    dense one. Entries stay strictly positive (``peak_total <= n_cells`` keeps the
+    log argument above 1), so the sparsity pattern is preserved too.
+
+    Degenerate rows differ, in the safe direction: a cell with no stored entries
+    used to come back all-NaN from ``0 / 0`` and now stays zero.
+
+    The second and third return values are the *untiled* per-cell and per-peak
+    vectors instead of the dense tiles. They exist only for ``inverse_TFIDF``, which
+    neither this component nor scButterfly's own training code ever calls.
+    """
+    X = count_mat.tocsr() if issparse(count_mat) else csr_matrix(count_mat)
+    n_cells = X.shape[0]
+
+    cell_totals = np.asarray(X.sum(axis=1)).ravel()
+    peak_totals = np.asarray(X.sum(axis=0)).ravel()
+    idf = np.log(1 + 1.0 * n_cells / peak_totals)
+
+    # Repeat each cell's total across the entries stored for that cell so the
+    # expression below lines up term for term with the dense one.
+    per_entry_cell_total = np.repeat(cell_totals, np.diff(X.indptr))
+    data = X.data / per_entry_cell_total * idf[X.indices]
+
+    out = csr_matrix((data, X.indices, X.indptr), shape=X.shape)
+    return out, cell_totals, idf
+
+
+@contextlib.contextmanager
+def suppress_unused_postprocessing():
+    """Make ``sc.pp.pca``/``sc.pp.neighbors`` no-ops for the duration of the block.
+
+    ``Model.test`` runs both, on *both* predicted matrices, whenever it is not asked
+    to draw figures — and there is no flag to turn it off. Nothing reads the results
+    back: :func:`extract_predictions` only touches ``.X`` and ``.var_names``. On the
+    ATAC side it is a PCA over a near-dense ``n_test x n_peaks`` matrix, which
+    dominates the predict step.
+    """
+    orig_pca, orig_neighbors = sc.pp.pca, sc.pp.neighbors
+    sc.pp.pca = lambda *args, **kwargs: None
+    sc.pp.neighbors = lambda *args, **kwargs: None
+    try:
+        yield
+    finally:
+        sc.pp.pca, sc.pp.neighbors = orig_pca, orig_neighbors
 
 
 def detect_direction(train_mod1, train_mod2):
@@ -72,14 +152,21 @@ def detect_direction(train_mod1, train_mod2):
 
 
 def _to_counts_X(adata):
-    """AnnData copy whose .X is the raw counts layer as float32.
+    """AnnData whose .X is the raw counts layer as float32, carrying obs and var.
 
     Counts are stored as float64; scButterfly's model is float32 and its data loader
     does not cast, so feed float32 to avoid a dtype mismatch.
+
+    Everything else is dropped rather than copied. ``sc.concat`` below discards the
+    other layers, ``obsm['gene_activity']`` and ``uns`` anyway — the placeholder
+    block has none of them and anndata intersects — so a full ``.copy()`` only
+    duplicates the largest matrices in the file to throw them away a moment later.
     """
-    out = adata.copy()
-    out.X = out.layers["counts"].astype(np.float32)
-    return out
+    return ad.AnnData(
+        X=adata.layers["counts"].astype(np.float32),
+        obs=adata.obs.copy(),
+        var=adata.var.copy(),
+    )
 
 
 def _placeholder_block(template_adata, n_rows, obs_names):
@@ -90,13 +177,37 @@ def _placeholder_block(template_adata, n_rows, obs_names):
     Fill by tiling real training rows (not zeros): all-zero rows/cols make per-cell
     normalization and TF-IDF divide by zero, producing NaNs that break BCE.
     """
-    import pandas as pd
     src = template_adata.X
-    src = src.toarray() if hasattr(src, "toarray") else np.asarray(src)
     idx = np.arange(n_rows) % max(1, src.shape[0])
-    X = csr_matrix(src[idx].astype(np.float32))
+    # Gather the rows on the CSR directly. Densifying the training block first cost
+    # n_train * n_features floats (>12 GiB of ATAC at Multiome scale) and bought
+    # nothing — the gathered rows hold the same values either way.
+    if issparse(src):
+        X = src.tocsr()[idx].astype(np.float32)
+    else:
+        X = csr_matrix(np.asarray(src)[idx].astype(np.float32))
     obs = pd.DataFrame(index=obs_names)
     return ad.AnnData(X=X, obs=obs, var=template_adata.var.copy())
+
+
+def _concat_blocks(train_block, test_block):
+    """Stack the train and test blocks, keeping the training var order.
+
+    Both blocks are built from the same ``var``, so the outer join already comes back
+    in the training order and reindexing is a no-op whose ``.copy()`` would duplicate
+    the whole matrix. The explicit reindex stays as a fallback if that stops holding.
+    """
+    out = sc.concat([train_block, test_block], axis=0, join="outer")
+    if not out.var_names.equals(train_block.var_names):
+        return out[:, train_block.var_names].copy()
+    # Materialising the reindexed view also dropped categories left unused by the
+    # concat (obs['batch'] keeps all donors otherwise). Nothing downstream reads
+    # obs, but do it anyway so the result matches the previous code exactly.
+    for frame in (out.obs, out.var):
+        for col in frame.columns:
+            if isinstance(frame[col].dtype, pd.CategoricalDtype):
+                frame[col] = frame[col].cat.remove_unused_categories()
+    return out
 
 
 def build_butterfly(train_mod1, train_mod2, test_mod1, n_top_genes, Butterfly):
@@ -139,8 +250,8 @@ def build_butterfly(train_mod1, train_mod2, test_mod1, n_top_genes, Butterfly):
     else:
         atac_test_c = _placeholder_block(atac_train_c, n_test, test_obs_names)
 
-    RNA_data = sc.concat([rna_train_c, rna_test_c], axis=0, join="outer")[:, rna_train_c.var_names].copy()
-    ATAC_data = sc.concat([atac_train_c, atac_test_c], axis=0, join="outer")[:, atac_train_c.var_names].copy()
+    RNA_data = _concat_blocks(rna_train_c, rna_test_c)
+    ATAC_data = _concat_blocks(atac_train_c, atac_test_c)
 
     train_id = list(range(n_train))
     test_id = list(range(n_train, n_train + n_test))
