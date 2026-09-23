@@ -18,12 +18,13 @@ engines:
     image: openproblems/base_pytorch_nvidia:1
     setup:
       - type: docker
-        run: pip install --no-cache-dir --no-deps git+https://github.com/lueckenlab/senkin-tmp-cite-pred.git
+        run: pip install --no-cache-dir --no-deps git+https://github.com/lueckenlab/senkin-tmp-cite-pred.git@be8bee65c146316e579ae092c43247284ba801fe
       - type: python
         packages:
           - lightgbm>=4.0
           - tensorflow>=2.12
           - scikit-learn>=1.1
+          - joblib>=1.4
           - mudata>=0.2
           - muon>=0.1
           - fast-array-utils
