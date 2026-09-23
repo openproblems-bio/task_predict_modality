@@ -62,12 +62,16 @@ engines:
         packages:
           - pyarrow
           - fastparquet
-      # reference files for the CITE input gene masks (same sources as the original solution)
+      # Reference files for the CITE input gene masks (same sources as the original solution). reactome.org rejects
+      # Python's default user agent with HTTP 403, hence the browser-like header.
       - type: docker
         run: |
           mkdir -p /opt/ss_opm_reference && cd /opt/ss_opm_reference && \
-          python -c "import urllib.request; urllib.request.urlretrieve('https://storage.googleapis.com/public-download-files/hgnc/archive/archive/monthly/tsv/hgnc_complete_set_2023-01-01.txt', 'hgnc_complete_set.txt')" && \
-          python -c "import urllib.request, zipfile; urllib.request.urlretrieve('https://reactome.org/download/current/ReactomePathways.gmt.zip', 'ReactomePathways.gmt.zip'); zipfile.ZipFile('ReactomePathways.gmt.zip').extractall('.')" && \
+          python -c "import shutil, urllib.request; \
+            [shutil.copyfileobj(urllib.request.urlopen(urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})), open(file_name, 'wb')) \
+             for url, file_name in [('https://storage.googleapis.com/public-download-files/hgnc/archive/archive/monthly/tsv/hgnc_complete_set_2023-01-01.txt', 'hgnc_complete_set.txt'), \
+                                    ('https://reactome.org/download/current/ReactomePathways.gmt.zip', 'ReactomePathways.gmt.zip')]]" && \
+          python -c "import zipfile; zipfile.ZipFile('ReactomePathways.gmt.zip').extractall('.')" && \
           rm ReactomePathways.gmt.zip
       - type: docker
         env:

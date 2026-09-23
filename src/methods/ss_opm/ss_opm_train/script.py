@@ -192,19 +192,22 @@ if task_type == "cite":
 
 # ---- Parameters: the authors' defaults ----
 pre_post_process_params = PrePostProcessing.get_params(task_type=task_type, data_dir=data_dir, device=device, seed=SEED)
+# The original fits the input SVD on the training and test inputs together (transductive). The test set is an optional
+# input of this component: without it, the original's own switch makes the SVD fit on the training cells only.
+pre_post_process_params["use_test_inputs"] = test_inputs is not None
 model_params = EncoderDecoder.get_params(task_type=task_type, device=device)
 model_params["epoch"] = par["n_epochs"]
 model_params["burnin_length_epoch"] = par["burnin_length_epoch"]
 
-# ---- Fit preprocessing (the SVDs are fit on train and test inputs together, as in the original) ----
+# ---- Fit preprocessing ----
 print("Fitting preprocessing...", flush=True)
 pre_post_process = PrePostProcessing(pre_post_process_params)
 pre_post_process.fit_preprocess(
     inputs_values=train_inputs,
     targets_values=train_targets,
     metadata=train_metadata,
-    test_inputs_values=test_inputs if test_inputs is not None else train_inputs,
-    test_metadata=test_metadata if test_metadata is not None else train_metadata,
+    test_inputs_values=test_inputs,
+    test_metadata=test_metadata,
 )
 
 print("Preprocessing training data...", flush=True)

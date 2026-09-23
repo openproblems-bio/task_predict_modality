@@ -11,8 +11,9 @@ This module rebuilds all of that from the task's h5ad files, which only guarante
 import json
 import os
 import re
+import shutil
+import urllib.request
 import zipfile
-from urllib.request import urlretrieve
 
 import numpy as np
 import pandas as pd
@@ -40,6 +41,8 @@ DEFAULT_DONOR_PATTERN = r"^\d+_(\d+)$"
 # Reference files the CITE gene masks are built from (same sources as the original `make_cite_input_mask.py`)
 HGNC_URL = "https://storage.googleapis.com/public-download-files/hgnc/archive/archive/monthly/tsv/hgnc_complete_set_2023-01-01.txt"
 REACTOME_URL = "https://reactome.org/download/current/ReactomePathways.gmt.zip"
+# reactome.org answers HTTP 403 to Python's default user agent
+DOWNLOAD_USER_AGENT = "Mozilla/5.0"
 
 ENSEMBL_ID_PATTERN = re.compile(r"^ENSG\d+")
 
@@ -58,16 +61,23 @@ def to_dense(X, dtype=np.float32):
 # ---------------------------------------------------------------------------------------------------------------
 # Reference files
 # ---------------------------------------------------------------------------------------------------------------
+def download_file(url, path):
+    request = urllib.request.Request(url, headers={"User-Agent": DOWNLOAD_USER_AGENT})
+    with urllib.request.urlopen(request) as response, open(path, "wb") as handle:
+        shutil.copyfileobj(response, handle)
+
+
 def download_reference_files(directory):
-    """Download the HGNC complete set and the Reactome gene sets into `directory` (used at image build time)."""
+    """Download the HGNC complete set and the Reactome gene sets into `directory` unless they are already there
+    (the docker image ships them in SS_OPM_REFERENCE_DIR, see the train component's setup)."""
     os.makedirs(directory, exist_ok=True)
     hgnc_path = os.path.join(directory, "hgnc_complete_set.txt")
     reactome_path = os.path.join(directory, "ReactomePathways.gmt")
     if not os.path.exists(hgnc_path):
-        urlretrieve(HGNC_URL, hgnc_path)
+        download_file(HGNC_URL, hgnc_path)
     if not os.path.exists(reactome_path):
         archive_path = os.path.join(directory, "ReactomePathways.gmt.zip")
-        urlretrieve(REACTOME_URL, archive_path)
+        download_file(REACTOME_URL, archive_path)
         with zipfile.ZipFile(archive_path) as archive:
             archive.extractall(directory)
         os.remove(archive_path)

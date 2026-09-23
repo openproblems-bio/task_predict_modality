@@ -100,6 +100,8 @@
 
 * `scbutterfly_train`, `scbutterfly_predict`: Upgrade pip before installing torch. The pip shipped in `python:3.9` rejects the `typing_extensions` wheel over the underscore in its metadata name, falls back to the sdist, and cannot build it because `flit_core` is not on the PyTorch index -- so the image stopped building the moment `typing_extensions` started requiring `flit_core>=3.11` (PR #64).
 
+* `ss_opm`: Rebuild the derived inputs the original solution was written against instead of feeding it the raw h5ad columns: standardized per-cell statistics, the day and donor parsed from the `{day}_{donor}` batch labels (the 2021 donor was taken as the day), batch singular vectors from per-batch gene medians, and the HGNC/Reactome-selected CITE input genes rather than all 14k-22k genes (a 96 GB peak and a different model). Drop training cells with a constant target vector, which made the correlation loss `NaN` from epoch 0 on the 2022 CITE datasets; keep the multiome targets in float32, whose dense float64 copies OOM-killed 2022 ATAC->GEX; and map the per-cell z-scored network output back to the target scale, so RMSE and Spearman are meaningful. The image build and the runtime fallback download the Reactome gene sets with a browser-like user agent, because reactome.org answers HTTP 403 to Python's default one (PR #69).
+
 # task_predict_modality 0.1.1
 
 ## NEW FUNCTIONALITY
