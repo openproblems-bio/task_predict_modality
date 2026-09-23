@@ -119,8 +119,20 @@ def scatter_to_target(pred_adata, target_var_names):
     out = np.zeros((n_cells, len(target_var_names)), dtype=np.float32)
 
     target_pos = {name: i for i, name in enumerate(target_var_names)}
+    src_cols, dst_cols = [], []
     for src_col, name in enumerate(pred_adata.var_names):
         dst = target_pos.get(name)
         if dst is not None:
-            out[:, dst] = X[:, src_col]
+            src_cols.append(src_col)
+            dst_cols.append(dst)
+
+    # Copy in column blocks: one fancy-index assignment per block rather than one
+    # per feature (up to ~116k of them for ATAC), while keeping the temporary that
+    # fancy indexing allocates bounded.
+    src_cols = np.asarray(src_cols, dtype=np.intp)
+    dst_cols = np.asarray(dst_cols, dtype=np.intp)
+    block = 4096
+    for start in range(0, src_cols.size, block):
+        sl = slice(start, start + block)
+        out[:, dst_cols[sl]] = X[:, src_cols[sl]]
     return out
