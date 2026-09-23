@@ -4,32 +4,50 @@ arguments:
   - name: "--n_epochs"
     type: integer
     default: 40
-    description: Number of training epochs.
+    description: Number of training epochs (the authors' setting).
     info:
       test_default: 2
   - name: "--burnin_length_epoch"
     type: integer
     default: 10
     description: |
-      Epochs before the training-length ratio starts ramping up. Must be below
-      `--n_epochs`, otherwise every epoch stays at ratio 0.
+      Epochs before the training-length ratio starts ramping up (the authors' setting). Must be
+      below `--n_epochs`, otherwise every epoch stays at ratio 0.
     info:
       test_default: 0
-  - name: "--cell_type_col"
-    type: string
-    required: false
-    description: |
-      Column in `obs` holding cell type labels. ss_opm uses them for the `cell_ratio_*`
-      features. This task's file format does not carry cell types, so it is unset by
-      default and the ratios fall back to uniform; set it when plugging in a dataset
-      that does have them.
   - name: "--day_pattern"
     type: string
-    default: 'd(\d+)'
+    default: '^(\d+)_\d+$'
     description: |
-      Regex whose first capture group is the collection day within a batch label. The
-      default matches the NeurIPS 2021 `s{site}d{day}` naming. Batches that do not match
-      get day 0, i.e. the model sees a single constant day rather than failing.
+      Regex whose first capture group is the collection day in a batch label; the model uses the day
+      as a numeric covariate. The default matches the `{day}_{donor}` labels of the NeurIPS 2022
+      datasets. Batches that do not match (e.g. the `s{site}d{donor}` labels of the NeurIPS 2021
+      datasets, which have no day) get a constant day.
+  - name: "--donor_pattern"
+    type: string
+    default: '^\d+_(\d+)$'
+    description: |
+      Regex whose first capture group is the donor id in a batch label. It only feeds the original's
+      donor-sex embedding, which knows the four Kaggle donors; other or unmatched donors are embedded
+      like an unknown donor.
+  - name: "--hgnc_complete_set"
+    type: file
+    required: false
+    description: |
+      HGNC complete set (tab separated), used to name the genes and proteins when building the CITE
+      input gene masks. Downloaded into the image when not given.
+  - name: "--reactome_pathways"
+    type: file
+    required: false
+    description: |
+      Reactome gene sets (GMT), used to build the CITE input gene masks. Downloaded into the image
+      when not given.
+  - name: "--n_rescaling_cells"
+    type: integer
+    default: 5000
+    description: |
+      Number of training cells used to fit the global affine map from the model's per-cell z-scored
+      output to the target scale.
 resources:
   - type: python_script
     path: script.py
@@ -44,8 +62,22 @@ engines:
         packages:
           - pyarrow
           - fastparquet
+      # Reference files for the CITE input gene masks (same sources as the original solution). reactome.org rejects
+      # Python's default user agent with HTTP 403, hence the browser-like header.
+      - type: docker
+        run: |
+          mkdir -p /opt/ss_opm_reference && cd /opt/ss_opm_reference && \
+          python -c "import shutil, urllib.request; \
+            [shutil.copyfileobj(urllib.request.urlopen(urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})), open(file_name, 'wb')) \
+             for url, file_name in [('https://storage.googleapis.com/public-download-files/hgnc/archive/archive/monthly/tsv/hgnc_complete_set_2023-01-01.txt', 'hgnc_complete_set.txt'), \
+                                    ('https://reactome.org/download/current/ReactomePathways.gmt.zip', 'ReactomePathways.gmt.zip')]]" && \
+          python -c "import zipfile; zipfile.ZipFile('ReactomePathways.gmt.zip').extractall('.')" && \
+          rm ReactomePathways.gmt.zip
+      - type: docker
+        env:
+          - SS_OPM_REFERENCE_DIR=/opt/ss_opm_reference
 runners:
   - type: executable
   - type: nextflow
     directives:
-      label: [highmem, hightime, midcpu, highsharedmem, gpu]
+      label: [veryhighmem, hightime, midcpu, highsharedmem, gpu]

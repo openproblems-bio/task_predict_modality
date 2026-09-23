@@ -1,7 +1,7 @@
 viash_version: 0.9.7
 name: task_predict_modality
 organization: openproblems-bio
-version: 0.2.0-rc4
+version: 0.2.0-rc5
 license: MIT
 label: Predict Modality
 keywords: [multi-omics, regression, single-cell]

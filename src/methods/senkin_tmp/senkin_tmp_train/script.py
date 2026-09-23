@@ -29,12 +29,16 @@ par = {
     "input_test_mod1":  "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal/test_mod1.h5ad",
     "output": "output_model.pkl",
     "n_folds": 5,
-    "lgbm_boost_rounds": 10000,
-    "lgbm_early_stopping": 100,
+    "lgbm_n_folds": 3,
+    "lgbm_boost_rounds": 100,
+    "lgbm_early_stopping": 20,
     "nn_epochs": 100,
     "n_tsvd_components": 100,
+    "lgbm_learning_rate": 0.1,
+    "lgbm_max_bin": 63,
+    "lgbm_n_jobs": -1,
 }
-meta = {"name": "senkin_tmp", "resources_dir": "src/methods/senkin_tmp/senkin_tmp_train", "cpus": None}
+meta = {"name": "senkin_tmp", "resources_dir": "src/methods/senkin_tmp/senkin_tmp_train", "cpus": None, "memory_gb": None}
 ## VIASH END
 
 sys.path.append(meta["resources_dir"])
@@ -148,6 +152,7 @@ Y_prot_train = to_dense(adata_prot_train.layers["normalized"], dtype=np.float64)
 Y_prot_raw = to_dense(adata_prot_train.layers.get("counts", adata_prot_train.X), dtype=np.float64)
 
 folds = KFold(n_splits=par["n_folds"], shuffle=True, random_state=666)
+lgbm_folds = KFold(n_splits=par["lgbm_n_folds"], shuffle=True, random_state=666)
 n_tsvd = par["n_tsvd_components"]
 boost_rounds = par["lgbm_boost_rounds"]
 early_stop = par["lgbm_early_stopping"]
@@ -157,9 +162,14 @@ early_stop = par["lgbm_early_stopping"]
 # meta["cpus"], so the threads oversubscribe and thrash -- the same class of slowdown
 # fixed for guanlab in #59. Leave the library default when cpus is unknown (local runs).
 _n_threads = meta.get("cpus")
-if _n_threads:
-    for _p in (lgbm_params_1, lgbm_params_2, lgbm_params_3, lgbm_params_4):
+for _p in (lgbm_params_1, lgbm_params_2, lgbm_params_3, lgbm_params_4):
+    if _n_threads:
         _p["num_threads"] = _n_threads
+    _p["learning_rate"] = par["lgbm_learning_rate"]
+    _p["max_bin"] = par["lgbm_max_bin"]
+lgbm_n_jobs = par["lgbm_n_jobs"]
+# Let the library keep the LightGBM worker processes within the allocated memory (a tenth is left for the rest).
+lgbm_memory_budget_gb = meta["memory_gb"] * 0.9 if meta.get("memory_gb") else None
 
 # ---------------------------------------------------------------------------
 # LightGBM — 4 models, train+test passed together (original design)
@@ -168,11 +178,14 @@ if _n_threads:
 def _lgbm(X_all, Y, params, description):
     logger.info(f"Training LightGBM {description}...")
     return get_lgbm_predictions(
-        X_all[train_idx], Y, X_all[test_idx], folds, params,
+        X_all[train_idx], Y, X_all[test_idx], lgbm_folds, params,
         n_tsvd_components=n_tsvd, num_boost_round=boost_rounds, early_stopping_rounds=early_stop,
+        n_jobs=lgbm_n_jobs, memory_budget_gb=lgbm_memory_budget_gb,
     )
 
 lgbm1_svd_all = _lgbm(X_lognorm_all, Y_prot_train, lgbm_params_1, "model 1 (log-normalized RNA -> proteins)")
+del X_lognorm_all  # not needed any more; keeps the parent's footprint (and hence the memory left for workers) small
+gc.collect()
 
 X_comb_all = np.concatenate([X_clr_tsvd_all, X_raw_selected_all, X_sqrt_tsvd_all, X_sqrt_pca_all], axis=1)
 lgbm2_svd_all = _lgbm(X_comb_all, Y_prot_train, lgbm_params_2, "model 2 (CLR-TSVD + selected genes + normalized TSVD/PCA -> proteins)")
@@ -180,7 +193,7 @@ del X_comb_all
 
 lgbm3_svd_all = _lgbm(X_counts_all, Y_prot_train, lgbm_params_3, "model 3 (raw counts -> proteins)")
 lgbm4_svd_all = _lgbm(X_counts_all, Y_prot_raw, lgbm_params_4, "model 4 (raw counts -> raw proteins)")
-del X_counts_all, X_lognorm_all
+del X_counts_all
 gc.collect()
 
 # ---------------------------------------------------------------------------
