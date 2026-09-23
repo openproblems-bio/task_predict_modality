@@ -1,0 +1,84 @@
+__merge__: ../../api/comp_method.yaml
+name: scipenn
+label: sciPENN
+summary: "RNN with skip connections predicting CITE-seq protein from RNA (sciPENN)."
+description: |
+  sciPENN (single-cell Protein prediction Engine using Neural Networks) predicts
+  surface-protein (ADT) expression from RNA (GEX) using a recurrent neural network with
+  skip connections, trained with a combined MSE and quantile-regression loss. RNA and
+  protein are given to sciPENN as log_cp10k and z-scored internally (per batch when every
+  batch has >= 2 cells, globally otherwise); predictions are mapped back to log_cp10k with
+  the training-protein mean/std. Predictions are the model's point (MSE-head) estimate.
+references:
+  doi:
+    - 10.1038/s42256-022-00545-w
+links:
+  repository: https://github.com/jlakkis/sciPENN
+  documentation: https://github.com/jlakkis/sciPENN
+info:
+  preferred_normalization: log_cp10k
+  variants:
+    scipenn:
+  # The api default test inputs are bmmc_cite/swap (ADT->GEX). sciPENN only supports
+  # GEX->ADT, so redirect the component test to the 'normal' direction inputs.
+  test_setup:
+    normal_direction:
+      input_train_mod1: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal/train_mod1.h5ad
+      input_train_mod2: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal/train_mod2.h5ad
+      input_test_mod1: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal/test_mod1.h5ad
+arguments:
+  - name: "--n_epochs"
+    type: integer
+    description: "Maximum training epochs (early stopping applies)."
+    default: 10000
+    info:
+      test_default: 1
+  - name: "--batch_size"
+    type: integer
+    description: "Training batch size."
+    default: 128
+  - name: "--select_hvg"
+    type: boolean
+    description: "Whether sciPENN performs highly-variable-gene selection on the RNA."
+    default: true
+  - name: "--min_cells"
+    type: integer
+    description: "Minimum cells per gene for sciPENN QC filtering (0 disables)."
+    default: 0
+  - name: "--min_genes"
+    type: integer
+    description: "Minimum genes per cell for sciPENN QC filtering (0 disables)."
+    default: 0
+  - name: "--seed"
+    type: integer
+    description: "Seed for the train/validation split, shuffling and weight initialization."
+    default: 0
+resources:
+  - type: python_script
+    path: script.py
+engines:
+  # sciPENN 0.9.6 targets a 2021-era stack; numba is never imported by sciPENN so its
+  # spurious numba<=0.50.0 pin is bypassed via --no-deps. torch cu117 wheels bundle their
+  # own CUDA runtime, so GPU works when run with --gpus (nextflow 'gpu' label).
+  - type: docker
+    image: python:3.9
+    setup:
+      - type: docker
+        run:
+          - pip install --no-cache-dir torch==1.13.1 --index-url https://download.pytorch.org/whl/cu117
+          - pip install --no-cache-dir --no-deps sciPENN==0.9.6
+          - pip install --no-cache-dir "numpy==1.23.5" "scipy==1.9.3" "pandas<2" "scanpy==1.9.3" "anndata==0.8.0" "scikit-learn==1.1.3" "numba==0.56.4" "llvmlite==0.39.1" "tqdm>=4.64" "h5py<3.8"
+          # openproblems core helper and requests are only baked into the openproblems/base_*
+          # images; the component test harness imports them, so install them on this base.
+          - pip install --no-cache-dir requests "git+https://github.com/openproblems-bio/core@a47fc957fd6d960a025d6242ab58bff5287358a2#subdirectory=packages/python/openproblems"
+runners:
+  - type: executable
+  - type: nextflow
+    directives:
+      label: [highmem, hightime, midcpu, gpu]
+# The api default test data is bmmc_cite/swap (ADT->GEX). sciPENN only supports GEX->ADT,
+# so also ship the 'normal' direction (mod1 = GEX, mod2 = ADT). __merge__ appends to the
+# api's test_resources, so the test scripts themselves must not be listed again here.
+test_resources:
+  - path: /resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal
+    dest: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal
