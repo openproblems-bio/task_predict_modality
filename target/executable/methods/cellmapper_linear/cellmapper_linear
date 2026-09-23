@@ -449,9 +449,9 @@ RUN pip install --upgrade pip && \
   pip install --upgrade --no-cache-dir "cellmapper>=0.2.6,<0.3"
 
 LABEL org.opencontainers.image.description="Companion container for running component methods cellmapper_linear"
-LABEL org.opencontainers.image.created="2026-09-23T15:26:02Z"
+LABEL org.opencontainers.image.created="2026-09-23T16:13:32Z"
 LABEL org.opencontainers.image.source="https://github.com/quadbio/cellmapper"
-LABEL org.opencontainers.image.revision="f48faee6549e983620f30968cc085bf80f2cc7fd"
+LABEL org.opencontainers.image.revision="be43c9b16c25f8f531f72589672840fe309c7289"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER

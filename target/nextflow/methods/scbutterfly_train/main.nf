@@ -3653,7 +3653,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/scbutterfly_train",
     "viash_version" : "0.9.7",
-    "git_commit" : "f48faee6549e983620f30968cc085bf80f2cc7fd",
+    "git_commit" : "be43c9b16c25f8f531f72589672840fe309c7289",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {

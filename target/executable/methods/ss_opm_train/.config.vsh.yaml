@@ -277,7 +277,7 @@ argument_groups:
     multiple_sep: ";"
   - type: "integer"
     name: "--n_epochs"
-    description: "Number of training epochs."
+    description: "Number of training epochs (the authors' setting)."
     info:
       test_default: 2
     default:
@@ -288,8 +288,9 @@ argument_groups:
     multiple_sep: ";"
   - type: "integer"
     name: "--burnin_length_epoch"
-    description: "Epochs before the training-length ratio starts ramping up. Must\
-      \ be below\n`--n_epochs`, otherwise every epoch stays at ratio 0.\n"
+    description: "Epochs before the training-length ratio starts ramping up (the authors'\
+      \ setting). Must be\nbelow `--n_epochs`, otherwise every epoch stays at ratio\
+      \ 0.\n"
     info:
       test_default: 0
     default:
@@ -299,25 +300,61 @@ argument_groups:
     multiple: false
     multiple_sep: ";"
   - type: "string"
-    name: "--cell_type_col"
-    description: "Column in `obs` holding cell type labels. ss_opm uses them for the\
-      \ `cell_ratio_*`\nfeatures. This task's file format does not carry cell types,\
-      \ so it is unset by\ndefault and the ratios fall back to uniform; set it when\
-      \ plugging in a dataset\nthat does have them.\n"
+    name: "--day_pattern"
+    description: "Regex whose first capture group is the collection day in a batch\
+      \ label; the model uses the day\nas a numeric covariate. The default matches\
+      \ the `{day}_{donor}` labels of the NeurIPS 2022\ndatasets. Batches that do\
+      \ not match (e.g. the `s{site}d{donor}` labels of the NeurIPS 2021\ndatasets,\
+      \ which have no day) get a constant day.\n"
     info: null
+    default:
+    - "^(\\d+)_\\d+$"
     required: false
     direction: "input"
     multiple: false
     multiple_sep: ";"
   - type: "string"
-    name: "--day_pattern"
-    description: "Regex whose first capture group is the collection day within a batch\
-      \ label. The\ndefault matches the NeurIPS 2021 `s{site}d{day}` naming. Batches\
-      \ that do not match\nget day 0, i.e. the model sees a single constant day rather\
-      \ than failing.\n"
+    name: "--donor_pattern"
+    description: "Regex whose first capture group is the donor id in a batch label.\
+      \ It only feeds the original's\ndonor-sex embedding, which knows the four Kaggle\
+      \ donors; other or unmatched donors are embedded\nlike an unknown donor.\n"
     info: null
     default:
-    - "d(\\d+)"
+    - "^\\d+_(\\d+)$"
+    required: false
+    direction: "input"
+    multiple: false
+    multiple_sep: ";"
+  - type: "file"
+    name: "--hgnc_complete_set"
+    description: "HGNC complete set (tab separated), used to name the genes and proteins\
+      \ when building the CITE\ninput gene masks. Downloaded into the image when not\
+      \ given.\n"
+    info: null
+    must_exist: true
+    create_parent: true
+    required: false
+    direction: "input"
+    multiple: false
+    multiple_sep: ";"
+  - type: "file"
+    name: "--reactome_pathways"
+    description: "Reactome gene sets (GMT), used to build the CITE input gene masks.\
+      \ Downloaded into the image\nwhen not given.\n"
+    info: null
+    must_exist: true
+    create_parent: true
+    required: false
+    direction: "input"
+    multiple: false
+    multiple_sep: ";"
+  - type: "integer"
+    name: "--n_rescaling_cells"
+    description: "Number of training cells used to fit the global affine map from\
+      \ the model's per-cell z-scored\noutput to the target scale.\n"
+    info: null
+    default:
+    - 5000
     required: false
     direction: "input"
     multiple: false
@@ -363,7 +400,7 @@ runners:
   id: "nextflow"
   directives:
     label:
-    - "highmem"
+    - "veryhighmem"
     - "hightime"
     - "midcpu"
     - "highsharedmem"
@@ -403,6 +440,18 @@ engines:
     - "pyarrow"
     - "fastparquet"
     upgrade: true
+  - type: "docker"
+    run:
+    - "mkdir -p /opt/ss_opm_reference && cd /opt/ss_opm_reference && \\\npython -c\
+      \ \"import shutil, urllib.request; \\\n  [shutil.copyfileobj(urllib.request.urlopen(urllib.request.Request(url,\
+      \ headers={'User-Agent': 'Mozilla/5.0'})), open(file_name, 'wb')) \\\n   for\
+      \ url, file_name in [('https://storage.googleapis.com/public-download-files/hgnc/archive/archive/monthly/tsv/hgnc_complete_set_2023-01-01.txt',\
+      \ 'hgnc_complete_set.txt'), \\\n                          ('https://reactome.org/download/current/ReactomePathways.gmt.zip',\
+      \ 'ReactomePathways.gmt.zip')]]\" && \\\npython -c \"import zipfile; zipfile.ZipFile('ReactomePathways.gmt.zip').extractall('.')\"\
+      \ && \\\nrm ReactomePathways.gmt.zip\n"
+  - type: "docker"
+    env:
+    - "SS_OPM_REFERENCE_DIR=/opt/ss_opm_reference"
   entrypoint: []
   cmd: null
 build_info:
@@ -412,7 +461,7 @@ build_info:
   output: "target/executable/methods/ss_opm_train"
   executable: "target/executable/methods/ss_opm_train/ss_opm_train"
   viash_version: "0.9.7"
-  git_commit: "f48faee6549e983620f30968cc085bf80f2cc7fd"
+  git_commit: "be43c9b16c25f8f531f72589672840fe309c7289"
   git_remote: "https://github.com/openproblems-bio/task_predict_modality"
 package_config:
   name: "task_predict_modality"

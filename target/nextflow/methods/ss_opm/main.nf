@@ -3474,7 +3474,7 @@ meta = [
   ],
   "label" : "SS-OPM",
   "summary" : "1st place solution of the Kaggle Open Problems Multimodal Single-Cell Integration challenge.",
-  "description" : "Encoder-decoder MLP method using SVD-based dimensionality reduction for both inputs and\ntargets, followed by batch-median correction. The encoder maps (optionally augmented)\ncell embeddings to a latent space; multiple decoder blocks predict target expression in\nthe SVD-compressed space. The method was the winning solution of the NeurIPS 2021\nOpen Problems Multimodal Single-Cell Integration Kaggle competition.\n",
+  "description" : "Encoder-decoder MLP method using SVD-based dimensionality reduction for both inputs and\ntargets, followed by batch-median correction. The encoder maps (optionally augmented)\ncell embeddings to a latent space; multiple decoder blocks predict target expression in\nthe SVD-compressed space. The method was the winning solution of the NeurIPS 2022\nOpen Problems Multimodal Single-Cell Integration Kaggle competition. The inputs the\noriginal derived from the competition tables (standardized per-cell and per-batch\nstatistics, the CITE gene masks built from HGNC and Reactome) are rebuilt from the\ntask's files, and the per-cell z-scored output is mapped to the target scale with a\nglobal affine transform.\n",
   "test_resources" : [
     {
       "type" : "python_script",
@@ -3581,7 +3581,7 @@ meta = [
     "engine" : "native",
     "output" : "target/nextflow/methods/ss_opm",
     "viash_version" : "0.9.7",
-    "git_commit" : "f48faee6549e983620f30968cc085bf80f2cc7fd",
+    "git_commit" : "be43c9b16c25f8f531f72589672840fe309c7289",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
