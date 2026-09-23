@@ -452,9 +452,9 @@ RUN pip install --no-cache-dir "numpy==1.23.5" "scipy==1.9.3" "pandas<2" "scanpy
 RUN pip install --no-cache-dir --no-deps episcanpy==0.3.2
 RUN pip install --no-cache-dir "git+https://github.com/openproblems-bio/core.git#subdirectory=packages/python/openproblems"
 LABEL org.opencontainers.image.description="Companion container for running component methods scbutterfly_predict"
-LABEL org.opencontainers.image.created="2026-09-16T12:29:39Z"
+LABEL org.opencontainers.image.created="2026-09-23T15:26:02Z"
 LABEL org.opencontainers.image.source="https://github.com/openproblems-bio/task_predict_modality"
-LABEL org.opencontainers.image.revision="e634c9cf8093988f6096420751457adde2e848e5"
+LABEL org.opencontainers.image.revision="f48faee6549e983620f30968cc085bf80f2cc7fd"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER
@@ -1174,11 +1174,14 @@ built = butterfly_common.build_butterfly(
 butterfly = built["butterfly"]
 
 logger.info("Loading trained weights and predicting...")
-A2R_predict, R2A_predict = butterfly.test_model(
-    batch_size=metadata["batch_size"],
-    model_path=par["input_model"],
-    load_model=True,
-)
+# test_model also runs PCA + a neighbour graph on both predicted matrices with no
+# way to opt out; none of it is read back. See suppress_unused_postprocessing.
+with butterfly_common.suppress_unused_postprocessing():
+    A2R_predict, R2A_predict = butterfly.test_model(
+        batch_size=metadata["batch_size"],
+        model_path=par["input_model"],
+        load_model=True,
+    )
 
 target_var_names = list(train_mod2.var_names)
 test_predictions = butterfly_common.extract_predictions(

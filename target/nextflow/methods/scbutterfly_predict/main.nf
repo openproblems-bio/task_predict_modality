@@ -3563,6 +3563,7 @@ meta = [
           "highmem",
           "hightime",
           "midcpu",
+          "highsharedmem",
           "gpu"
         ],
         "tag" : "$id"
@@ -3618,7 +3619,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/scbutterfly_predict",
     "viash_version" : "0.9.7",
-    "git_commit" : "e634c9cf8093988f6096420751457adde2e848e5",
+    "git_commit" : "f48faee6549e983620f30968cc085bf80f2cc7fd",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3903,11 +3904,14 @@ built = butterfly_common.build_butterfly(
 butterfly = built["butterfly"]
 
 logger.info("Loading trained weights and predicting...")
-A2R_predict, R2A_predict = butterfly.test_model(
-    batch_size=metadata["batch_size"],
-    model_path=par["input_model"],
-    load_model=True,
-)
+# test_model also runs PCA + a neighbour graph on both predicted matrices with no
+# way to opt out; none of it is read back. See suppress_unused_postprocessing.
+with butterfly_common.suppress_unused_postprocessing():
+    A2R_predict, R2A_predict = butterfly.test_model(
+        batch_size=metadata["batch_size"],
+        model_path=par["input_model"],
+        load_model=True,
+    )
 
 target_var_names = list(train_mod2.var_names)
 test_predictions = butterfly_common.extract_predictions(
@@ -4326,6 +4330,7 @@ meta["defaults"] = [
     "highmem",
     "hightime",
     "midcpu",
+    "highsharedmem",
     "gpu"
   ],
   "tag" : "$id"
