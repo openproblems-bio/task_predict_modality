@@ -445,14 +445,14 @@ function ViashDockerfile {
     cat << 'VIASHDOCKER'
 FROM openproblems/base_pytorch_nvidia:1
 ENTRYPOINT []
-RUN pip install --no-cache-dir --no-deps git+https://github.com/lueckenlab/senkin-tmp-cite-pred.git
+RUN pip install --no-cache-dir --no-deps git+https://github.com/lueckenlab/senkin-tmp-cite-pred.git@be8bee65c146316e579ae092c43247284ba801fe
 RUN pip install --upgrade pip && \
-  pip install --upgrade --no-cache-dir "lightgbm>=4.0" "tensorflow>=2.12" "scikit-learn>=1.1" "mudata>=0.2" "muon>=0.1" "fast-array-utils"
+  pip install --upgrade --no-cache-dir "lightgbm>=4.0" "tensorflow>=2.12" "scikit-learn>=1.1" "joblib>=1.4" "mudata>=0.2" "muon>=0.1" "fast-array-utils"
 
 LABEL org.opencontainers.image.description="Companion container for running component methods senkin_tmp_predict"
-LABEL org.opencontainers.image.created="2026-09-23T16:13:31Z"
+LABEL org.opencontainers.image.created="2026-09-23T16:15:38Z"
 LABEL org.opencontainers.image.source="https://github.com/openproblems-bio/task_predict_modality"
-LABEL org.opencontainers.image.revision="be43c9b16c25f8f531f72589672840fe309c7289"
+LABEL org.opencontainers.image.revision="50d6ecf57f185057028e85a219aa9d459b365717"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER

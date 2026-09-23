@@ -449,9 +449,9 @@ RUN pip install --upgrade pip && \
   pip install --upgrade --no-cache-dir "scikit-learn>=1.1"
 
 LABEL org.opencontainers.image.description="Companion container for running component methods babel_predict"
-LABEL org.opencontainers.image.created="2026-09-23T16:13:33Z"
+LABEL org.opencontainers.image.created="2026-09-23T16:15:38Z"
 LABEL org.opencontainers.image.source="https://github.com/openproblems-bio/task_predict_modality"
-LABEL org.opencontainers.image.revision="be43c9b16c25f8f531f72589672840fe309c7289"
+LABEL org.opencontainers.image.revision="50d6ecf57f185057028e85a219aa9d459b365717"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER

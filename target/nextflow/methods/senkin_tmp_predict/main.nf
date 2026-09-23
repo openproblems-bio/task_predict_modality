@@ -3587,7 +3587,7 @@ meta = [
         {
           "type" : "docker",
           "run" : [
-            "pip install --no-cache-dir --no-deps git+https://github.com/lueckenlab/senkin-tmp-cite-pred.git"
+            "pip install --no-cache-dir --no-deps git+https://github.com/lueckenlab/senkin-tmp-cite-pred.git@be8bee65c146316e579ae092c43247284ba801fe"
           ]
         },
         {
@@ -3597,6 +3597,7 @@ meta = [
             "lightgbm>=4.0",
             "tensorflow>=2.12",
             "scikit-learn>=1.1",
+            "joblib>=1.4",
             "mudata>=0.2",
             "muon>=0.1",
             "fast-array-utils"
@@ -3612,7 +3613,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/senkin_tmp_predict",
     "viash_version" : "0.9.7",
-    "git_commit" : "be43c9b16c25f8f531f72589672840fe309c7289",
+    "git_commit" : "50d6ecf57f185057028e85a219aa9d459b365717",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
