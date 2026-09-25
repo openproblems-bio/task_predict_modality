@@ -1,0 +1,66 @@
+__merge__: ../../api/comp_method.yaml
+name: scipenn
+label: sciPENN
+summary: "RNN with skip connections predicting CITE-seq protein from RNA (sciPENN)."
+description: |
+  sciPENN (single-cell Protein prediction Engine using Neural Networks) predicts
+  surface-protein (ADT) expression from RNA (GEX) using a recurrent neural network with
+  skip connections, trained with a combined MSE and quantile-regression loss. RNA and
+  protein are given to sciPENN as log_cp10k and z-scored internally (per batch when every
+  batch has >= 2 cells, globally otherwise); predictions are mapped back to log_cp10k with
+  the training-protein mean/std. Predictions are the model's point (MSE-head) estimate.
+references:
+  doi:
+    - 10.1038/s42256-022-00545-w
+links:
+  repository: https://github.com/jlakkis/sciPENN
+  documentation: https://github.com/jlakkis/sciPENN
+info:
+  preferred_normalization: log_cp10k
+  variants:
+    scipenn:
+  # The api default test inputs are bmmc_cite/swap (ADT->GEX). sciPENN only supports
+  # GEX->ADT, so redirect the component test to the 'normal' direction inputs.
+  test_setup:
+    normal_direction:
+      input_train_mod1: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal/train_mod1.h5ad
+      input_train_mod2: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal/train_mod2.h5ad
+      input_test_mod1: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal/test_mod1.h5ad
+arguments:
+  - name: "--n_epochs"
+    type: integer
+    description: "Maximum training epochs (early stopping applies)."
+    default: 10000
+    info:
+      test_default: 1
+  - name: "--batch_size"
+    type: integer
+    description: "Training batch size."
+    default: 128
+  - name: "--seed"
+    type: integer
+    description: "Seed for the train/validation split, shuffling and weight initialization."
+    default: 0
+resources:
+  - type: python_script
+    path: script.py
+engines:
+  # sciPENN is installed --no-deps: it pins a spurious numba<=0.50.0 (never imported) and a
+  # 2021-era stack, but runs on the base image's torch/scanpy/anndata. The base already ships
+  # the openproblems core helper + requests that the component test harness needs.
+  - type: docker
+    image: openproblems/base_pytorch_nvidia:1
+    setup:
+      - type: docker
+        run: pip install --no-cache-dir --no-deps sciPENN==0.9.6
+runners:
+  - type: executable
+  - type: nextflow
+    directives:
+      label: [highmem, hightime, midcpu, gpu]
+# The api default test data is bmmc_cite/swap (ADT->GEX). sciPENN only supports GEX->ADT,
+# so also ship the 'normal' direction (mod1 = GEX, mod2 = ADT). __merge__ appends to the
+# api's test_resources, so the test scripts themselves must not be listed again here.
+test_resources:
+  - path: /resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal
+    dest: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal

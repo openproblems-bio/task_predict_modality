@@ -78,6 +78,7 @@ dependencies:
   - name: methods/senkin_tmp
   - name: methods/scbutterfly
   - name: methods/ss_opm
+  - name: methods/scipenn
   - name: metrics/correlation
   - name: metrics/mse
 runners:
