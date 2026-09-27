@@ -1,10 +1,11 @@
 import gc
 import logging
-import pickle
+import os
 import sys
 
 import anndata as ad
 import numpy as np
+import pandas as pd
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.model_selection import KFold
 
@@ -27,7 +28,7 @@ par = {
     "input_train_mod1": "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal/train_mod1.h5ad",
     "input_train_mod2": "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal/train_mod2.h5ad",
     "input_test_mod1":  "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal/test_mod1.h5ad",
-    "output": "output_model.pkl",
+    "output": "output/models/senkin_tmp",
     "n_folds": 5,
     "lgbm_n_folds": 3,
     "lgbm_boost_rounds": 100,
@@ -247,17 +248,18 @@ logger.info(f"Rescaling z-scored predictions to the target scale: slope {slope:.
 test_preds = test_preds * slope + intercept
 
 # ---------------------------------------------------------------------------
-# Save bundle — test predictions stored directly, predict script just reads them
+# Save the model: the solution is transductive, so the test predictions themselves are the model. They are stored as an
+# AnnData rather than a pickle, because the predict step runs in another image whose pandas may not unpickle the
+# objects of this one.
 # ---------------------------------------------------------------------------
-logger.info("Saving model bundle...")
-bundle = {
-    "test_predictions": test_preds.astype(np.float32),  # (n_test, n_proteins)
-    "test_obs_names": test_cell_ids,
-    "prot_var": adata_prot_train.var,
-    "dataset_id": adata_rna_train.uns.get("dataset_id", ""),
-}
-
-with open(par["output"], "wb") as f:
-    pickle.dump(bundle, f, protocol=4)
+logger.info("Saving the test predictions...")
+adata_predictions = ad.AnnData(
+    layers={"normalized": test_preds.astype(np.float32)},  # (n_test, n_proteins)
+    obs=pd.DataFrame(index=pd.Index(test_cell_ids).astype(str)),
+    var=adata_prot_train.var,
+    uns={"dataset_id": adata_rna_train.uns.get("dataset_id", "")},
+)
+os.makedirs(par["output"], exist_ok=True)
+adata_predictions.write_h5ad(os.path.join(par["output"], "predictions.h5ad"), compression="gzip")
 
 logger.info("Training complete. Model saved to %s", par["output"])

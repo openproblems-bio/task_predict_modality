@@ -3729,7 +3729,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/senkin_tmp_train",
     "viash_version" : "0.9.7",
-    "git_commit" : "87c345f918fcaaabc4a1ca9daf7186c599eb5454",
+    "git_commit" : "ee7bbdb3257e04239ba479e5b540c8fa7f46871a",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3941,11 +3941,12 @@ tempscript=".viash_script.py"
 cat > "$tempscript" << VIASHMAIN
 import gc
 import logging
-import pickle
+import os
 import sys
 
 import anndata as ad
 import numpy as np
+import pandas as pd
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.model_selection import KFold
 
@@ -4212,18 +4213,19 @@ logger.info(f"Rescaling z-scored predictions to the target scale: slope {slope:.
 test_preds = test_preds * slope + intercept
 
 # ---------------------------------------------------------------------------
-# Save bundle — test predictions stored directly, predict script just reads them
+# Save the model: the solution is transductive, so the test predictions themselves are the model. They are stored as an
+# AnnData rather than a pickle, because the predict step runs in another image whose pandas may not unpickle the
+# objects of this one.
 # ---------------------------------------------------------------------------
-logger.info("Saving model bundle...")
-bundle = {
-    "test_predictions": test_preds.astype(np.float32),  # (n_test, n_proteins)
-    "test_obs_names": test_cell_ids,
-    "prot_var": adata_prot_train.var,
-    "dataset_id": adata_rna_train.uns.get("dataset_id", ""),
-}
-
-with open(par["output"], "wb") as f:
-    pickle.dump(bundle, f, protocol=4)
+logger.info("Saving the test predictions...")
+adata_predictions = ad.AnnData(
+    layers={"normalized": test_preds.astype(np.float32)},  # (n_test, n_proteins)
+    obs=pd.DataFrame(index=pd.Index(test_cell_ids).astype(str)),
+    var=adata_prot_train.var,
+    uns={"dataset_id": adata_rna_train.uns.get("dataset_id", "")},
+)
+os.makedirs(par["output"], exist_ok=True)
+adata_predictions.write_h5ad(os.path.join(par["output"], "predictions.h5ad"), compression="gzip")
 
 logger.info("Training complete. Model saved to %s", par["output"])
 VIASHMAIN

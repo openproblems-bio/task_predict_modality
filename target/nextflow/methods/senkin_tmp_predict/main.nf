@@ -3508,7 +3508,7 @@ meta = [
       "with_model" : {
         "input_test_mod1" : "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal/test_mod1.h5ad",
         "input_train_mod2" : "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal/train_mod2.h5ad",
-        "input_model" : "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal/models/senkin_tmp/model.pkl"
+        "input_model" : "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/normal/models/senkin_tmp"
       }
     },
     "type" : "method_predict",
@@ -3613,7 +3613,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/senkin_tmp_predict",
     "viash_version" : "0.9.7",
-    "git_commit" : "87c345f918fcaaabc4a1ca9daf7186c599eb5454",
+    "git_commit" : "ee7bbdb3257e04239ba479e5b540c8fa7f46871a",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3824,10 +3824,11 @@ def innerWorkflowFactory(args) {
 tempscript=".viash_script.py"
 cat > "$tempscript" << VIASHMAIN
 import logging
+import os
 import pickle
 
 import anndata as ad
-import numpy as np
+import pandas as pd
 from scipy.sparse import csc_matrix
 
 logging.basicConfig(level=logging.INFO)
@@ -3868,27 +3869,43 @@ dep = {
 
 ## VIASH END
 
+
+def read_predictions(model_dir):
+    """The train step already predicts the test cells (the solution is transductive) and stores them as the AnnData
+    \\`predictions.h5ad\\`. Models written before that were a pickle of pandas objects, which the pandas of this image
+    cannot always unpickle; they are still read so that the existing test resources keep working until they are
+    regenerated."""
+    h5ad_path = os.path.join(model_dir, "predictions.h5ad")
+    if os.path.exists(h5ad_path):
+        return ad.read_h5ad(h5ad_path)
+    with open(os.path.join(model_dir, "model.pkl"), "rb") as handle:
+        legacy = pickle.load(handle)
+    test_obs_names = legacy["test_obs_names"] if "test_obs_names" in legacy else legacy["test_obs"].index
+    return ad.AnnData(
+        layers={"normalized": legacy["test_predictions"]},
+        obs=pd.DataFrame(index=pd.Index(test_obs_names).astype(str)),
+        var=legacy["prot_var"],
+        uns={"dataset_id": legacy.get("dataset_id", "")},
+    )
+
+
 logger.info("Reading input files...")
-adata_rna_test   = ad.read_h5ad(par["input_test_mod1"])
+adata_rna_test = ad.read_h5ad(par["input_test_mod1"])
 adata_prot_train = ad.read_h5ad(par["input_train_mod2"])
 
-logger.info("Loading model bundle...")
-with open(par["input_model"], "rb") as f:
-    bundle = pickle.load(f)
-
-predictions = bundle["test_predictions"]
-if "test_obs_names" in bundle:
-    # The train step predicted the test cells in the order of input_test_mod1; make sure nothing changed
-    assert (np.asarray(bundle["test_obs_names"]) == adata_rna_test.obs_names.values).all(), "test cells do not match the trained model"
-assert predictions.shape == (adata_rna_test.n_obs, adata_prot_train.n_vars)
+logger.info("Loading the predictions of the train step...")
+adata_predictions = read_predictions(par["input_model"])
+# The train step predicted the test cells of input_test_mod1 in their order; make sure nothing changed
+assert adata_predictions.obs_names.equals(adata_rna_test.obs_names), "test cells do not match the trained model"
+assert adata_predictions.var_names.equals(adata_prot_train.var_names), "proteins do not match the trained model"
 
 logger.info("Writing predictions...")
 adata_out = ad.AnnData(
-    layers={"normalized": csc_matrix(predictions)},
+    layers={"normalized": csc_matrix(adata_predictions.layers["normalized"])},
     obs=adata_rna_test.obs,
     var=adata_prot_train.var,
     uns={
-        "dataset_id": adata_rna_test.uns.get("dataset_id", bundle.get("dataset_id", "")),
+        "dataset_id": adata_rna_test.uns.get("dataset_id", adata_predictions.uns.get("dataset_id", "")),
         "method_id": "senkin_tmp",
     },
 )

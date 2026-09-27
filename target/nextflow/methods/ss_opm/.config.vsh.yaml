@@ -379,7 +379,7 @@ build_info:
   output: "target/nextflow/methods/ss_opm"
   executable: "target/nextflow/methods/ss_opm/main.nf"
   viash_version: "0.9.7"
-  git_commit: "87c345f918fcaaabc4a1ca9daf7186c599eb5454"
+  git_commit: "ee7bbdb3257e04239ba479e5b540c8fa7f46871a"
   git_remote: "https://github.com/openproblems-bio/task_predict_modality"
   dependencies:
   - "target/nextflow/methods/ss_opm_train"
