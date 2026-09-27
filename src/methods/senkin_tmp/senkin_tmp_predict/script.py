@@ -20,9 +20,9 @@ meta = {"name": "senkin_tmp"}
 ## VIASH END
 
 
-def read_model_bundle(model_dir):
+def read_predictions(model_dir):
     """The train step already predicts the test cells (the solution is transductive) and stores them as the AnnData
-    `predictions.h5ad`. Bundles written before that were a pickle of pandas objects, which the pandas of this image
+    `predictions.h5ad`. Models written before that were a pickle of pandas objects, which the pandas of this image
     cannot always unpickle; they are still read so that the existing test resources keep working until they are
     regenerated."""
     h5ad_path = os.path.join(model_dir, "predictions.h5ad")
@@ -43,19 +43,19 @@ logger.info("Reading input files...")
 adata_rna_test = ad.read_h5ad(par["input_test_mod1"])
 adata_prot_train = ad.read_h5ad(par["input_train_mod2"])
 
-logger.info("Loading model bundle...")
-bundle = read_model_bundle(par["input_model"])
+logger.info("Loading the predictions of the train step...")
+adata_predictions = read_predictions(par["input_model"])
 # The train step predicted the test cells of input_test_mod1 in their order; make sure nothing changed
-assert bundle.obs_names.equals(adata_rna_test.obs_names), "test cells do not match the trained model"
-assert bundle.var_names.equals(adata_prot_train.var_names), "proteins do not match the trained model"
+assert adata_predictions.obs_names.equals(adata_rna_test.obs_names), "test cells do not match the trained model"
+assert adata_predictions.var_names.equals(adata_prot_train.var_names), "proteins do not match the trained model"
 
 logger.info("Writing predictions...")
 adata_out = ad.AnnData(
-    layers={"normalized": csc_matrix(bundle.layers["normalized"])},
+    layers={"normalized": csc_matrix(adata_predictions.layers["normalized"])},
     obs=adata_rna_test.obs,
     var=adata_prot_train.var,
     uns={
-        "dataset_id": adata_rna_test.uns.get("dataset_id", bundle.uns.get("dataset_id", "")),
+        "dataset_id": adata_rna_test.uns.get("dataset_id", adata_predictions.uns.get("dataset_id", "")),
         "method_id": "senkin_tmp",
     },
 )

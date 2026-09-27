@@ -248,18 +248,18 @@ logger.info(f"Rescaling z-scored predictions to the target scale: slope {slope:.
 test_preds = test_preds * slope + intercept
 
 # ---------------------------------------------------------------------------
-# Save bundle: the solution is transductive, so the test predictions themselves are the model. They are stored as an
+# Save the model: the solution is transductive, so the test predictions themselves are the model. They are stored as an
 # AnnData rather than a pickle, because the predict step runs in another image whose pandas may not unpickle the
 # objects of this one.
 # ---------------------------------------------------------------------------
-logger.info("Saving model bundle...")
-bundle = ad.AnnData(
+logger.info("Saving the test predictions...")
+adata_predictions = ad.AnnData(
     layers={"normalized": test_preds.astype(np.float32)},  # (n_test, n_proteins)
     obs=pd.DataFrame(index=pd.Index(test_cell_ids).astype(str)),
     var=adata_prot_train.var,
     uns={"dataset_id": adata_rna_train.uns.get("dataset_id", "")},
 )
 os.makedirs(par["output"], exist_ok=True)
-bundle.write_h5ad(os.path.join(par["output"], "predictions.h5ad"), compression="gzip")
+adata_predictions.write_h5ad(os.path.join(par["output"], "predictions.h5ad"), compression="gzip")
 
 logger.info("Training complete. Model saved to %s", par["output"])
