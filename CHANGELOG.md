@@ -102,6 +102,8 @@
 
 * `ss_opm`: Rebuild the derived inputs the original solution was written against instead of feeding it the raw h5ad columns: standardized per-cell statistics, the day and donor parsed from the `{day}_{donor}` batch labels (the 2021 donor was taken as the day), batch singular vectors from per-batch gene medians, and the HGNC/Reactome-selected CITE input genes rather than all 14k-22k genes (a 96 GB peak and a different model). Drop training cells with a constant target vector, which made the correlation loss `NaN` from epoch 0 on the 2022 CITE datasets; keep the multiome targets in float32, whose dense float64 copies OOM-killed 2022 ATAC->GEX; and map the per-cell z-scored network output back to the target scale, so RMSE and Spearman are meaningful. The image build and the runtime fallback download the Reactome gene sets with a browser-like user agent, because reactome.org answers HTTP 403 to Python's default one (PR #69).
 
+* `senkin_tmp_train`, `senkin_tmp_predict`: Store the model bundle (the test predictions, as the solution is transductive) as an h5ad file in a directory instead of a pickle. The train image is built from `nvidia/cuda` with the current pandas 3, the predict image `openproblems/base_pytorch_nvidia:1` ships pandas 2, and unpickling the bundled `var` DataFrame raised `NotImplementedError` in `NDArrayBacked.__setstate__`, so senkin_tmp finished both CITE training runs of run_2026-09-23 but never produced a prediction. The predict step still reads the old pickle until the test resources are regenerated (PR #73).
+
 # task_predict_modality 0.1.1
 
 ## NEW FUNCTIONALITY

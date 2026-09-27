@@ -107,9 +107,10 @@ for name in bmmc_cite/normal bmmc_cite/swap bmmc_multiome/normal bmmc_multiome/s
   # senkin_tmp is CITE-only
   if [[ "$name" == bmmc_cite/normal ]]; then
     echo "pre-train senkin_tmp on $name"
-    if up_to_date $DATASET_DIR/$name/models/senkin_tmp/model.pkl $STATE; then
+    if up_to_date $DATASET_DIR/$name/models/senkin_tmp/predictions.h5ad $STATE; then
       echo "  already up to date, skipping"
     else
+      rm -rf $DATASET_DIR/$name/models/senkin_tmp/
       mkdir -p $DATASET_DIR/$name/models/senkin_tmp/
       viash run src/methods/senkin_tmp/senkin_tmp_train/config.vsh.yaml -- \
         --input_train_mod1 $DATASET_DIR/$name/train_mod1.h5ad \
@@ -118,7 +119,7 @@ for name in bmmc_cite/normal bmmc_cite/swap bmmc_multiome/normal bmmc_multiome/s
         --lgbm_boost_rounds 50 \
         --lgbm_early_stopping 10 \
         --nn_epochs 2 \
-        --output $DATASET_DIR/$name/models/senkin_tmp/model.pkl
+        --output $DATASET_DIR/$name/models/senkin_tmp
     fi
   fi
 
