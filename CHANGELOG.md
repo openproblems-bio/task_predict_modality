@@ -8,6 +8,12 @@
 
 * `file_train_mod1`, `file_train_mod2`, `file_test_mod1`, `file_test_mod2`: Declare `uns["modality"]`, which `process_dataset` already writes and which six methods and the `run_benchmark` workflow already read (PR #29).
 
+* `run_benchmark`: Write the commit the workflow ran from and the launch time into `task_info.yaml`, instead of publishing `_viash.yaml` verbatim (ported from openproblems-bio/task_template#18).
+
+* `run_benchmark`: Replace `--method_ids` with `--methods_include`/`--methods_exclude`, and add `--metrics_include`/`--metrics_exclude` (ported from openproblems-bio/task_template#20).
+
+* `run_benchmark`: Run parameterised methods once per named paramset from `info.variants` or the new `--paramsets` file, tag scores with `paramset_name`/`paramset`, and allow `--methods_include`/`--methods_exclude` to target `<method_id>.<paramset_name>`. The existing `info.variants` of `cellmapper_linear` and `cellmapper_scvi` are now run by default (ported from openproblems-bio/task_template#23).
+
 * `mse`: Write the unbounded maximum as `"+.inf"` rather than `"+inf"`, which is the literal the metric schema accepts (PR #31).
 
 * `cellmapper_linear`: Write the unmasked variants as `mask_var: null` rather than `mask_var: None`, which YAML reads as the string `"None"` and which would resolve to `adata.var["None"]` (PR #38).
@@ -45,6 +51,8 @@
 * `solution`, `zeros`: Ask for `lowmem` rather than `midmem` -- they use 0.5 GB and 11 GB of the 50 GB they asked for (PR #58).
 
 ## BUG FIXES
+
+* `cellmapper_linear`: Write the unmasked variants as `mask_var: "none"` rather than `mask_var: null`. Viash drops null values from the config, so these variants fell back to the default `mask_var: "hvg"` and duplicated their `-hvg` counterparts.
 
 * `guanlab_dengkw_pm`: Restore the consensus scheme of the original submission -- five reshuffles of the batches into two halves, ten kernel ridge models averaged. The port had replaced it with a single fixed two-way split for ADT pairs and leave-one-batch-out otherwise, so the result depended on the order the batches happened to come in. `--n_repeats` and `--seed` are now arguments; the unused `--distance_method` and `--n_pcs` are gone (PR #32).
 
