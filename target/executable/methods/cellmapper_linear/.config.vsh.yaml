@@ -306,7 +306,8 @@ argument_groups:
     multiple_sep: ";"
   - type: "string"
     name: "--mask_var"
-    description: "Variable to mask for fallback representation."
+    description: "Variable to mask for fallback representation, or \"none\" to use\
+      \ all features."
     info: null
     default:
     - "hvg"
@@ -361,6 +362,7 @@ info:
   variants:
     cellmapper-pca:
       fallback_representation: "joint_pca"
+      mask_var: "none"
       kernel_method: "hnoca"
     cellmapper-pca-hvg:
       fallback_representation: "joint_pca"
@@ -372,6 +374,7 @@ info:
       kernel_method: "gauss"
     cellmapper-cca:
       fallback_representation: "fast_cca"
+      mask_var: "none"
       kernel_method: "hnoca"
     cellmapper-cca-hvg:
       fallback_representation: "fast_cca"
@@ -455,7 +458,7 @@ build_info:
   output: "target/executable/methods/cellmapper_linear"
   executable: "target/executable/methods/cellmapper_linear/cellmapper_linear"
   viash_version: "0.9.7"
-  git_commit: "ee7bbdb3257e04239ba479e5b540c8fa7f46871a"
+  git_commit: "8972ac741d154e3e8b1668231764e9a5fe720ed8"
   git_remote: "https://github.com/openproblems-bio/task_predict_modality"
 package_config:
   name: "task_predict_modality"

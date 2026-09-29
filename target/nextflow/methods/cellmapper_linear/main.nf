@@ -3480,7 +3480,7 @@ meta = [
         {
           "type" : "string",
           "name" : "--mask_var",
-          "description" : "Variable to mask for fallback representation.",
+          "description" : "Variable to mask for fallback representation, or \\"none\\" to use all features.",
           "default" : [
             "hvg"
           ],
@@ -3552,6 +3552,7 @@ meta = [
     "variants" : {
       "cellmapper-pca" : {
         "fallback_representation" : "joint_pca",
+        "mask_var" : "none",
         "kernel_method" : "hnoca"
       },
       "cellmapper-pca-hvg" : {
@@ -3566,6 +3567,7 @@ meta = [
       },
       "cellmapper-cca" : {
         "fallback_representation" : "fast_cca",
+        "mask_var" : "none",
         "kernel_method" : "hnoca"
       },
       "cellmapper-cca-hvg" : {
@@ -3675,7 +3677,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/cellmapper_linear",
     "viash_version" : "0.9.7",
-    "git_commit" : "ee7bbdb3257e04239ba479e5b540c8fa7f46871a",
+    "git_commit" : "8972ac741d154e3e8b1668231764e9a5fe720ed8",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3950,7 +3952,7 @@ cmap.compute_neighbors(
     knn_method="sklearn" if n_obs < 60000 else "pynndescent",
     fallback_representation=par['fallback_representation'],
     n_neighbors=par['n_neighbors'],
-    fallback_kwargs={"mask_var": par['mask_var']},
+    fallback_kwargs={"mask_var": None if par['mask_var'] == "none" else par['mask_var']},
     )
 cmap.compute_mapping_matrix(kernel_method=par['kernel_method'])
 

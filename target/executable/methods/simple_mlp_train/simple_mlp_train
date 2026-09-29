@@ -449,9 +449,9 @@ RUN pip install --upgrade pip && \
   pip install --upgrade --no-cache-dir "scikit-learn" "scanpy" "pytorch-lightning"
 
 LABEL org.opencontainers.image.description="Companion container for running component methods simple_mlp_train"
-LABEL org.opencontainers.image.created="2026-09-27T01:46:32Z"
+LABEL org.opencontainers.image.created="2026-09-29T08:38:01Z"
 LABEL org.opencontainers.image.source="https://github.com/openproblems-bio/task_predict_modality"
-LABEL org.opencontainers.image.revision="ee7bbdb3257e04239ba479e5b540c8fa7f46871a"
+LABEL org.opencontainers.image.revision="8972ac741d154e3e8b1668231764e9a5fe720ed8"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER

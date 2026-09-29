@@ -457,9 +457,9 @@ RUN pip install --upgrade pip && \
 
 RUN pip install --no-cache-dir --no-deps git+https://github.com/lueckenlab/senkin-tmp-cite-pred.git@be8bee65c146316e579ae092c43247284ba801fe
 LABEL org.opencontainers.image.description="Companion container for running component methods senkin_tmp_train"
-LABEL org.opencontainers.image.created="2026-09-27T01:46:31Z"
+LABEL org.opencontainers.image.created="2026-09-29T08:38:00Z"
 LABEL org.opencontainers.image.source="https://github.com/openproblems-bio/task_predict_modality"
-LABEL org.opencontainers.image.revision="ee7bbdb3257e04239ba479e5b540c8fa7f46871a"
+LABEL org.opencontainers.image.revision="8972ac741d154e3e8b1668231764e9a5fe720ed8"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER

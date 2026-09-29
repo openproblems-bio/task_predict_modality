@@ -16,7 +16,7 @@ info:
   variants: 
     cellmapper-pca:
       fallback_representation: joint_pca
-      mask_var: null
+      mask_var: "none"
       kernel_method: hnoca
     cellmapper-pca-hvg:
       fallback_representation: joint_pca
@@ -28,7 +28,7 @@ info:
       kernel_method: gauss
     cellmapper-cca:
       fallback_representation: fast_cca
-      mask_var: null
+      mask_var: "none"
       kernel_method: hnoca
     cellmapper-cca-hvg:
       fallback_representation: fast_cca
@@ -47,7 +47,7 @@ arguments:
   - name: "--mask_var"
     type: "string"
     default: "hvg"
-    description: Variable to mask for fallback representation.
+    description: Variable to mask for fallback representation, or "none" to use all features.
   - name: "--kernel_method"
     type: "string"
     choices: ["hnoca", "gauss"]

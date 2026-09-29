@@ -1,0 +1,360 @@
+#!/bin/bash
+
+# Fetch a benchmark run's results off the de.NBI BiBiGrid cluster, warn about
+# failed tasks, render the results report, and optionally pull the Nextflow work
+# dirs for debugging or upload everything to the task's S3 results prefix.
+#
+# Runs launched with run_full_denbi.sh publish to /vol/scratch/results on the
+# cluster rather than to S3, because an on-prem SLURM compute environment runs
+# Nextflow on the cluster itself. Some tasks publish to results/<RUN_ID>, others
+# to results/<task>/<RUN_ID>; both are handled. /vol/scratch is semiPermanent -- it survives node
+# suspend, but is deleted when the cluster is terminated -- so results have to be
+# copied off before teardown.
+#
+# The task is read from _viash.yaml in the repository root, so this script works
+# unchanged in any task_* repository.
+#
+# Overrides:
+#   DENBI_HOST       skip cluster autodiscovery, use this ip/hostname
+#   DENBI_KEY        ssh identity file
+#   DENBI_USER       remote user (default: ubuntu)
+#   AWS_PROFILE      profile used for the upload (default: op)
+
+set -eo pipefail
+
+SCRIPT_NAME=$(basename "$0")
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT=$(git rev-parse --show-toplevel)
+cd "$REPO_ROOT"
+
+usage() {
+  cat << EOF
+Usage: $SCRIPT_NAME [OPTIONS] <run_id | seqera_run_id>
+
+Fetch a de.NBI benchmark run into resources/results/<run_id>/ and render its report.
+
+ARGUMENTS:
+    run_id              directory name on the cluster, e.g. run_2026-08-05_17-13-15
+    seqera_run_id       seqera run id, e.g. bNUQHaI8up9sQ (resolved via \`tw\`)
+
+OPTIONS:
+    -h, --help          show this help message
+    -t, --task NAME     task name (auto-detected from _viash.yaml if not provided)
+        --upload        also upload results and report to the task's S3 results prefix
+        --logs          also fetch the .command.* logs and .exitcode of every task
+                        in trace.txt (into logs/)
+        --work          also fetch the full work dir of every task in trace.txt
+                        (into work/; implies the logs/ tree of --logs)
+        --max-size SZ   skip work dir files larger than this (default 5m, 0 = no limit)
+        --dry-run       show what would happen without transferring or uploading
+        --no-fetch      use the already-fetched copy in resources/results
+        --no-render     skip rendering the results report
+
+EXAMPLES:
+    $SCRIPT_NAME run_2026-08-05_17-13-15
+    $SCRIPT_NAME bNUQHaI8up9sQ
+    $SCRIPT_NAME --logs bNUQHaI8up9sQ                    # triaging a failed run
+    $SCRIPT_NAME --work bNUQHaI8up9sQ                    # reproducing a failed task
+    $SCRIPT_NAME --upload run_2026-08-05_17-13-15        # publish to S3
+    $SCRIPT_NAME --no-fetch run_2026-08-05_17-13-15      # re-render only
+
+EOF
+}
+
+REMOTE_RESULTS="/vol/scratch/results"
+REMOTE_WORK="/vol/scratch/work"
+
+# staged in resources/results rather than resources/<task>/results for two reasons:
+# it is where render_results_local.sh already looks, and the latter is the target of
+# `sync_full_resources.sh`, which syncs with --delete and would happily remove a run
+# that has been fetched but not yet uploaded.
+LOCAL_RESULTS="resources/results"
+
+DENBI_USER="${DENBI_USER:-ubuntu}"
+AWS_PROFILE="${AWS_PROFILE:-op}"
+export AWS_PROFILE
+
+# rsync spells it --dry-run, the aws cli spells it --dryrun
+DRY_RUN=""
+RSYNC_DRY=""
+AWS_DRY=""
+DO_FETCH=1
+DO_RENDER=1
+DO_UPLOAD=""
+DO_WORK=""
+DO_LOGS=""
+MAX_SIZE="5m"
+TASK=""
+ARGS=()
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -h|--help) usage; exit 0 ;;
+    -t|--task) TASK="$2"; shift 2 ;;
+    --upload) DO_UPLOAD=1; shift ;;
+    --work) DO_WORK=1; shift ;;
+    --logs) DO_LOGS=1; shift ;;
+    --max-size) MAX_SIZE="$2"; shift 2 ;;
+    --dry-run) DRY_RUN=1; RSYNC_DRY="--dry-run"; AWS_DRY="--dryrun"; shift ;;
+    --no-fetch) DO_FETCH=""; shift ;;
+    --no-render) DO_RENDER=""; shift ;;
+    -*) echo "Unknown option: $1" >&2; usage >&2; exit 1 ;;
+    *) ARGS+=("$1"); shift ;;
+  esac
+done
+
+if [ "${#ARGS[@]}" -ne 1 ]; then
+  echo "ERROR: expected exactly one run id." >&2
+  usage >&2
+  exit 1
+fi
+RUN_ARG="${ARGS[0]}"
+
+# the task determines the S3 prefix. read it from _viash.yaml the same way
+# common/scripts/render_results_report does, so both agree on where results live.
+if [ -z "$TASK" ]; then
+  if [ ! -f "$REPO_ROOT/_viash.yaml" ]; then
+    echo "ERROR: _viash.yaml not found in $REPO_ROOT." >&2
+    echo "       Run this from a task repository, or pass --task <name>." >&2
+    exit 1
+  fi
+  TASK=$(grep '^name:' "$REPO_ROOT/_viash.yaml" | head -1 | sed 's/name: *//' | tr -d '"'"'")
+  if [ -z "$TASK" ]; then
+    echo "ERROR: could not read 'name' from $REPO_ROOT/_viash.yaml." >&2
+    exit 1
+  fi
+fi
+
+S3_RESULTS="s3://openproblems-data/resources/$TASK/results"
+echo "Task $TASK"
+
+# render_results_report is a sibling when this script lives in common/scripts, and
+# under common/scripts when it is called through a task-repo wrapper.
+RENDER_SCRIPT=""
+for candidate in "$SCRIPT_DIR/render_results_report" "$REPO_ROOT/common/scripts/render_results_report"; do
+  if [ -x "$candidate" ]; then
+    RENDER_SCRIPT="$candidate"
+    break
+  fi
+done
+if [ -n "$DO_RENDER" ] && [ -z "$RENDER_SCRIPT" ]; then
+  echo "ERROR: render_results_report not found next to this script or in common/scripts." >&2
+  echo "       Is the common submodule checked out? Or pass --no-render." >&2
+  exit 1
+fi
+
+# resolve the run id. a seqera run id needs a tw lookup to find publish_dir; a
+# run_<timestamp> is already the directory name (its full remote path is probed
+# once the cluster address is known).
+REMOTE_DIR=""
+if [[ "$RUN_ARG" == run_* ]]; then
+  RUN_ID="$RUN_ARG"
+else
+  echo "Looking up publish_dir for seqera run $RUN_ARG"
+  : "${TOWER_API_ENDPOINT:=https://api.cloud.seqera.io}"
+  : "${TOWER_WORKSPACE_ID:=53907369739130}"
+  export TOWER_API_ENDPOINT TOWER_WORKSPACE_ID
+
+  PUBLISH_DIR=$(tw runs view --id "$RUN_ARG" --params 2>/dev/null \
+    | grep -o '"publish_dir"[^,}]*' \
+    | sed 's/.*: *"//; s/"$//')
+
+  if [ -z "$PUBLISH_DIR" ]; then
+    echo "ERROR: could not read publish_dir for run $RUN_ARG." >&2
+    echo "       Check TOWER_ACCESS_TOKEN is set and the id is correct." >&2
+    exit 1
+  fi
+  if [[ "$PUBLISH_DIR" == s3://* ]]; then
+    echo "ERROR: run $RUN_ARG published straight to S3 ($PUBLISH_DIR)." >&2
+    echo "       Nothing to fetch -- this script is only for de.NBI runs." >&2
+    exit 1
+  fi
+  RUN_ID=$(basename "$PUBLISH_DIR")
+  REMOTE_DIR="$PUBLISH_DIR"
+  echo "  -> $PUBLISH_DIR"
+fi
+
+LOCAL_DIR="$LOCAL_RESULTS/$RUN_ID"
+
+# anything that talks to the cluster needs its address and key
+if [ -n "$DO_FETCH$DO_WORK$DO_LOGS" ]; then
+  # find the running cluster. the floating ip changes every time the cluster is
+  # recreated, so read it from bibigrid's own state rather than ~/.ssh/config,
+  # which goes stale silently and fails with "no route to host".
+  if [ -z "$DENBI_HOST" ]; then
+    INFO_DIR="$HOME/.config/bibigrid/cluster_info"
+    CLUSTER_FILE=$(grep -l "state: running" "$INFO_DIR"/*.yaml 2>/dev/null | head -1)
+
+    if [ -z "$CLUSTER_FILE" ]; then
+      echo "ERROR: no running cluster found in $INFO_DIR." >&2
+      echo "       If the cluster was terminated, /vol/scratch is gone with it." >&2
+      exit 1
+    fi
+
+    CLUSTER_ID=$(basename "$CLUSTER_FILE" .yaml)
+    DENBI_HOST=$(grep '^floating_ip:' "$CLUSTER_FILE" | awk '{print $2}')
+    DENBI_KEY="${DENBI_KEY:-$HOME/.config/bibigrid/keys/tempKey_bibi-$CLUSTER_ID}"
+    echo "Cluster $CLUSTER_ID at $DENBI_HOST"
+  fi
+
+  SSH_OPTS=(-o ProxyJump=denbi-jumphost -o ConnectTimeout=20 -o BatchMode=yes)
+  [ -n "$DENBI_KEY" ] && SSH_OPTS+=(-i "$DENBI_KEY")
+fi
+
+if [ -n "$DO_FETCH" ]; then
+  # check it is actually there before starting a transfer. when the run id was
+  # given directly, try both publish layouts.
+  if [ -z "$REMOTE_DIR" ]; then
+    REMOTE_DIR=$(ssh "${SSH_OPTS[@]}" "$DENBI_USER@$DENBI_HOST" \
+      "for d in '$REMOTE_RESULTS/$TASK/$RUN_ID' '$REMOTE_RESULTS/$RUN_ID'; do if test -d \"\$d\"; then echo \"\$d\"; break; fi; done")
+  elif ! ssh "${SSH_OPTS[@]}" "$DENBI_USER@$DENBI_HOST" "test -d '$REMOTE_DIR'"; then
+    REMOTE_DIR=""
+  fi
+  if [ -z "$REMOTE_DIR" ]; then
+    echo "ERROR: run $RUN_ID does not exist on the cluster." >&2
+    echo "       Available:" >&2
+    ssh "${SSH_OPTS[@]}" "$DENBI_USER@$DENBI_HOST" \
+      "ls '$REMOTE_RESULTS' '$REMOTE_RESULTS/$TASK' 2>/dev/null" >&2 || true
+    exit 1
+  fi
+
+  echo
+  echo "Fetching $REMOTE_DIR -> $LOCAL_DIR"
+  mkdir -p "$LOCAL_DIR"
+  rsync -avh --progress $RSYNC_DRY \
+    -e "ssh ${SSH_OPTS[*]}" \
+    "$DENBI_USER@$DENBI_HOST:$REMOTE_DIR/" \
+    "$LOCAL_DIR/"
+elif [ ! -d "$LOCAL_DIR" ]; then
+  echo "ERROR: --no-fetch given but $LOCAL_DIR does not exist." >&2
+  exit 1
+fi
+
+# a run that finished can still have failed tasks -- errorStrategy 'ignore' in
+# labels_denbi.config lets most non-zero exits through, so the run is reported
+# SUCCEEDED regardless. Surface them rather than silently publishing.
+TRACE="$LOCAL_DIR/trace.txt"
+if [ -f "$TRACE" ]; then
+  FAILED=$(awk -F'\t' '
+    NR==1 {for (i=1; i<=NF; i++) {if ($i=="exit") e=i; if ($i=="name") n=i; if ($i=="status") s=i}}
+    NR>1 && $e != 0 && $e != "-" {print "  " $s "  exit=" $e "  " $n}
+  ' "$TRACE" | sort -u)
+
+  if [ -n "$FAILED" ]; then
+    echo
+    echo "WARNING: this run contains failed tasks:"
+    echo "$FAILED"
+    echo
+    echo "Scores for these will be missing from score_uns.yaml."
+  fi
+fi
+
+# fetch the work dirs (--work) or just their logs (--logs) of everything in the
+# trace, so failures can be inspected (and reproduced) locally. inputs staged by
+# nextflow are symlinks into other work dirs, so a task's own dir is not
+# self-contained -- hence fetching all of them rather than cherry-picking the
+# failed ones.
+if [ -n "$DO_WORK$DO_LOGS" ]; then
+  if [ ! -f "$TRACE" ]; then
+    echo "ERROR: no trace.txt in $LOCAL_DIR, cannot locate the work dirs." >&2
+    exit 1
+  fi
+
+  # the hash/dir index lives next to whatever gets fetched
+  if [ -n "$DO_WORK" ]; then META_DIR="$LOCAL_DIR/work"; else META_DIR="$LOCAL_DIR/logs"; fi
+  mkdir -p "$META_DIR"
+
+  echo
+  echo "Resolving work dirs for $(($(wc -l < "$TRACE") - 1)) tasks"
+  # the trace stores a truncated hash (ab/cdef01); expand it to the full dir name
+  tail -n +2 "$TRACE" | cut -f2 | sort -u > "$META_DIR/_hashes.txt"
+  ssh "${SSH_OPTS[@]}" "$DENBI_USER@$DENBI_HOST" \
+    "cd $REMOTE_WORK && while read -r h; do ls -d \${h}* 2>/dev/null | head -1; done" \
+    < "$META_DIR/_hashes.txt" > "$META_DIR/_dirs.txt"
+
+  n_found=$(wc -l < "$META_DIR/_dirs.txt")
+  n_want=$(wc -l < "$META_DIR/_hashes.txt")
+  echo "$n_found/$n_want work dirs still present on the cluster"
+
+  # an index from work dir hash to what actually ran there
+  {
+    printf 'hash\tstatus\texit\tname\twork_dir\n'
+    tail -n +2 "$TRACE" | awk -F'\t' -v OFS='\t' '{print $2, $5, $6, $4}' | \
+      while IFS=$'\t' read -r hash status exit name; do
+        dir=$(grep -m1 "^${hash}" "$META_DIR/_dirs.txt" || true)
+        printf '%s\t%s\t%s\t%s\t%s\n' "$hash" "$status" "$exit" "$name" "${dir:-<missing>}"
+      done
+  } > "$META_DIR/_index.tsv"
+
+  if [ -n "$DO_WORK" ]; then
+    MAX_SIZE_ARG=()
+    if [ "$MAX_SIZE" != "0" ]; then
+      MAX_SIZE_ARG=(--max-size="$MAX_SIZE")
+      echo "Skipping work dir files larger than $MAX_SIZE (pass --max-size 0 to fetch everything)"
+    fi
+
+    echo "Fetching work dirs -> $LOCAL_DIR/work"
+    rsync -a -r --info=progress2 $RSYNC_DRY "${MAX_SIZE_ARG[@]}" \
+      -e "ssh ${SSH_OPTS[*]}" \
+      --files-from="$META_DIR/_dirs.txt" \
+      "$DENBI_USER@$DENBI_HOST:$REMOTE_WORK/" "$LOCAL_DIR/work/"
+
+    # a logs-only copy of the same tree, for grepping without the data files.
+    # the work dirs are already local, so extract rather than transfer twice.
+    echo "Extracting logs and exit codes -> $LOCAL_DIR/logs"
+    rm -rf "$LOCAL_DIR/logs"
+    rsync -am \
+      --include='*/' \
+      --include='.command.*' --include='.exitcode' \
+      --include='_index.tsv' --include='_dirs.txt' --include='_hashes.txt' \
+      --exclude='*' \
+      "$LOCAL_DIR/work/" "$LOCAL_DIR/logs/"
+  else
+    echo "Fetching logs and exit codes -> $LOCAL_DIR/logs"
+    rsync -am -r --info=progress2 $RSYNC_DRY \
+      -e "ssh ${SSH_OPTS[*]}" \
+      --include='*/' --include='.command.*' --include='.exitcode' --exclude='*' \
+      --files-from="$META_DIR/_dirs.txt" \
+      "$DENBI_USER@$DENBI_HOST:$REMOTE_WORK/" "$LOCAL_DIR/logs/"
+  fi
+fi
+
+# render the report into the run directory, so it is uploaded alongside the raw
+# results.
+if [ -n "$DO_RENDER" ]; then
+  # viash generates a nextflow.config that declares `tempDir` as an implicit
+  # top-level groovy variable. the v2 config parser, default since nextflow 25.10,
+  # rejects that with "`tempDir` is not defined", so ask for the lenient v1 parser.
+  export NXF_SYNTAX_PARSER="${NXF_SYNTAX_PARSER:-v1}"
+
+  echo
+  echo "Rendering report -> $LOCAL_DIR/report"
+  if [ -n "$DRY_RUN" ]; then
+    echo "  (dry run) $RENDER_SCRIPT local $LOCAL_DIR --output $LOCAL_DIR/report"
+  else
+    if [ -d "$LOCAL_DIR/report" ]; then
+      echo "  replacing existing $LOCAL_DIR/report"
+      rm -rf "${LOCAL_DIR:?}/report"
+    fi
+    "$RENDER_SCRIPT" local "$LOCAL_DIR" --output "$LOCAL_DIR/report"
+  fi
+fi
+
+# the logs are small and useful for post-hoc triage, so they go along; the work
+# dirs hold staged data files and stay off S3
+if [ -n "$DO_UPLOAD" ]; then
+  echo
+  echo "Uploading $LOCAL_DIR -> $S3_RESULTS/$RUN_ID  (AWS_PROFILE=$AWS_PROFILE)"
+  aws s3 sync $AWS_DRY \
+    --exclude "work/*" \
+    "$LOCAL_DIR" "$S3_RESULTS/$RUN_ID"
+fi
+
+echo
+if [ -n "$DRY_RUN" ]; then
+  echo "Dry run -- nothing was written."
+elif [ -n "$DO_UPLOAD" ]; then
+  echo "Done. $S3_RESULTS/$RUN_ID"
+else
+  echo "Done. $LOCAL_DIR"
+fi

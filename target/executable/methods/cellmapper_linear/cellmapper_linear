@@ -449,9 +449,9 @@ RUN pip install --upgrade pip && \
   pip install --upgrade --no-cache-dir "cellmapper>=0.2.6,<0.3"
 
 LABEL org.opencontainers.image.description="Companion container for running component methods cellmapper_linear"
-LABEL org.opencontainers.image.created="2026-09-27T01:46:32Z"
+LABEL org.opencontainers.image.created="2026-09-29T08:38:01Z"
 LABEL org.opencontainers.image.source="https://github.com/quadbio/cellmapper"
-LABEL org.opencontainers.image.revision="ee7bbdb3257e04239ba479e5b540c8fa7f46871a"
+LABEL org.opencontainers.image.revision="8972ac741d154e3e8b1668231764e9a5fe720ed8"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER
@@ -607,7 +607,8 @@ function ViashHelp {
   echo "    --mask_var"
   echo "        type: string"
   echo "        default: hvg"
-  echo "        Variable to mask for fallback representation."
+  echo "        Variable to mask for fallback representation, or \"none\" to use all"
+  echo "        features."
   echo ""
   echo "    --kernel_method"
   echo "        type: string"
@@ -1259,7 +1260,7 @@ cmap.compute_neighbors(
     knn_method="sklearn" if n_obs < 60000 else "pynndescent",
     fallback_representation=par['fallback_representation'],
     n_neighbors=par['n_neighbors'],
-    fallback_kwargs={"mask_var": par['mask_var']},
+    fallback_kwargs={"mask_var": None if par['mask_var'] == "none" else par['mask_var']},
     )
 cmap.compute_mapping_matrix(kernel_method=par['kernel_method'])
 
