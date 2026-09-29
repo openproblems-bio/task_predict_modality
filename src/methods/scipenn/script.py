@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 import tempfile
 
 import anndata as ad
@@ -23,8 +24,11 @@ par = {
     "batch_size": 128,
     "seed": 0,
 }
-meta = {"name": "scipenn"}
+meta = {"name": "scipenn", "resources_dir": "src/utils"}
 ## VIASH END
+
+sys.path.append(meta["resources_dir"])
+from exit_codes import exit_non_applicable
 
 logger.info("Reading input files...")
 rna_train = ad.read_h5ad(par["input_train_mod1"])   # mod1 = RNA (GEX)
@@ -33,11 +37,11 @@ rna_test = ad.read_h5ad(par["input_test_mod1"])
 
 # sciPENN only supports the GEX -> ADT direction. It biologically interprets the
 # gene sets as RNA and the protein sets as surface protein, so running it on the
-# swapped (ADT -> GEX) direction produces meaningless output. Fail loudly instead.
+# swapped (ADT -> GEX) direction produces meaningless output.
 mod1 = rna_train.uns.get("modality")
 mod2 = prot_train.uns.get("modality")
 if mod1 != "GEX" or mod2 != "ADT":
-    raise ValueError(
+    exit_non_applicable(
         f"sciPENN only supports predicting protein (ADT) from RNA (GEX); "
         f"got mod1={mod1!r}, mod2={mod2!r}."
     )

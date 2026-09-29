@@ -112,6 +112,8 @@
 
 * `senkin_tmp_train`, `senkin_tmp_predict`: Store the model bundle (the test predictions, as the solution is transductive) as an h5ad file in a directory instead of a pickle. The train image is built from `nvidia/cuda` with the current pandas 3, the predict image `openproblems/base_pytorch_nvidia:1` ships pandas 2, and unpickling the bundled `var` DataFrame raised `NotImplementedError` in `NDArrayBacked.__setstate__`, so senkin_tmp finished both CITE training runs of run_2026-09-23 but never produced a prediction. The predict step still reads the old pickle until the test resources are regenerated (PR #73).
 
+* `scipenn`: Exit 99 (non-applicable) instead of raising a `ValueError` on anything other than GEX -> ADT.
+
 # task_predict_modality 0.1.1
 
 ## NEW FUNCTIONALITY
