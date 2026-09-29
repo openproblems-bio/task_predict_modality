@@ -4,6 +4,12 @@
 
 * Added `src/utils/exit_codes.py`, so components can mark themselves non-applicable for a dataset (PR #32).
 
+## MAJOR CHANGES
+
+* `process_dataset`: When the target modality is ATAC, keep the 10k peaks with the highest `hvg_score` instead of 10k random peaks, so the target is the part of the chromatin accessibility that actually differs between cells.
+
+* `process_dataset`: Remove cells without counts in either modality, after the peak selection. Empty cells have no profile to predict, and made `cellmapper_scvi` fail on `pbmc_cite` (43 cells without ADT counts).
+
 ## MINOR CHANGES
 
 * `file_train_mod1`, `file_train_mod2`, `file_test_mod1`, `file_test_mod2`: Declare `uns["modality"]`, which `process_dataset` already writes and which six methods and the `run_benchmark` workflow already read (PR #29).
