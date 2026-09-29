@@ -112,6 +112,8 @@
 
 * `senkin_tmp_train`, `senkin_tmp_predict`: Store the model bundle (the test predictions, as the solution is transductive) as an h5ad file in a directory instead of a pickle. The train image is built from `nvidia/cuda` with the current pandas 3, the predict image `openproblems/base_pytorch_nvidia:1` ships pandas 2, and unpickling the bundled `var` DataFrame raised `NotImplementedError` in `NDArrayBacked.__setstate__`, so senkin_tmp finished both CITE training runs of run_2026-09-23 but never produced a prediction. The predict step still reads the old pickle until the test resources are regenerated (PR #73).
 
+* `novel`: Guard the TF-IDF and LSI of the ATAC input against cells without counts in the selected peaks. These turned into NaN, so the validation loss never improved, no model was saved and `novel_predict` failed with a missing `tensor.pt` on the multiome swap datasets (PR #76).
+
 * `senkin_tmp_predict`: Compare the cell and protein names of the stored predictions as lists. The train and predict images run different pandas versions, so the same names were read back with a different index dtype and `Index.equals()` failed on every dataset (PR #75).
 
 * `scipenn`: Exit 99 (non-applicable) instead of raising a `ValueError` on anything other than GEX -> ADT (PR #77).
