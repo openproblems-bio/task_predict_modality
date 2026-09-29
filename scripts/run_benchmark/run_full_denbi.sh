@@ -21,11 +21,11 @@ publish_dir: "$publish_dir"
 HERE
 
 tw launch https://github.com/openproblems-bio/task_predict_modality.git \
-  --revision v0.2.0-rc6 \
+  --revision build/main \
   --pull-latest \
   --main-script target/nextflow/workflows/run_benchmark/main.nf \
   --workspace 53907369739130 \
-  --compute-env denbi_bibigrid_cpu \
+  --compute-env 3qstFmP9lNwdzutSNuJq7c \
   --params-file /tmp/params.yaml \
   --entry-name auto \
   --config common/nextflow_helpers/labels_denbi.config \
