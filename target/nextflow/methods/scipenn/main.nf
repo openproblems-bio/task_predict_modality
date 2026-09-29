@@ -3508,6 +3508,10 @@ meta = [
       "type" : "python_script",
       "path" : "script.py",
       "is_executable" : true
+    },
+    {
+      "type" : "file",
+      "path" : "/src/utils/exit_codes.py"
     }
   ],
   "label" : "sciPENN",
@@ -3639,7 +3643,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/scipenn",
     "viash_version" : "0.9.7",
-    "git_commit" : "8972ac741d154e3e8b1668231764e9a5fe720ed8",
+    "git_commit" : "0688615e6a0cba0c4cda216245596e9b22755b44",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3851,6 +3855,7 @@ tempscript=".viash_script.py"
 cat > "$tempscript" << VIASHMAIN
 import logging
 import os
+import sys
 import tempfile
 
 import anndata as ad
@@ -3901,6 +3906,9 @@ dep = {
 
 ## VIASH END
 
+sys.path.append(meta["resources_dir"])
+from exit_codes import exit_non_applicable
+
 logger.info("Reading input files...")
 rna_train = ad.read_h5ad(par["input_train_mod1"])   # mod1 = RNA (GEX)
 prot_train = ad.read_h5ad(par["input_train_mod2"])   # mod2 = protein (ADT)
@@ -3908,11 +3916,11 @@ rna_test = ad.read_h5ad(par["input_test_mod1"])
 
 # sciPENN only supports the GEX -> ADT direction. It biologically interprets the
 # gene sets as RNA and the protein sets as surface protein, so running it on the
-# swapped (ADT -> GEX) direction produces meaningless output. Fail loudly instead.
+# swapped (ADT -> GEX) direction produces meaningless output.
 mod1 = rna_train.uns.get("modality")
 mod2 = prot_train.uns.get("modality")
 if mod1 != "GEX" or mod2 != "ADT":
-    raise ValueError(
+    exit_non_applicable(
         f"sciPENN only supports predicting protein (ADT) from RNA (GEX); "
         f"got mod1={mod1!r}, mod2={mod2!r}."
     )

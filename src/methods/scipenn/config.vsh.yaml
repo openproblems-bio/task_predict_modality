@@ -44,6 +44,7 @@ arguments:
 resources:
   - type: python_script
     path: script.py
+  - path: /src/utils/exit_codes.py
 engines:
   # sciPENN is installed --no-deps: it pins a spurious numba<=0.50.0 (never imported) and a
   # 2021-era stack, but runs on the base image's torch/scanpy/anndata. The base already ships
