@@ -10,6 +10,8 @@
 
 * `run_benchmark`: Write the commit the workflow ran from and the launch time into `task_info.yaml`, instead of publishing `_viash.yaml` verbatim (ported from openproblems-bio/task_template#18).
 
+* `run_benchmark`: Replace `--method_ids` with `--methods_include`/`--methods_exclude`, and add `--metrics_include`/`--metrics_exclude` (ported from openproblems-bio/task_template#20).
+
 * `mse`: Write the unbounded maximum as `"+.inf"` rather than `"+inf"`, which is the literal the metric schema accepts (PR #31).
 
 * `cellmapper_linear`: Write the unmasked variants as `mask_var: null` rather than `mask_var: None`, which YAML reads as the string `"None"` and which would resolve to `adata.var["None"]` (PR #38).
