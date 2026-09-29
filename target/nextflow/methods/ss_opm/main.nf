@@ -3581,7 +3581,7 @@ meta = [
     "engine" : "native",
     "output" : "target/nextflow/methods/ss_opm",
     "viash_version" : "0.9.7",
-    "git_commit" : "0688615e6a0cba0c4cda216245596e9b22755b44",
+    "git_commit" : "1fefb6a303409b79646e5f087d670aa855429e74",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {

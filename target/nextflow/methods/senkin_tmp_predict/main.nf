@@ -3613,7 +3613,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/senkin_tmp_predict",
     "viash_version" : "0.9.7",
-    "git_commit" : "0688615e6a0cba0c4cda216245596e9b22755b44",
+    "git_commit" : "1fefb6a303409b79646e5f087d670aa855429e74",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3896,8 +3896,8 @@ adata_prot_train = ad.read_h5ad(par["input_train_mod2"])
 logger.info("Loading the predictions of the train step...")
 adata_predictions = read_predictions(par["input_model"])
 # The train step predicted the test cells of input_test_mod1 in their order; make sure nothing changed
-assert adata_predictions.obs_names.equals(adata_rna_test.obs_names), "test cells do not match the trained model"
-assert adata_predictions.var_names.equals(adata_prot_train.var_names), "proteins do not match the trained model"
+assert adata_predictions.obs_names.tolist() == adata_rna_test.obs_names.tolist(), "test cells do not match the trained model"
+assert adata_predictions.var_names.tolist() == adata_prot_train.var_names.tolist(), "proteins do not match the trained model"
 
 logger.info("Writing predictions...")
 adata_out = ad.AnnData(
