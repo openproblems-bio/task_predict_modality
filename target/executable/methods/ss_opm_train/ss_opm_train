@@ -459,9 +459,9 @@ rm ReactomePathways.gmt.zip
 
 ENV SS_OPM_REFERENCE_DIR=/opt/ss_opm_reference
 LABEL org.opencontainers.image.description="Companion container for running component methods ss_opm_train"
-LABEL org.opencontainers.image.created="2026-09-29T17:23:38Z"
+LABEL org.opencontainers.image.created="2026-09-29T18:43:58Z"
 LABEL org.opencontainers.image.source="https://github.com/openproblems-bio/task_predict_modality"
-LABEL org.opencontainers.image.revision="1fefb6a303409b79646e5f087d670aa855429e74"
+LABEL org.opencontainers.image.revision="214364f490d632cfd279ea956c1f3b37b1e7672b"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER

@@ -450,9 +450,9 @@ RUN pip install --upgrade pip && \
   pip install --upgrade --no-cache-dir "lightgbm>=4.0" "tensorflow>=2.12" "scikit-learn>=1.1" "joblib>=1.4" "mudata>=0.2" "muon>=0.1" "fast-array-utils"
 
 LABEL org.opencontainers.image.description="Companion container for running component methods senkin_tmp_predict"
-LABEL org.opencontainers.image.created="2026-09-29T17:23:38Z"
+LABEL org.opencontainers.image.created="2026-09-29T18:43:59Z"
 LABEL org.opencontainers.image.source="https://github.com/openproblems-bio/task_predict_modality"
-LABEL org.opencontainers.image.revision="1fefb6a303409b79646e5f087d670aa855429e74"
+LABEL org.opencontainers.image.revision="214364f490d632cfd279ea956c1f3b37b1e7672b"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER
