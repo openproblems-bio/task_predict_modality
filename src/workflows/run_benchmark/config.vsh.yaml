@@ -55,16 +55,38 @@ argument_groups:
       These arguments are mutually exclusive, so only `--methods_include` OR
       `--methods_exclude` can set but not both.
     arguments:
+      - name: "--paramsets"
+        type: file
+        direction: input
+        required: false
+        description: |
+          A yaml file mapping method ids to named parameter sets, e.g.:
+
+            cellmapper_linear:
+              pca_hvg:
+                fallback_representation: joint_pca
+                mask_var: hvg
+              cca_hvg:
+                fallback_representation: fast_cca
+                mask_var: hvg
+
+          Each listed method is run once per parameter set, with the given arguments
+          and with `paramset_name`/`paramset` attached to its scores.
+          If not provided, the parameter sets default to the `info.variants`
+          defined in the method components' configs. A method without
+          `info.variants` is run once with its default parameter set.
       - name: "--methods_include"
         type: string
         multiple: true
         description: |
           A list of method ids to include. If specified, only these methods will be run.
+          For parameterised methods, a single paramset can be targeted as `<method_id>.<paramset_name>`, e.g. `cellmapper_linear.cellmapper-pca`.
       - name: "--methods_exclude"
         type: string
         multiple: true
         description: |
           A list of method ids to exclude. If specified, all methods except the ones listed will be run.
+          For parameterised methods, a single paramset can be excluded as `<method_id>.<paramset_name>`, e.g. `cellmapper_linear.cellmapper-pca`.
   - name: Metric filtering
     description: |
       Use these arguments to filter metrics by name. By default, all metrics are
