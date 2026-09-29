@@ -52,6 +52,8 @@
 
 ## BUG FIXES
 
+* `cellmapper_linear`: Write the unmasked variants as `mask_var: "none"` rather than `mask_var: null`. Viash drops null values from the config, so these variants fell back to the default `mask_var: "hvg"` and duplicated their `-hvg` counterparts.
+
 * `guanlab_dengkw_pm`: Restore the consensus scheme of the original submission -- five reshuffles of the batches into two halves, ten kernel ridge models averaged. The port had replaced it with a single fixed two-way split for ADT pairs and leave-one-batch-out otherwise, so the result depended on the order the batches happened to come in. `--n_repeats` and `--seed` are now arguments; the unused `--distance_method` and `--n_pcs` are gone (PR #32).
 
 * `guanlab_dengkw_pm`: Only map the predictions back through the mod2 SVD when that SVD was actually fitted. When the target had fewer features than `n_mod2`, the method raised `NameError: embedder_mod2`. Unsupported modality pairs now exit 99 (non-applicable) instead of raising a `KeyError` (PR #32).
