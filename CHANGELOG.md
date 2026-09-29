@@ -114,6 +114,10 @@
 
 * `novel`: Guard the TF-IDF and LSI of the ATAC input against cells without counts in the selected peaks. These turned into NaN, so the validation loss never improved, no model was saved and `novel_predict` failed with a missing `tensor.pt` on the multiome swap datasets (PR #76).
 
+* `senkin_tmp_predict`: Compare the cell and protein names of the stored predictions as lists. The train and predict images run different pandas versions, so the same names were read back with a different index dtype and `Index.equals()` failed on every dataset (PR #75).
+
+* `scipenn`: Exit 99 (non-applicable) instead of raising a `ValueError` on anything other than GEX -> ADT (PR #77).
+
 # task_predict_modality 0.1.1
 
 ## NEW FUNCTIONALITY
