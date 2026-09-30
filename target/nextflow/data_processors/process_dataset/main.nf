@@ -4002,7 +4002,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/data_processors/process_dataset",
     "viash_version" : "0.9.7",
-    "git_commit" : "214364f490d632cfd279ea956c1f3b37b1e7672b",
+    "git_commit" : "6291e14a93d176545ed495679c74fc97f65f809b",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -4327,9 +4327,8 @@ if (ad1_mod == "ATAC" && "gene_activity" %in% names(ad1\\$obsm)) {
 if (ad2_mod == "ATAC") {
   # subset to make the task computationally feasible
   if (ncol(ad2) > 10000) {
-    poss_ix <- which(Matrix::colSums(ad2\\$layers[["normalized"]]) > 0)
-    # sample by position -- sample(x, n) treats a length-1 x as seq_len(x)
-    sel_ix <- sort(poss_ix[sample.int(length(poss_ix), min(10000, length(poss_ix)))])
+    # keep the most variable peaks
+    sel_ix <- sort(order(ad2\\$var[["hvg_score"]], decreasing = TRUE)[seq_len(10000)])
     ad2 <- ad2[, sel_ix]\\$copy()
     ad2_var <- ad2_var[sel_ix, , drop = FALSE]
   }
@@ -4339,6 +4338,20 @@ if (ad2_mod == "ATAC") {
     ad2_uns\\$gene_activity_var_names <- ad2\\$uns\\$gene_activity_var_names
     ad2_obsm\\$gene_activity <- as(ad2\\$obsm\\$gene_activity, "CsparseMatrix")
   }
+}
+
+# drop cells without counts in either modality -- after the peak selection above,
+# which can leave cells empty in the ATAC modality
+keep <- which(
+  Matrix::rowSums(ad1\\$layers[["counts"]]) > 0 &
+    Matrix::rowSums(ad2\\$layers[["counts"]]) > 0
+)
+if (length(keep) < nrow(ad1)) {
+  cat("Removing ", nrow(ad1) - length(keep), " cells without counts in either modality\\\\n", sep = "")
+  ad1 <- ad1[keep, ]\\$copy()
+  ad2 <- ad2[keep, ]\\$copy()
+  ad1_obsm <- lapply(ad1_obsm, function(x) x[keep, , drop = FALSE])
+  ad2_obsm <- lapply(ad2_obsm, function(x) x[keep, , drop = FALSE])
 }
 
 cat("Creating train/test split\\\\n")
