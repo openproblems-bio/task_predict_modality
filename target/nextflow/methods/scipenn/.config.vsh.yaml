@@ -1,6 +1,6 @@
 name: "scipenn"
 namespace: "methods"
-version: "0.2.0-rc6"
+version: "0.2.0-rc7"
 argument_groups:
 - name: "Arguments"
   arguments:
@@ -325,6 +325,8 @@ resources:
 - type: "python_script"
   path: "script.py"
   is_executable: true
+- type: "file"
+  path: "exit_codes.py"
 label: "sciPENN"
 summary: "RNN with skip connections predicting CITE-seq protein from RNA (sciPENN)."
 description: "sciPENN (single-cell Protein prediction Engine using Neural Networks)\
@@ -427,11 +429,11 @@ build_info:
   output: "target/nextflow/methods/scipenn"
   executable: "target/nextflow/methods/scipenn/main.nf"
   viash_version: "0.9.7"
-  git_commit: "ee7bbdb3257e04239ba479e5b540c8fa7f46871a"
+  git_commit: "0bb3beb05aab3ba89dd3a4785147bb4e3856d424"
   git_remote: "https://github.com/openproblems-bio/task_predict_modality"
 package_config:
   name: "task_predict_modality"
-  version: "0.2.0-rc6"
+  version: "0.2.0-rc7"
   label: "Predict Modality"
   summary: "Predicting the profiles of one modality (e.g. protein abundance) from\
     \ another (e.g. mRNA expression)."

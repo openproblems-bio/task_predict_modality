@@ -1,3 +1,5 @@
+include { checkItemAllowed; paramsetsFromVariants; expandParamsets; methodMatchesParamset; checkMethodAllowed } from "${meta.resources_dir}/helper.nf"
+
 workflow auto {
   findStates(params, meta.config)
     | meta.workflow.run(
@@ -79,28 +81,47 @@ workflow run_wf {
    ***************************/
   score_ch = dataset_ch
 
+    // expand the channel so parameterised methods run once per paramset.
+    // the paramsets are read from the --paramsets file if provided, and
+    // default to the method components' info.variants.
+    | flatMap { id, state ->
+      def method_paramsets = state.paramsets
+        ? readYaml(state.paramsets)
+        : paramsetsFromVariants(methods)
+      expandParamsets(id, state, method_paramsets)
+    }
+
     // run all methods
     | runEach(
       components: methods,
 
-      // use the 'filter' argument to only run a method on the normalisation the component is asking for
+      // use the 'filter' argument to only run a method on the normalisation the
+      // component is asking for, to match paramset-tagged states to their method,
+      // and to filter by --methods_include/--methods_exclude
       filter: { id, state, comp ->
         def norm = state.rna_norm
         def pref = comp.config.info.preferred_normalization
         // if the preferred normalisation is none at all,
         // we can pass whichever dataset we want
         def norm_check = (norm == "log_cp10k" && pref == "counts") || norm == pref
-        def method_check = !state.method_ids || state.method_ids.contains(comp.config.name)
+        def paramset_check = methodMatchesParamset(state, comp.config.name)
+        def method_check = checkMethodAllowed(
+          comp.config.name,
+          state.paramset_name,
+          state.methods_include,
+          state.methods_exclude
+        )
 
-        method_check && norm_check
+        norm_check && paramset_check && method_check
       },
 
-      // define a new 'id' by appending the method name to the dataset id
+      // define a new 'id' by appending the method name and paramset name to the dataset id
       id: { id, state, comp ->
-        id + "." + comp.config.name
+        id + "." + comp.config.name + (state.paramset_name ? "." + state.paramset_name : "")
       },
 
-      // use 'fromState' to fetch the arguments the component requires from the overall state
+      // use 'fromState' to fetch the arguments the component requires from the overall state,
+      // along with the paramset arguments (if any)
       fromState: { id, state, comp ->
         def new_args = [
           input_train_mod1: state.input_train_mod1,
@@ -110,7 +131,7 @@ workflow run_wf {
         if (comp.config.info.type == "control_method") {
           new_args.input_test_mod2 = state.input_test_mod2
         }
-        new_args
+        new_args + (state.paramset ?: [:])
       },
 
       // use 'toState' to publish that component's outputs to the overall state
@@ -125,6 +146,18 @@ workflow run_wf {
     // run all metrics
     | runEach(
       components: metrics,
+
+      // use the 'filter' argument to only run the metrics the user asked for
+      filter: { id, state, comp ->
+        checkItemAllowed(
+          comp.config.name,
+          state.metrics_include,
+          state.metrics_exclude,
+          "metrics_include",
+          "metrics_exclude"
+        )
+      },
+
       id: { id, state, comp ->
         id + "." + comp.config.name
       },
@@ -141,13 +174,17 @@ workflow run_wf {
         ]
       }
     )
-    // extract the scores
+    // extract the scores, tagged with the paramset used for the method
+    // (null for control methods and methods without paramsets)
     | extract_uns_metadata.run(
       key: "extract_scores",
       fromState: [input: "metric_output"],
       toState: { id, output, state ->
+        def uns = readYaml(output.output).uns
+        uns.paramset_name = state.paramset_name
+        uns.paramset = state.paramset
         state + [
-          score_uns: readYaml(output.output).uns
+          score_uns: uns
         ]
       }
     )
@@ -196,7 +233,17 @@ workflow run_wf {
       def metric_configs_file = tempFile("metric_configs.yaml")
       metric_configs_file.write(metric_configs_yaml_blob)
 
-      def task_info_file = meta.resources_dir.resolve("_viash.yaml")
+      // store the task info in a file
+      def task_info = readYaml(meta.resources_dir.resolve("_viash.yaml"))
+      // commitId is null when nextflow runs from a local checkout instead of a revision
+      if (workflow.commitId) {
+        task_info.commit = workflow.commitId
+      }
+      // the launch time -- workflow.complete is only known once the run is over
+      task_info.timestamp = workflow.start.toInstant()
+        .truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString()
+      def task_info_file = tempFile("task_info.yaml")
+      task_info_file.write(toYamlBlob(task_info))
 
       // create output
       def new_state = [

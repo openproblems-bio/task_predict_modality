@@ -4,9 +4,21 @@
 
 * Added `src/utils/exit_codes.py`, so components can mark themselves non-applicable for a dataset (PR #32).
 
+## MAJOR CHANGES
+
+* `process_dataset`: When the target modality is ATAC, keep the 10k peaks with the highest `hvg_score` instead of 10k random peaks, so the target is the part of the chromatin accessibility that actually differs between cells.
+
+* `process_dataset`: Remove cells without counts in either modality, after the peak selection. Empty cells have no profile to predict, and made `cellmapper_scvi` fail on `pbmc_cite` (43 cells without ADT counts).
+
 ## MINOR CHANGES
 
 * `file_train_mod1`, `file_train_mod2`, `file_test_mod1`, `file_test_mod2`: Declare `uns["modality"]`, which `process_dataset` already writes and which six methods and the `run_benchmark` workflow already read (PR #29).
+
+* `run_benchmark`: Write the commit the workflow ran from and the launch time into `task_info.yaml`, instead of publishing `_viash.yaml` verbatim (ported from openproblems-bio/task_template#18).
+
+* `run_benchmark`: Replace `--method_ids` with `--methods_include`/`--methods_exclude`, and add `--metrics_include`/`--metrics_exclude` (ported from openproblems-bio/task_template#20).
+
+* `run_benchmark`: Run parameterised methods once per named paramset from `info.variants` or the new `--paramsets` file, tag scores with `paramset_name`/`paramset`, and allow `--methods_include`/`--methods_exclude` to target `<method_id>.<paramset_name>`. The existing `info.variants` of `cellmapper_linear` and `cellmapper_scvi` are now run by default (ported from openproblems-bio/task_template#23).
 
 * `mse`: Write the unbounded maximum as `"+.inf"` rather than `"+inf"`, which is the literal the metric schema accepts (PR #31).
 
@@ -45,6 +57,8 @@
 * `solution`, `zeros`: Ask for `lowmem` rather than `midmem` -- they use 0.5 GB and 11 GB of the 50 GB they asked for (PR #58).
 
 ## BUG FIXES
+
+* `cellmapper_linear`: Write the unmasked variants as `mask_var: "none"` rather than `mask_var: null`. Viash drops null values from the config, so these variants fell back to the default `mask_var: "hvg"` and duplicated their `-hvg` counterparts.
 
 * `guanlab_dengkw_pm`: Restore the consensus scheme of the original submission -- five reshuffles of the batches into two halves, ten kernel ridge models averaged. The port had replaced it with a single fixed two-way split for ADT pairs and leave-one-batch-out otherwise, so the result depended on the order the batches happened to come in. `--n_repeats` and `--seed` are now arguments; the unused `--distance_method` and `--n_pcs` are gone (PR #32).
 
@@ -103,6 +117,14 @@
 * `ss_opm`: Rebuild the derived inputs the original solution was written against instead of feeding it the raw h5ad columns: standardized per-cell statistics, the day and donor parsed from the `{day}_{donor}` batch labels (the 2021 donor was taken as the day), batch singular vectors from per-batch gene medians, and the HGNC/Reactome-selected CITE input genes rather than all 14k-22k genes (a 96 GB peak and a different model). Drop training cells with a constant target vector, which made the correlation loss `NaN` from epoch 0 on the 2022 CITE datasets; keep the multiome targets in float32, whose dense float64 copies OOM-killed 2022 ATAC->GEX; and map the per-cell z-scored network output back to the target scale, so RMSE and Spearman are meaningful. The image build and the runtime fallback download the Reactome gene sets with a browser-like user agent, because reactome.org answers HTTP 403 to Python's default one (PR #69).
 
 * `senkin_tmp_train`, `senkin_tmp_predict`: Store the model bundle (the test predictions, as the solution is transductive) as an h5ad file in a directory instead of a pickle. The train image is built from `nvidia/cuda` with the current pandas 3, the predict image `openproblems/base_pytorch_nvidia:1` ships pandas 2, and unpickling the bundled `var` DataFrame raised `NotImplementedError` in `NDArrayBacked.__setstate__`, so senkin_tmp finished both CITE training runs of run_2026-09-23 but never produced a prediction. The predict step still reads the old pickle until the test resources are regenerated (PR #73).
+
+* `novel`: Guard the TF-IDF and LSI of the ATAC input against cells without counts in the selected peaks. These turned into NaN, so the validation loss never improved, no model was saved and `novel_predict` failed with a missing `tensor.pt` on the multiome swap datasets (PR #76).
+
+* `senkin_tmp_predict`: Compare the cell and protein names of the stored predictions as lists. The train and predict images run different pandas versions, so the same names were read back with a different index dtype and `Index.equals()` failed on every dataset (PR #75).
+
+* `scipenn`: Exit 99 (non-applicable) instead of raising a `ValueError` on anything other than GEX -> ADT (PR #77).
+
+* `guanlab_dengkw_pm`: Solve the kernel ridge regression with `scipy.linalg.cho_factor()`/`cho_solve()` instead of `KernelRidge`, whose `scipy.linalg.solve()` raised a `MemoryError` or segfaulted beyond ~30k cells with the OpenBLAS in this image. Predictions are unchanged; the method failed on every dataset except `bmmc_multiome`.
 
 # task_predict_modality 0.1.1
 

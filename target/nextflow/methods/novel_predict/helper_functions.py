@@ -29,11 +29,13 @@ class tfidfTransformer():
     def transform(self, X):
         if not self.fitted:
             raise RuntimeError('Transformer was not fitted on any data')
+        row_sums = np.asarray(X.sum(axis=1)).reshape(-1, 1)
+        row_sums[row_sums == 0] = 1
         if scipy.sparse.issparse(X):
-            tf = X.multiply(1 / X.sum(axis=1))
+            tf = X.multiply(1 / row_sums)
             return tf.multiply(self.idf)
         else:
-            tf = X / X.sum(axis=1, keepdims=True)
+            tf = X / row_sums
             return tf * self.idf
 
     def fit_transform(self, X):
@@ -75,7 +77,9 @@ class lsiTransformer():
         X_norm = np.log1p(X_norm * 1e4)
         X_lsi = self.pcaTransformer.transform(X_norm)
         X_lsi -= X_lsi.mean(axis=1, keepdims=True)
-        X_lsi /= X_lsi.std(axis=1, ddof=1, keepdims=True)
+        X_lsi_std = X_lsi.std(axis=1, ddof=1, keepdims=True)
+        X_lsi_std[X_lsi_std == 0] = 1
+        X_lsi /= X_lsi_std
         lsi_df = pd.DataFrame(X_lsi, index = adata_use.obs_names)
         return lsi_df
 

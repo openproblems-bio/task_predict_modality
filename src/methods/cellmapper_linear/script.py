@@ -43,7 +43,7 @@ cmap.compute_neighbors(
     knn_method="sklearn" if n_obs < 60000 else "pynndescent",
     fallback_representation=par['fallback_representation'],
     n_neighbors=par['n_neighbors'],
-    fallback_kwargs={"mask_var": par['mask_var']},
+    fallback_kwargs={"mask_var": None if par['mask_var'] == "none" else par['mask_var']},
     )
 cmap.compute_mapping_matrix(kernel_method=par['kernel_method'])
 
