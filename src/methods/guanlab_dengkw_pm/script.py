@@ -1,10 +1,10 @@
 import sys
 import anndata as ad
 import numpy as np
+from scipy.linalg import cho_factor, cho_solve
 from scipy.sparse import csc_matrix
 from sklearn.decomposition import TruncatedSVD
 from sklearn.gaussian_process.kernels import RBF
-from sklearn.kernel_ridge import KernelRidge
 from threadpoolctl import threadpool_limits
 
 ## VIASH START
@@ -28,6 +28,27 @@ from exit_codes import exit_non_applicable
 # BLAS otherwise sizes its pool from the node's core count, not the cores allotted to us
 if meta.get('cpus'):
     threadpool_limits(meta['cpus'])
+
+# Workaround for sklearn's KernelRidge: this computes
+# KernelRidge(alpha=alpha, kernel=kernel).fit(X, y).predict(X_test), but solves the system itself.
+#
+# KernelRidge solves (K + alpha * I) w = y with scipy.linalg.solve(assume_a="pos"). In this image
+# (scipy 1.17 and 1.18 with OpenBLAS) that call raises a MemoryError or segfaults once a half of the
+# batches holds more than ~30-40k cells, no matter how much memory the job gets (200 GB was not enough
+# for 40k cells, which need ~13 GB). So the method failed on every dataset except bmmc_multiome.
+#
+# K + alpha * I is symmetric positive definite, so solve() does a Cholesky factorisation anyway.
+# cho_factor()/cho_solve() run that same factorisation directly and handle 46k cells in about a minute;
+# the predictions are identical to KernelRidge's. They also factorise K in place, whereas KernelRidge
+# copies it first, which saves one n x n float64 matrix of peak memory.
+#
+# Switch back to KernelRidge once scipy.linalg.solve() handles matrices of this size again.
+def kernel_ridge_predict(kernel, alpha, X, y, X_test):
+    K = kernel(X)
+    K.flat[::K.shape[0] + 1] += alpha
+    # K is symmetric, so its transpose is a Fortran-ordered view LAPACK can factorise in place
+    dual_coef = cho_solve(cho_factor(K.T, overwrite_a=True), y)
+    return kernel(X_test, X) @ dual_coef
 
 
 ## Removed PCA and normalization steps, as they arr already performed with the input data
@@ -118,13 +139,14 @@ for _ in range(par['n_repeats']):
 
         print(batch, flush=True)
         kernel = RBF(length_scale = scale)
-        krr = KernelRidge(alpha=alpha, kernel=kernel)
         print('Fitting KRR ... ', flush=True)
-        krr.fit(
+        y_pred_batch = kernel_ridge_predict(
+            kernel,
+            alpha,
             train_norm[input_train_mod1.obs.batch.isin(batch)],
-            train_gs[input_train_mod2.obs.batch.isin(batch)]
+            train_gs[input_train_mod2.obs.batch.isin(batch)],
+            test_norm
         )
-        y_pred_batch = krr.predict(test_norm)
         if embedder_mod2 is not None:
             # map the predicted components back to the mod2 feature space
             y_pred_batch = y_pred_batch @ embedder_mod2.components_

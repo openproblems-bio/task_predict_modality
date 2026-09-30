@@ -452,9 +452,9 @@ RUN pip install --no-cache-dir "numpy==1.23.5" "scipy==1.9.3" "pandas<2" "scanpy
 RUN pip install --no-cache-dir --no-deps episcanpy==0.3.2
 RUN pip install --no-cache-dir "git+https://github.com/openproblems-bio/core.git#subdirectory=packages/python/openproblems"
 LABEL org.opencontainers.image.description="Companion container for running component methods scbutterfly_train"
-LABEL org.opencontainers.image.created="2026-09-30T07:42:24Z"
+LABEL org.opencontainers.image.created="2026-09-30T07:55:44Z"
 LABEL org.opencontainers.image.source="https://github.com/openproblems-bio/task_predict_modality"
-LABEL org.opencontainers.image.revision="6291e14a93d176545ed495679c74fc97f65f809b"
+LABEL org.opencontainers.image.revision="0bb3beb05aab3ba89dd3a4785147bb4e3856d424"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER
