@@ -124,6 +124,8 @@
 
 * `scipenn`: Exit 99 (non-applicable) instead of raising a `ValueError` on anything other than GEX -> ADT (PR #77).
 
+* `guanlab_dengkw_pm`: Solve the kernel ridge regression with `scipy.linalg.cho_factor()`/`cho_solve()` instead of `KernelRidge`, whose `scipy.linalg.solve()` raised a `MemoryError` or segfaulted beyond ~30k cells with the OpenBLAS in this image. Predictions are unchanged; the method failed on every dataset except `bmmc_multiome`.
+
 # task_predict_modality 0.1.1
 
 ## NEW FUNCTIONALITY

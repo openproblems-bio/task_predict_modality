@@ -1,10 +1,10 @@
 import sys
 import anndata as ad
 import numpy as np
+from scipy.linalg import cho_factor, cho_solve
 from scipy.sparse import csc_matrix
 from sklearn.decomposition import TruncatedSVD
 from sklearn.gaussian_process.kernels import RBF
-from sklearn.kernel_ridge import KernelRidge
 from threadpoolctl import threadpool_limits
 
 ## VIASH START
@@ -28,6 +28,15 @@ from exit_codes import exit_non_applicable
 # BLAS otherwise sizes its pool from the node's core count, not the cores allotted to us
 if meta.get('cpus'):
     threadpool_limits(meta['cpus'])
+
+# same as KernelRidge(alpha=alpha, kernel=kernel).fit(X, y).predict(X_test), solved by Cholesky:
+# the scipy.linalg.solve() that KernelRidge uses fails beyond ~30k cells with this image's OpenBLAS
+def kernel_ridge_predict(kernel, alpha, X, y, X_test):
+    K = kernel(X)
+    K.flat[::K.shape[0] + 1] += alpha
+    # K is symmetric, so its transpose is a Fortran-ordered view LAPACK can factorise in place
+    dual_coef = cho_solve(cho_factor(K.T, overwrite_a=True), y)
+    return kernel(X_test, X) @ dual_coef
 
 
 ## Removed PCA and normalization steps, as they arr already performed with the input data
@@ -118,13 +127,14 @@ for _ in range(par['n_repeats']):
 
         print(batch, flush=True)
         kernel = RBF(length_scale = scale)
-        krr = KernelRidge(alpha=alpha, kernel=kernel)
         print('Fitting KRR ... ', flush=True)
-        krr.fit(
+        y_pred_batch = kernel_ridge_predict(
+            kernel,
+            alpha,
             train_norm[input_train_mod1.obs.batch.isin(batch)],
-            train_gs[input_train_mod2.obs.batch.isin(batch)]
+            train_gs[input_train_mod2.obs.batch.isin(batch)],
+            test_norm
         )
-        y_pred_batch = krr.predict(test_norm)
         if embedder_mod2 is not None:
             # map the predicted components back to the mod2 feature space
             y_pred_batch = y_pred_batch @ embedder_mod2.components_
