@@ -447,7 +447,7 @@ FROM openproblems/base_pytorch_nvidia:1
 ENTRYPOINT []
 RUN pip install --no-cache-dir --no-deps sciPENN==0.9.6
 LABEL org.opencontainers.image.description="Companion container for running component methods scipenn"
-LABEL org.opencontainers.image.created="2026-09-30T07:55:45Z"
+LABEL org.opencontainers.image.created="2026-09-30T09:24:58Z"
 LABEL org.opencontainers.image.source="https://github.com/jlakkis/sciPENN"
 LABEL org.opencontainers.image.revision="0bb3beb05aab3ba89dd3a4785147bb4e3856d424"
 LABEL org.opencontainers.image.version="build_main"

@@ -449,7 +449,7 @@ RUN Rscript -e 'options(warn = 2); if (!requireNamespace("remotes", quietly = TR
   Rscript -e 'options(warn = 2); remotes::install_cran(c("lmds"), repos = "https://cran.rstudio.com")'
 
 LABEL org.opencontainers.image.description="Companion container for running component methods lm"
-LABEL org.opencontainers.image.created="2026-09-30T07:55:45Z"
+LABEL org.opencontainers.image.created="2026-09-30T09:24:59Z"
 LABEL org.opencontainers.image.source="https://github.com/RcppCore/RcppArmadillo"
 LABEL org.opencontainers.image.revision="0bb3beb05aab3ba89dd3a4785147bb4e3856d424"
 LABEL org.opencontainers.image.version="build_main"
