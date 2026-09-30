@@ -29,8 +29,20 @@ from exit_codes import exit_non_applicable
 if meta.get('cpus'):
     threadpool_limits(meta['cpus'])
 
-# same as KernelRidge(alpha=alpha, kernel=kernel).fit(X, y).predict(X_test), solved by Cholesky:
-# the scipy.linalg.solve() that KernelRidge uses fails beyond ~30k cells with this image's OpenBLAS
+# Workaround for sklearn's KernelRidge: this computes
+# KernelRidge(alpha=alpha, kernel=kernel).fit(X, y).predict(X_test), but solves the system itself.
+#
+# KernelRidge solves (K + alpha * I) w = y with scipy.linalg.solve(assume_a="pos"). In this image
+# (scipy 1.17 and 1.18 with OpenBLAS) that call raises a MemoryError or segfaults once a half of the
+# batches holds more than ~30-40k cells, no matter how much memory the job gets (200 GB was not enough
+# for 40k cells, which need ~13 GB). So the method failed on every dataset except bmmc_multiome.
+#
+# K + alpha * I is symmetric positive definite, so solve() does a Cholesky factorisation anyway.
+# cho_factor()/cho_solve() run that same factorisation directly and handle 46k cells in about a minute;
+# the predictions are identical to KernelRidge's. They also factorise K in place, whereas KernelRidge
+# copies it first, which saves one n x n float64 matrix of peak memory.
+#
+# Switch back to KernelRidge once scipy.linalg.solve() handles matrices of this size again.
 def kernel_ridge_predict(kernel, alpha, X, y, X_test):
     K = kernel(X)
     K.flat[::K.shape[0] + 1] += alpha
