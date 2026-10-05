@@ -9,6 +9,7 @@ resources:
   - type: python_script
     path: script.py
   - path: ../ss_opm_common.py
+  - path: /src/utils/cell_scale.py
 engines:
   - type: docker
     image: openproblems/base_pytorch_nvidia:1
