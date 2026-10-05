@@ -31,9 +31,10 @@ from scButterfly.butterfly import Butterfly
 # Load data + model metadata
 # ---------------------------------------------------------------------------
 logger.info("Reading input files...")
-train_mod1 = ad.read_h5ad(par["input_train_mod1"])
-train_mod2 = ad.read_h5ad(par["input_train_mod2"])
-test_mod1 = ad.read_h5ad(par["input_test_mod1"])
+train_mod1 = butterfly_common.read_modality(par["input_train_mod1"])
+# The target's normalized layer is what the scale map is fitted to.
+train_mod2 = butterfly_common.read_modality(par["input_train_mod2"], layers=("counts", "normalized"))
+test_mod1 = butterfly_common.read_modality(par["input_test_mod1"])
 
 with open(os.path.join(par["input_model"], "metadata.pkl"), "rb") as f:
     metadata = pickle.load(f)
@@ -57,18 +58,15 @@ test_predictions = butterfly_common.predict_cells(
 )
 
 # scButterfly predicts its own preprocessing of the target; map it onto the scale of
-# the target's normalized layer (see target_scale).
-if built["direction"] == "ATAC2GEX":
-    logger.info("Converting predictions to log CP10k (scButterfly target sum %.1f)...", built["rna_target_sum"])
-    test_predictions = target_scale.to_log_cp10k(test_predictions, built["rna_target_sum"])
-else:
-    logger.info("Calibrating peak predictions on %d held-out training cells...", len(built["validation_id"]))
-    calibration = target_scale.PeakCalibration().fit(
-        butterfly_common.predict_cells(built, built["validation_id"], batch_size),
-        train_mod2.layers["normalized"][built["validation_id"]],
-    )
-    logger.info("Peaks with zero slope: %d / %d", (calibration.slope_ == 0).sum(), calibration.slope_.size)
-    test_predictions = calibration.apply(test_predictions)
+# the target's normalized layer with a line fitted on the held-out training cells
+# (see target_scale).
+logger.info("Fitting the scale map on %d held-out training cells...", len(built["validation_id"]))
+calibration = target_scale.ScaleCalibration().fit(
+    butterfly_common.predict_cells(built, built["validation_id"], batch_size),
+    train_mod2.layers["normalized"][built["validation_id"]],
+)
+logger.info("Target = %.4f + %.4f x scButterfly output", calibration.intercept_, calibration.slope_)
+test_predictions = calibration.apply(test_predictions)
 
 # ---------------------------------------------------------------------------
 # Write predictions.
