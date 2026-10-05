@@ -30,6 +30,7 @@ def apply_runtime_patches():
     - BCE on a float32 sigmoid can drift >1.0 -> clamp input to [0,1]
     - scButterfly hardcodes ``.cuda()``; make it a no-op when no GPU is present
     - ``TFIDF`` builds dense (n_peaks, n_cells) tiles -> sparse equivalent
+    - ``Model`` densifies both whole modalities -> densify one cell at a time
     """
     import torch
     import torch.nn as nn
@@ -78,6 +79,10 @@ def apply_runtime_patches():
     data_processing.TFIDF = _sparse_tfidf
     logger.info("Patched scButterfly TFIDF with the sparse implementation.")
 
+    from scButterfly import train_model
+
+    train_model.Model.__init__ = _rows_on_demand(train_model.Model.__init__)
+
 
 def _sparse_tfidf(count_mat):
     """Sparse, O(nnz) drop-in for ``scButterfly.data_processing.TFIDF``.
@@ -120,15 +125,51 @@ def _sparse_tfidf(count_mat):
     return out, cell_totals, idf
 
 
+class _DenseRows:
+    """A CSR matrix that hands out one cell at a time as a dense float32 row.
+
+    ``Model.__init__`` stores ``RNA_data.X.toarray()`` and ``ATAC_data.X.toarray()``:
+    every cell of both modalities, training and test, as dense float32. At NeurIPS 2022
+    Multiome scale (131k cells x 175k peaks after peak filtering) the ATAC matrix alone
+    is 92 GB. The model only ever reads ``.shape`` and single rows (``data[cell, :]`` in
+    its datasets), so this serves those rows from the sparse matrix instead.
+    """
+
+    def __init__(self, matrix):
+        self.matrix = csr_matrix(matrix, dtype=np.float32)
+        self.shape = self.matrix.shape
+
+    def __getitem__(self, index):
+        cell = index[0] if isinstance(index, tuple) else index
+        start, end = self.matrix.indptr[cell], self.matrix.indptr[cell + 1]
+        row = np.zeros(self.shape[1], dtype=np.float32)
+        row[self.matrix.indices[start:end]] = self.matrix.data[start:end]
+        return row
+
+
+def _rows_on_demand(original_init):
+    """Wrap ``Model.__init__`` to keep the data sparse (see :class:`_DenseRows`)."""
+
+    def init(self, RNA_data, ATAC_data, *args, **kwargs):
+        # The networks are sized from the dim lists, not the data, so build them on
+        # zero cells and attach the real matrices afterwards.
+        original_init(self, RNA_data[:0], ATAC_data[:0], *args, **kwargs)
+        self.RNA_data_obs, self.ATAC_data_obs = RNA_data.obs, ATAC_data.obs
+        # Upstream stores the RNA var as ATAC_data_var too; nothing reads either.
+        self.RNA_data_var, self.ATAC_data_var = RNA_data.var, RNA_data.var
+        self.RNA_data, self.ATAC_data = _DenseRows(RNA_data.X), _DenseRows(ATAC_data.X)
+
+    return init
+
+
 @contextlib.contextmanager
 def suppress_unused_postprocessing():
     """Make ``sc.pp.pca``/``sc.pp.neighbors`` no-ops for the duration of the block.
 
     ``Model.test`` runs both, on *both* predicted matrices, whenever it is not asked
     to draw figures — and there is no flag to turn it off. Nothing reads the results
-    back: :func:`extract_predictions` only touches ``.X`` and ``.var_names``. On the
-    ATAC side it is a PCA over a near-dense ``n_test x n_peaks`` matrix, which
-    dominates the predict step.
+    back: :func:`predict_cells` only touches ``.X``. On the ATAC side it is a PCA over
+    a near-dense ``n_test x n_peaks`` matrix, which dominates the predict step.
     """
     orig_pca, orig_neighbors = sc.pp.pca, sc.pp.neighbors
     sc.pp.pca = lambda *args, **kwargs: None
@@ -210,13 +251,22 @@ def _concat_blocks(train_block, test_block):
     return out
 
 
-def build_butterfly(train_mod1, train_mod2, test_mod1, n_top_genes, Butterfly):
+def build_butterfly(train_mod1, train_mod2, test_mod1, n_top_genes, Butterfly,
+                    model_all_target_features=True):
     """Build + preprocess + construct a Butterfly for the given data.
 
+    scButterfly's preprocessing keeps the ``n_top_genes`` most variable genes and drops
+    peaks open in fewer than 0.5% of the cells. With ``model_all_target_features`` that
+    only applies to the input modality: the benchmark scores every target feature, and
+    one the model drops could only be predicted as a constant zero. ``False`` reproduces
+    models trained before this option existed.
+
     Returns a dict with the constructed ``butterfly``, the resolved ``direction``,
-    ``test_id`` (indices of the test cells), ``chrom_list``, and the preprocessed
-    target-modality var names. Deterministic given the same inputs, so train and
-    predict produce identical architecture/preprocessing.
+    ``test_id`` and ``validation_id`` (row indices of the test and held-out training
+    cells), ``chrom_list``, the preprocessed and the original target var names, and
+    ``rna_target_sum``, the total scButterfly scales every cell's GEX counts to.
+    Deterministic given the same inputs, so train and predict produce identical
+    architecture/preprocessing.
     """
     direction, mod1, mod2 = detect_direction(train_mod1, train_mod2)
     logger.info("Direction: %s (mod1=%s, mod2=%s)", direction, mod1, mod2)
@@ -268,9 +318,18 @@ def build_butterfly(train_mod1, train_mod2, test_mod1, n_top_genes, Butterfly):
     sort_index, chrom_list = chrom_utils.sorted_chrom_order(ATAC_data)
     ATAC_data = chrom_utils.apply_sort(ATAC_data, sort_index)
 
+    # What scanpy's normalize_total scales every cell to: the median count total of the
+    # cells that have any counts.
+    rna_totals = np.asarray(RNA_data.X.sum(axis=1)).ravel()
+    rna_target_sum = float(np.median(rna_totals[rna_totals > 0]))
+
     butterfly = Butterfly()
     butterfly.load_data(RNA_data, ATAC_data, train_id_final, test_id, validation_id)
-    butterfly.data_preprocessing(n_top_genes=n_top_genes)
+    butterfly.data_preprocessing(
+        n_top_genes=n_top_genes,
+        use_hvg=not (model_all_target_features and direction == "ATAC2GEX"),
+        filter_features=not (model_all_target_features and direction == "GEX2ATAC"),
+    )
     butterfly.augmentation(aug_type=None)
 
     # scButterfly casts to float32 only on the CUDA path; force float32 for CPU.
@@ -298,31 +357,39 @@ def build_butterfly(train_mod1, train_mod2, test_mod1, n_top_genes, Butterfly):
         "n_train": n_train,
         "n_test": n_test,
         "test_id": test_id,
+        "validation_id": validation_id,
         "chrom_list": chrom_list,
         "target_p_var_names": list(target_p.var_names),
+        "target_var_names": list(train_mod2.var_names),
+        "rna_target_sum": rna_target_sum,
     }
 
 
-def extract_predictions(built, A2R_predict, R2A_predict, target_var_names):
-    """Select the target-modality prediction, name its vars, and scatter to target order."""
-    direction = built["direction"]
-    n_train, n_test = built["n_train"], built["n_test"]
-    pred = A2R_predict if direction == "ATAC2GEX" else R2A_predict
+def predict_cells(built, cell_ids, batch_size, model_path=None):
+    """scButterfly's prediction of the target modality for rows ``cell_ids``.
 
-    # tensor2adata gives integer var names; assign the preprocessed target var names.
-    p_names = built["target_p_var_names"]
-    if pred.n_vars == len(p_names):
-        pred.var_names = p_names
-    else:
-        logger.warning("Prediction vars (%d) != preprocessed target vars (%d)",
-                       pred.n_vars, len(p_names))
-
-    if pred.n_obs == (n_train + n_test):
-        pred = pred[built["test_id"]].copy()
-    elif pred.n_obs != n_test:
-        logger.warning("Unexpected prediction rows: %d (n_test=%d)", pred.n_obs, n_test)
-
-    out = chrom_utils.scatter_to_target(pred, target_var_names)
-    overlap = len(set(pred.var_names) & set(target_var_names))
-    logger.info("Var overlap with target: %d / %d", overlap, len(target_var_names))
-    return out
+    Returned as a dense float32 array in the target's original var order, still on
+    scButterfly's scale (see ``target_scale``). ``model_path`` loads the trained
+    weights first; leave it out once they are loaded.
+    """
+    # Model.test also runs PCA + a neighbour graph on both predicted matrices with no
+    # way to opt out; none of it is read back. See suppress_unused_postprocessing.
+    with suppress_unused_postprocessing():
+        A2R_predict, R2A_predict = built["butterfly"].model.test(
+            test_id_r=cell_ids,
+            test_id_a=cell_ids,
+            batch_size=batch_size,
+            model_path=model_path,
+            load_model=model_path is not None,
+            test_cluster=False,
+            test_figure=False,
+            output_data=False,
+            return_predict=True,
+        )
+    prediction = A2R_predict if built["direction"] == "ATAC2GEX" else R2A_predict
+    # tensor2adata gives integer var names; name them, then scatter by name, which
+    # undoes the chromosome sort and zero-fills target features the model dropped.
+    prediction.var_names = built["target_p_var_names"]
+    n_modelled = len(set(prediction.var_names) & set(built["target_var_names"]))
+    logger.info("Modelled target features: %d / %d", n_modelled, len(built["target_var_names"]))
+    return chrom_utils.scatter_to_target(prediction, built["target_var_names"])

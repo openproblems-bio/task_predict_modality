@@ -44,7 +44,7 @@ arguments:
   - name: "--n_top_genes"
     type: integer
     default: 3000
-    description: Number of highly variable genes kept by scButterfly RNA preprocessing.
+    description: Number of highly variable genes scButterfly keeps when GEX is the input (GEX -> ATAC). When GEX is the target, every gene is modelled.
 engines:
   - type: docker
     image: python:3.9
