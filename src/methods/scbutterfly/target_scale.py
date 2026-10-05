@@ -10,12 +10,14 @@ layer the benchmark scores:
 
 :class:`ScaleCalibration` maps them with one least-squares line, fitted on training
 cells scButterfly held out for validation. On the NeurIPS 2021 and 2022 Multiome
-datasets it scored as well as or better than the alternatives on every metric: one line
-per gene or peak (noisier, and it reorders each cell's profile), and for GEX the exact
-conversion ``log1p(expm1(p) * 1e4 / target_sum)``. The exact conversion is exact for a
-value, not for the model's prediction of one: an MSE-trained decoder predicts a
-conditional mean in its own log space, and the concave conversion inflates it for
-sparsely expressed genes (RMSE 0.553 against 0.518 for the line on ``bmmc_multiome``).
+datasets it came within 0.005 of the best alternative on every metric but MAE, which
+favours scButterfly's raw output for staying near the zeros. Each alternative lost
+clearly somewhere: one line per gene or peak reorders each cell's profile (per-cell
+Spearman -0.023 on ``bmmc_multiome`` GEX -> ATAC), and the exact GEX conversion
+``log1p(expm1(p) * 1e4 / target_sum)`` is exact for a value, not for the model's
+prediction of one: an MSE-trained decoder predicts a conditional mean in its own log
+space, which the concave conversion inflates for sparsely expressed genes (RMSE 0.553
+against 0.518 for the line on ``bmmc_multiome`` ATAC -> GEX).
 
 The line is increasing, so every correlation is exactly the model's; it fixes the level
 and spread that RMSE scores.
