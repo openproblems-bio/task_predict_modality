@@ -31,7 +31,10 @@ class ScaleCalibration:
     def fit(self, predictions, targets, block_size=1000):
         """Fit on ``predictions`` (cells x features, dense) and ``targets`` (dense or sparse).
 
-        A negative slope, a model anticorrelated with its target, is set to 0.
+        If the held-out cells show no positive association, which only an essentially
+        untrained model produces (e.g. two epochs on the test resources), the line
+        matches the target's mean and standard deviation instead, so the predictions
+        are rescaled rather than replaced by a constant.
         """
         n_entries = predictions.size
         prediction_sum, prediction_square_sum = 0.0, 0.0
@@ -44,7 +47,13 @@ class ScaleCalibration:
         target_mean = targets.sum() / n_entries
         covariance = targets.multiply(predictions).sum() / n_entries - prediction_mean * target_mean
         variance = prediction_square_sum / n_entries - prediction_mean**2
-        self.slope_ = max(covariance, 0.0) / variance if variance > 0 else 0.0
+        target_variance = (targets.data**2).sum() / n_entries - target_mean**2
+        if variance <= 0:
+            self.slope_ = 0.0
+        elif covariance > 0:
+            self.slope_ = covariance / variance
+        else:
+            self.slope_ = np.sqrt(max(target_variance, 0.0) / variance)
         self.intercept_ = target_mean - self.slope_ * prediction_mean
         return self
 
