@@ -68,6 +68,7 @@ logger.info("Saving model metadata...")
 metadata = {
     "direction": built["direction"],
     "n_top_genes": par["n_top_genes"],
+    "model_all_target_features": True,
     "batch_size": par["batch_size"],
     "target_var_names": list(train_mod2.var_names),
     "dataset_id": train_mod1.uns.get("dataset_id", ""),

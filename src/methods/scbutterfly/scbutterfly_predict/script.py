@@ -22,6 +22,7 @@ meta = {"name": "scbutterfly", "resources_dir": "src/methods/scbutterfly"}
 
 sys.path.append(meta["resources_dir"])
 import butterfly_common
+import target_scale
 
 butterfly_common.apply_runtime_patches()
 from scButterfly.butterfly import Butterfly
@@ -45,23 +46,29 @@ logger.info("Reconstructing scButterfly model...")
 built = butterfly_common.build_butterfly(
     train_mod1, train_mod2, test_mod1,
     n_top_genes=metadata["n_top_genes"], Butterfly=Butterfly,
+    # Models trained before every target feature was modelled lack the key.
+    model_all_target_features=metadata.get("model_all_target_features", False),
 )
-butterfly = built["butterfly"]
+batch_size = metadata["batch_size"]
 
 logger.info("Loading trained weights and predicting...")
-# test_model also runs PCA + a neighbour graph on both predicted matrices with no
-# way to opt out; none of it is read back. See suppress_unused_postprocessing.
-with butterfly_common.suppress_unused_postprocessing():
-    A2R_predict, R2A_predict = butterfly.test_model(
-        batch_size=metadata["batch_size"],
-        model_path=par["input_model"],
-        load_model=True,
-    )
-
-target_var_names = list(train_mod2.var_names)
-test_predictions = butterfly_common.extract_predictions(
-    built, A2R_predict, R2A_predict, target_var_names,
+test_predictions = butterfly_common.predict_cells(
+    built, built["test_id"], batch_size, model_path=par["input_model"],
 )
+
+# scButterfly predicts its own preprocessing of the target; map it onto the scale of
+# the target's normalized layer (see target_scale).
+if built["direction"] == "ATAC2GEX":
+    logger.info("Converting predictions to log CP10k (scButterfly target sum %.1f)...", built["rna_target_sum"])
+    test_predictions = target_scale.to_log_cp10k(test_predictions, built["rna_target_sum"])
+else:
+    logger.info("Calibrating peak predictions on %d held-out training cells...", len(built["validation_id"]))
+    calibration = target_scale.PeakCalibration().fit(
+        butterfly_common.predict_cells(built, built["validation_id"], batch_size),
+        train_mod2.layers["normalized"][built["validation_id"]],
+    )
+    logger.info("Peaks with zero slope: %d / %d", (calibration.slope_ == 0).sum(), calibration.slope_.size)
+    test_predictions = calibration.apply(test_predictions)
 
 # ---------------------------------------------------------------------------
 # Write predictions.

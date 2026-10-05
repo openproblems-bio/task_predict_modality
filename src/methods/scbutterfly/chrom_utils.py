@@ -4,7 +4,7 @@ scButterfly's ``construct_model`` needs a ``chrom_list`` (number of peaks per
 chromosome) and reads ``ATAC_data.var.chrom`` during model construction. It also
 assumes peaks are contiguous per chromosome. The predict-modality ATAC h5ads have
 no ``chrom`` column and peaks are in arbitrary chromosome order, but the peak names
-encode the chromosome (e.g. ``chr17-6651156-6652045``).
+encode the chromosome (``chr17-6651156-6652045`` or ``chr17:6651156-6652045``).
 
 This module parses the chromosome from peak names, produces a peak ordering that
 groups peaks contiguously per chromosome (with the matching ``chrom_list``), and
@@ -16,23 +16,15 @@ import re
 import numpy as np
 from scipy.sparse import issparse
 
-# Matches a leading chromosome token like "chr17", "chrX", "17", "X" followed by
-# a ':' or '-' delimiter. Used as a fallback when the simple split does not yield
-# a recognisable chromosome.
-_CHROM_RE = re.compile(r"^chr?([0-9XYMxym]+)[:\-]")
-
 
 def parse_chrom(name):
-    """Return the chromosome token for a peak name (e.g. 'chr17')."""
-    name = str(name)
-    token = name.split("-", 1)[0]
-    if token.lower().startswith("chr"):
-        return token
-    m = _CHROM_RE.match(name)
-    if m:
-        return "chr" + m.group(1)
-    # Unparseable — bucket everything unknown together so it still forms one group.
-    return token
+    """Return the contig of a peak name.
+
+    NeurIPS 2021 names peaks ``chr17-6651156-6652045`` and NeurIPS 2022
+    ``chr17:6651156-6652045``; both also have peaks on unplaced scaffolds
+    (``GL000195.1:32231-33125``), which keep their scaffold as their own group.
+    """
+    return re.split(r"[:\-]", str(name), maxsplit=1)[0]
 
 
 def sorted_chrom_order(atac_adata):

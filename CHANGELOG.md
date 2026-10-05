@@ -58,6 +58,12 @@
 
 ## BUG FIXES
 
+* `scbutterfly`: Parse the chromosome of `chr1:1000-2000` peak names, not only `chr1-1000-2000`. NeurIPS 2022 names its peaks the former way, so every peak became its own chromosome, each with its own block in the ATAC encoder: `pbmc_multiome` was OOM-killed when GEX was the target (174,978 "chromosomes") and hit the 8 h limit when ATAC was (7,002 "chromosomes", 5.7 h for one pretraining epoch).
+
+* `scbutterfly`: Model every target feature and predict it on the scale of the target's `normalized` layer. scButterfly kept only the 3,000 most variable genes and the peaks open in at least 0.5% of the cells, also when they were the target, so the other genes and peaks were predicted as zero; and it predicts its own preprocessing of the target. GEX predictions are now converted exactly from scButterfly's median-library-size scaling to log CP10k, and ATAC predictions (a sigmoid of the max-scaled TF-IDF) are mapped onto the dataset's TF-IDF by one least-squares line per peak, fitted on the training cells held out for validation. The HVG selection and peak filter still apply to the input modality. `scbutterfly_predict` reproduces the old preprocessing for model bundles trained before this change.
+
+* `scbutterfly`: Serve the model's training and test cells one sparse row at a time instead of densifying both whole modalities, 92 GB for the ATAC input of `pbmc_multiome` alone.
+
 * `cellmapper_linear`: Write the unmasked variants as `mask_var: "none"` rather than `mask_var: null`. Viash drops null values from the config, so these variants fell back to the default `mask_var: "hvg"` and duplicated their `-hvg` counterparts.
 
 * `guanlab_dengkw_pm`: Restore the consensus scheme of the original submission -- five reshuffles of the batches into two halves, ten kernel ridge models averaged. The port had replaced it with a single fixed two-way split for ADT pairs and leave-one-batch-out otherwise, so the result depended on the order the batches happened to come in. `--n_repeats` and `--seed` are now arguments; the unused `--distance_method` and `--n_pcs` are gone (PR #32).

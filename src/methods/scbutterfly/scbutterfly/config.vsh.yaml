@@ -7,8 +7,12 @@ description: |
   adversarial translator that learns to convert between paired single-cell modalities.
   For the predict-modality task it is trained on paired Multiome cells and used to translate
   the held-out test modality. Chromosome grouping for the ATAC branch is parsed from peak
-  coordinates in the feature names. Only Multiome GEX<->ATAC is supported; CITE-seq (ADT)
-  datasets are not handled.
+  coordinates in the feature names. scButterfly's feature selection (highly variable genes,
+  peak filtering) applies to the input modality only, so every target feature is modelled.
+  Predictions are mapped from scButterfly's own preprocessing onto the target layer: exactly
+  to log CP10k for GEX, and by a per-peak least-squares line fitted on held-out training
+  cells for ATAC. Only Multiome GEX<->ATAC is supported; CITE-seq (ADT) datasets are not
+  handled.
 references:
   doi:
     - 10.1038/s41467-024-47418-x
