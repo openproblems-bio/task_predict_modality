@@ -11,9 +11,11 @@ groups peaks contiguously per chromosome (with the matching ``chrom_list``), and
 scatters a predicted matrix back into a target var order by feature name.
 """
 
+import itertools
 import re
 
 import numpy as np
+import pandas as pd
 from scipy.sparse import issparse
 
 
@@ -33,29 +35,16 @@ def sorted_chrom_order(atac_adata):
     Returns
     -------
     sort_index : np.ndarray
-        Indices that reorder ``atac_adata`` so peaks are grouped per chromosome.
+        Indices that reorder ``atac_adata`` so peaks are grouped per chromosome, in
+        sorted chromosome order; the stable sort keeps the original order within one.
     chrom_list : list[int]
         Number of peaks per chromosome, in the sorted order. ``sum == n_peaks``.
     """
     chroms = np.array([parse_chrom(v) for v in atac_adata.var_names])
-    # Stable ordering of chromosomes; stable argsort keeps peaks deterministic
-    # within a chromosome (preserving original relative order).
-    chrom_order = sorted(set(chroms))
-    rank = {c: i for i, c in enumerate(chrom_order)}
-    keys = np.array([rank[c] for c in chroms])
-    sort_index = np.argsort(keys, kind="stable")
-
-    sorted_chroms = chroms[sort_index]
-    chrom_list = []
-    last = None
-    for c in sorted_chroms:
-        if c != last:
-            chrom_list.append(1)
-            last = c
-        else:
-            chrom_list[-1] += 1
-    assert sum(chrom_list) == atac_adata.n_vars
-    return sort_index, chrom_list
+    sort_index = np.argsort(chroms, kind="stable")
+    # np.unique returns the chromosomes sorted, i.e. in the order of sort_index.
+    _, chrom_list = np.unique(chroms, return_counts=True)
+    return sort_index, chrom_list.tolist()
 
 
 def chrom_counts(atac_adata):
@@ -67,18 +56,10 @@ def chrom_counts(atac_adata):
     keeps the grouping contiguous, so recounting here yields a valid ``chrom_list``.
     """
     if "chrom" in atac_adata.var.columns:
-        chroms = list(atac_adata.var["chrom"])
+        chroms = atac_adata.var["chrom"]
     else:
-        chroms = [parse_chrom(v) for v in atac_adata.var_names]
-    counts = []
-    last = None
-    for c in chroms:
-        if c != last:
-            counts.append(1)
-            last = c
-        else:
-            counts[-1] += 1
-    return counts
+        chroms = map(parse_chrom, atac_adata.var_names)
+    return [len(list(peaks)) for _, peaks in itertools.groupby(chroms)]
 
 
 def apply_sort(atac_adata, sort_index):
@@ -96,35 +77,15 @@ def scatter_to_target(pred_adata, target_var_names):
     """Scatter a prediction into ``target_var_names`` order, by feature name.
 
     Predicted features may be a subset of and/or in a different order from the
-    target modality's vars (scButterfly can subset RNA to HVGs or filter ATAC
-    peaks). Scattering by name simultaneously (a) restores the original peak
-    order and (b) fills any missing target features with zeros.
+    target modality's vars (scButterfly sorts peaks by chromosome, and models trained
+    before every target feature was modelled subset genes and peaks). Scattering by
+    name restores the original order and fills missing target features with zeros.
 
     Returns a dense float32 ndarray of shape ``(n_cells, len(target_var_names))``.
     """
-    X = pred_adata.X
-    if issparse(X):
-        X = X.toarray()
-    X = np.asarray(X, dtype=np.float32)
-
-    n_cells = X.shape[0]
-    out = np.zeros((n_cells, len(target_var_names)), dtype=np.float32)
-
-    target_pos = {name: i for i, name in enumerate(target_var_names)}
-    src_cols, dst_cols = [], []
-    for src_col, name in enumerate(pred_adata.var_names):
-        dst = target_pos.get(name)
-        if dst is not None:
-            src_cols.append(src_col)
-            dst_cols.append(dst)
-
-    # Copy in column blocks: one fancy-index assignment per block rather than one
-    # per feature (up to ~116k of them for ATAC), while keeping the temporary that
-    # fancy indexing allocates bounded.
-    src_cols = np.asarray(src_cols, dtype=np.intp)
-    dst_cols = np.asarray(dst_cols, dtype=np.intp)
-    block = 4096
-    for start in range(0, src_cols.size, block):
-        sl = slice(start, start + block)
-        out[:, dst_cols[sl]] = X[:, src_cols[sl]]
+    X = pred_adata.X.toarray() if issparse(pred_adata.X) else np.asarray(pred_adata.X)
+    source_columns = pd.Index(pred_adata.var_names).get_indexer(target_var_names)
+    modelled = source_columns >= 0
+    out = np.zeros((X.shape[0], len(target_var_names)), dtype=np.float32)
+    out[:, modelled] = X[:, source_columns[modelled]]
     return out

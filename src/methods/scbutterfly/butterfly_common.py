@@ -311,6 +311,17 @@ def _concat_blocks(train_block, test_block):
     return out
 
 
+def validation_cells(n_train):
+    """The ~10% of the training cells held out for early stopping (row indices).
+
+    Deterministic, so train and predict hold out the same cells; ``scbutterfly_train``
+    also fits the spread of the per-cell scale on them.
+    """
+    shuffled = list(range(n_train))
+    np.random.RandomState(0).shuffle(shuffled)
+    return sorted(shuffled[:max(1, int(0.1 * n_train))])
+
+
 def build_butterfly(train_mod1, train_mod2, test_mod1, n_top_genes, Butterfly,
                     model_all_target_features=True):
     """Build + preprocess + construct a Butterfly for the given data.
@@ -368,13 +379,8 @@ def build_butterfly(train_mod1, train_mod2, test_mod1, n_top_genes, Butterfly,
     train_id = list(range(n_train))
     test_id = list(range(n_train, n_train + n_test))
 
-    # Deterministic ~10% validation carve (not five_fold_split_dataset).
-    rng = np.random.RandomState(0)
-    shuffled = list(train_id)
-    rng.shuffle(shuffled)
-    n_val = max(1, int(0.1 * n_train))
-    validation_id = sorted(shuffled[:n_val])
-    train_id_final = sorted(shuffled[n_val:])
+    validation_id = validation_cells(n_train)
+    train_id_final = sorted(set(train_id) - set(validation_id))
 
     # Chromosome ordering (peaks contiguous per chrom + chrom_list).
     sort_index, chrom_list = chrom_utils.sorted_chrom_order(ATAC_data)
@@ -428,8 +434,8 @@ def predict_cells(built, cell_ids, batch_size, model_path=None):
     """scButterfly's prediction of the target modality for rows ``cell_ids``.
 
     Returned as a dense float32 array in the target's original var order, still on
-    scButterfly's scale (see ``target_scale``). ``model_path`` loads the trained
-    weights first; leave it out once they are loaded.
+    scButterfly's scale (``cell_scale.CellScale`` maps it onto the target's). ``model_path``
+    loads the trained weights first; leave it out once they are loaded.
     """
     # Model.test predicts both directions; give the unused one a single cell, which
     # for ATAC -> GEX on NeurIPS 2022 saves a cells x 175k-peak matrix. It also runs

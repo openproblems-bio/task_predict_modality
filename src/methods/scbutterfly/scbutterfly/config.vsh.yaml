@@ -9,9 +9,10 @@ description: |
   the held-out test modality. Chromosome grouping for the ATAC branch is parsed from peak
   coordinates in the feature names. scButterfly's feature selection (highly variable genes,
   peak filtering) applies to the input modality only, so every target feature is modelled.
-  Predictions are mapped from scButterfly's own preprocessing onto the target layer by one
-  least-squares line fitted on held-out training cells. Only Multiome GEX<->ATAC is
-  supported; CITE-seq (ADT) datasets are not handled.
+  scButterfly predicts its own preprocessing of the target, so every predicted cell is given
+  the level and spread of the target layer with the per-cell scale model shared with ss_opm
+  and senkin_tmp (src/utils/cell_scale.py). Only Multiome GEX<->ATAC is supported; CITE-seq
+  (ADT) datasets are not handled.
 references:
   doi:
     - 10.1038/s41467-024-47418-x

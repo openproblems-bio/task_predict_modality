@@ -12,8 +12,8 @@ resources:
     type: python_script
   - path: ../butterfly_common.py
   - path: ../chrom_utils.py
-  - path: ../target_scale.py
   - path: /src/utils/exit_codes.py
+  - path: /src/utils/cell_scale.py
 test_resources:
   - path: /resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap
     dest: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap
