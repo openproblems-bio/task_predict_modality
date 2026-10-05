@@ -34,9 +34,9 @@ from scButterfly.butterfly import Butterfly
 # Load data
 # ---------------------------------------------------------------------------
 logger.info("Reading input files...")
-train_mod1 = ad.read_h5ad(par["input_train_mod1"])
-train_mod2 = ad.read_h5ad(par["input_train_mod2"])
-test_mod1 = ad.read_h5ad(par["input_test_mod1"])
+train_mod1 = butterfly_common.read_modality(par["input_train_mod1"])
+train_mod2 = butterfly_common.read_modality(par["input_train_mod2"])
+test_mod1 = butterfly_common.read_modality(par["input_test_mod1"])
 
 # ---------------------------------------------------------------------------
 # Build + construct the model, then train (weights written to <output>/model).
