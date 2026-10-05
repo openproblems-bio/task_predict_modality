@@ -16,6 +16,7 @@ import anndata as ad
 import numpy as np
 import pandas as pd
 import scanpy as sc
+import torch
 from scipy.sparse import csr_matrix, issparse
 
 import chrom_utils
@@ -30,9 +31,9 @@ def apply_runtime_patches():
     - BCE on a float32 sigmoid can drift >1.0 -> clamp input to [0,1]
     - scButterfly hardcodes ``.cuda()``; make it a no-op when no GPU is present
     - ``TFIDF`` builds dense (n_peaks, n_cells) tiles -> sparse equivalent
-    - ``Model`` densifies both whole modalities -> densify one cell at a time
+    - ``Model`` densifies both whole modalities -> keep them sparse
+    - per-cell ``DataLoader`` batches -> batches densified on the device
     """
-    import torch
     import torch.nn as nn
     import torch.nn.functional as F
 
@@ -81,7 +82,8 @@ def apply_runtime_patches():
 
     from scButterfly import train_model
 
-    train_model.Model.__init__ = _rows_on_demand(train_model.Model.__init__)
+    train_model.Model.__init__ = _keep_data_sparse(train_model.Model.__init__)
+    train_model.DataLoader = _SparseBatchLoader
 
 
 def _sparse_tfidf(count_mat):
@@ -125,30 +127,15 @@ def _sparse_tfidf(count_mat):
     return out, cell_totals, idf
 
 
-class _DenseRows:
-    """A CSR matrix that hands out one cell at a time as a dense float32 row.
+def _keep_data_sparse(original_init):
+    """Wrap ``Model.__init__`` so that it keeps the data as float32 CSR matrices.
 
-    ``Model.__init__`` stores ``RNA_data.X.toarray()`` and ``ATAC_data.X.toarray()``:
-    every cell of both modalities, training and test, as dense float32. At NeurIPS 2022
-    Multiome scale (131k cells x 175k peaks after peak filtering) the ATAC matrix alone
-    is 92 GB. The model only ever reads ``.shape`` and single rows (``data[cell, :]`` in
-    its datasets), so this serves those rows from the sparse matrix instead.
+    Upstream stores ``RNA_data.X.toarray()`` and ``ATAC_data.X.toarray()``: every cell
+    of both modalities, training and test, as dense float32. At NeurIPS 2022 Multiome
+    scale (131k cells x 175k peaks after peak filtering) the ATAC matrix alone is 92 GB.
+    The model reads only their ``.shape`` and, through its datasets, batches of rows,
+    which :class:`_SparseBatchLoader` serves from the sparse matrices.
     """
-
-    def __init__(self, matrix):
-        self.matrix = csr_matrix(matrix, dtype=np.float32)
-        self.shape = self.matrix.shape
-
-    def __getitem__(self, index):
-        cell = index[0] if isinstance(index, tuple) else index
-        start, end = self.matrix.indptr[cell], self.matrix.indptr[cell + 1]
-        row = np.zeros(self.shape[1], dtype=np.float32)
-        row[self.matrix.indices[start:end]] = self.matrix.data[start:end]
-        return row
-
-
-def _rows_on_demand(original_init):
-    """Wrap ``Model.__init__`` to keep the data sparse (see :class:`_DenseRows`)."""
 
     def init(self, RNA_data, ATAC_data, *args, **kwargs):
         # The networks are sized from the dim lists, not the data, so build them on
@@ -157,9 +144,60 @@ def _rows_on_demand(original_init):
         self.RNA_data_obs, self.ATAC_data_obs = RNA_data.obs, ATAC_data.obs
         # Upstream stores the RNA var as ATAC_data_var too; nothing reads either.
         self.RNA_data_var, self.ATAC_data_var = RNA_data.var, RNA_data.var
-        self.RNA_data, self.ATAC_data = _DenseRows(RNA_data.X), _DenseRows(ATAC_data.X)
+        self.RNA_data = csr_matrix(RNA_data.X, dtype=np.float32)
+        self.ATAC_data = csr_matrix(ATAC_data.X, dtype=np.float32)
 
     return init
+
+
+class _SparseBatchLoader:
+    """Stand-in for the ``DataLoader`` scButterfly builds over its datasets.
+
+    ``DataLoader`` workers assembled every batch from dense per-cell rows on the CPU,
+    and the training loop copied it to the GPU. With every target feature modelled, a
+    NeurIPS 2022 Multiome cell is 198k floats (23k genes, 175k peaks), so a batch of 64
+    is 51 MB and data loading dominated each step: the GPU sat at ~28% and one ATAC
+    pretraining epoch took 128 s on a V100. This loader gathers a batch's rows from the
+    CSR matrices, ships only their stored entries to the device and scatters them into
+    a dense tensor there.
+
+    Batches hold the same values in the same layout (RNA columns, then ATAC), and come
+    back on the device as float32, so the training loop's ``.cuda().to(torch.float32)``
+    is a no-op. Shuffling draws a ``torch.randperm``, like ``DataLoader``, so it follows
+    the seed scButterfly sets.
+    """
+
+    def __init__(self, dataset, batch_size, shuffle=False, num_workers=0, drop_last=False):
+        if hasattr(dataset, "id_list"):  # Single_omics_dataset
+            self.blocks = [(dataset.dataset, np.asarray(dataset.id_list))]
+        else:  # RNA_ATAC_dataset
+            self.blocks = [
+                (dataset.RNA_dataset, np.asarray(dataset.id_list_r)),
+                (dataset.ATAC_dataset, np.asarray(dataset.id_list_a)),
+            ]
+        self.n_cells = len(self.blocks[0][1])
+        self.batch_size, self.shuffle, self.drop_last = batch_size, shuffle, drop_last
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    def __len__(self):
+        if self.drop_last:
+            return self.n_cells // self.batch_size
+        return -(-self.n_cells // self.batch_size)
+
+    def __iter__(self):
+        order = torch.randperm(self.n_cells).numpy() if self.shuffle else np.arange(self.n_cells)
+        for start in range(0, len(self) * self.batch_size, self.batch_size):
+            positions = order[start:start + self.batch_size]
+            yield torch.cat([self._dense_rows(matrix, cells[positions]) for matrix, cells in self.blocks], dim=1)
+
+    def _dense_rows(self, matrix, cells):
+        rows = matrix[cells]
+        row_of_entry = np.repeat(np.arange(len(cells)), np.diff(rows.indptr))
+        dense = torch.zeros((len(cells), matrix.shape[1]), dtype=torch.float32, device=self.device)
+        dense[torch.from_numpy(row_of_entry).to(self.device), torch.from_numpy(rows.indices.astype(np.int64)).to(self.device)] = (
+            torch.from_numpy(rows.data).to(self.device)
+        )
+        return dense
 
 
 @contextlib.contextmanager
