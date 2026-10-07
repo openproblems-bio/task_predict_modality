@@ -466,13 +466,6 @@ def informative_cells(targets):
     return variances > 1e-12
 
 
-def fit_prediction_rescaling(predictions, targets):
-    """The model predicts per-cell z-scores. One global affine map to the target scale keeps every per-cell and
-    per-feature correlation unchanged and makes the RMSE/MAE metrics meaningful."""
-    slope, intercept = np.polyfit(np.asarray(predictions, dtype=np.float64).ravel(), to_dense(targets, np.float64).ravel(), deg=1)
-    return {"slope": float(slope), "intercept": float(intercept)}
-
-
 def save_json(path, payload):
     with open(path, "w") as handle:
         json.dump(payload, handle, indent=2)

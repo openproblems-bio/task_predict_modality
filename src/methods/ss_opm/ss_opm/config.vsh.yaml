@@ -10,8 +10,9 @@ description: |
   Open Problems Multimodal Single-Cell Integration Kaggle competition. The inputs the
   original derived from the competition tables (standardized per-cell and per-batch
   statistics, the CITE gene masks built from HGNC and Reactome) are rebuilt from the
-  task's files, and the per-cell z-scored output is mapped to the target scale with a
-  global affine transform.
+  task's files. The output is z-scored per cell (the competition scored per-cell correlations
+  only), so each test cell gets its own target level and spread back, predicted from its input
+  profile by a ridge regression fitted on the training cells.
 references:
   doi:
     - 10.1101/2022.04.11.487796
