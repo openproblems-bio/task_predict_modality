@@ -126,6 +126,8 @@
 
 * `guanlab_dengkw_pm`: Solve the kernel ridge regression with `scipy.linalg.cho_factor()`/`cho_solve()` instead of `KernelRidge`, whose `scipy.linalg.solve()` raised a `MemoryError` or segfaulted beyond ~30k cells with the OpenBLAS in this image. Predictions are unchanged; the method failed on every dataset except `bmmc_multiome`.
 
+* `senkin_tmp_train`, `ss_opm_train`, `ss_opm_predict`: Give every predicted cell its own level and spread instead of one global slope and intercept. Both 2022 competition solutions predict a z-scored profile per cell, so every cell came out with the same mean (0.5955 on `bmmc_cite`, where the true per-cell mean ranges from 0.16 to 2.83): per-cell correlations were unaffected, but per-gene correlations, overall correlations and RMSE/MAE scored that missing level, not the methods. The new `src/utils/cell_scale.py` predicts each cell's target mean and log standard deviation from its input (ridge regression on a truncated SVD plus two sequencing-depth features) and shrinks the restored spread by one factor fitted on training-cell predictions. `ss_opm_predict` still applies the old global map to model bundles trained before this change.
+
 # task_predict_modality 0.1.1
 
 ## NEW FUNCTIONALITY

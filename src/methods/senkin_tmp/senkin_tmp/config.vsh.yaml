@@ -11,7 +11,9 @@ description: |
   the TSVD-reduced LightGBM predictions, together with the feature blocks (each z-scored per
   cell), with two neural networks: a bidirectional GRU with cosine-similarity loss and a dense
   bidirectional GRU with MSE loss. Final predictions are a weighted blend (55% cosine, 45% MSE)
-  of per-fold averaged outputs, rescaled to the target scale with a global affine transform.
+  of per-fold averaged outputs. These are z-scored per cell (the competition scored per-cell
+  correlations only), so each test cell gets its own protein level and spread back, predicted
+  from its RNA profile by a ridge regression fitted on the training cells.
 references:
   doi:
     - 10.64898/2026.02.24.707614

@@ -3474,7 +3474,7 @@ meta = [
   ],
   "label" : "senkin & tmp",
   "summary" : "LightGBM + bidirectional GRU ensemble for CITE-seq protein prediction (best CITE-seq model of the Open Problems 2022 competition)",
-  "description" : "Two-stage method of senkin13 from the Open Problems NeurIPS 2022 multimodal single-cell\nintegration competition (2nd place overall, best CITE-seq submission). Stage 1 trains four\nLightGBM models on different RNA feature representations (log-normalized counts; CLR-TSVD\ntogether with correlated genes and TSVD/PCA of a custom sqrt normalization with per-batch\nmedian correction; raw counts; raw counts predicting raw protein counts). Stage 2 refines\nthe TSVD-reduced LightGBM predictions, together with the feature blocks (each z-scored per\ncell), with two neural networks: a bidirectional GRU with cosine-similarity loss and a dense\nbidirectional GRU with MSE loss. Final predictions are a weighted blend (55% cosine, 45% MSE)\nof per-fold averaged outputs, rescaled to the target scale with a global affine transform.\n",
+  "description" : "Two-stage method of senkin13 from the Open Problems NeurIPS 2022 multimodal single-cell\nintegration competition (2nd place overall, best CITE-seq submission). Stage 1 trains four\nLightGBM models on different RNA feature representations (log-normalized counts; CLR-TSVD\ntogether with correlated genes and TSVD/PCA of a custom sqrt normalization with per-batch\nmedian correction; raw counts; raw counts predicting raw protein counts). Stage 2 refines\nthe TSVD-reduced LightGBM predictions, together with the feature blocks (each z-scored per\ncell), with two neural networks: a bidirectional GRU with cosine-similarity loss and a dense\nbidirectional GRU with MSE loss. Final predictions are a weighted blend (55% cosine, 45% MSE)\nof per-fold averaged outputs. These are z-scored per cell (the competition scored per-cell\ncorrelations only), so each test cell gets its own protein level and spread back, predicted\nfrom its RNA profile by a ridge regression fitted on the training cells.\n",
   "test_resources" : [
     {
       "type" : "python_script",
@@ -3581,7 +3581,7 @@ meta = [
     "engine" : "native",
     "output" : "target/nextflow/methods/senkin_tmp",
     "viash_version" : "0.9.7",
-    "git_commit" : "0bb3beb05aab3ba89dd3a4785147bb4e3856d424",
+    "git_commit" : "abd49712da1bbacdd118dcc97651f130f16cd47c",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {

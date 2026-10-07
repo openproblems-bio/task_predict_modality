@@ -46,12 +46,13 @@ arguments:
     type: integer
     default: 5000
     description: |
-      Number of training cells used to fit the global affine map from the model's per-cell z-scored
-      output to the target scale.
+      Number of training cells whose predictions are used to fit the shrinkage of the restored
+      per-cell spread (see src/utils/cell_scale.py).
 resources:
   - type: python_script
     path: script.py
   - path: ../ss_opm_common.py
+  - path: /src/utils/cell_scale.py
 engines:
   - type: docker
     image: openproblems/base_pytorch_nvidia:1

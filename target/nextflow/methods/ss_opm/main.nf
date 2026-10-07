@@ -3474,7 +3474,7 @@ meta = [
   ],
   "label" : "SS-OPM",
   "summary" : "1st place solution of the Kaggle Open Problems Multimodal Single-Cell Integration challenge.",
-  "description" : "Encoder-decoder MLP method using SVD-based dimensionality reduction for both inputs and\ntargets, followed by batch-median correction. The encoder maps (optionally augmented)\ncell embeddings to a latent space; multiple decoder blocks predict target expression in\nthe SVD-compressed space. The method was the winning solution of the NeurIPS 2022\nOpen Problems Multimodal Single-Cell Integration Kaggle competition. The inputs the\noriginal derived from the competition tables (standardized per-cell and per-batch\nstatistics, the CITE gene masks built from HGNC and Reactome) are rebuilt from the\ntask's files, and the per-cell z-scored output is mapped to the target scale with a\nglobal affine transform.\n",
+  "description" : "Encoder-decoder MLP method using SVD-based dimensionality reduction for both inputs and\ntargets, followed by batch-median correction. The encoder maps (optionally augmented)\ncell embeddings to a latent space; multiple decoder blocks predict target expression in\nthe SVD-compressed space. The method was the winning solution of the NeurIPS 2022\nOpen Problems Multimodal Single-Cell Integration Kaggle competition. The inputs the\noriginal derived from the competition tables (standardized per-cell and per-batch\nstatistics, the CITE gene masks built from HGNC and Reactome) are rebuilt from the\ntask's files. The output is z-scored per cell (the competition scored per-cell correlations\nonly), so each test cell gets its own target level and spread back, predicted from its input\nprofile by a ridge regression fitted on the training cells.\n",
   "test_resources" : [
     {
       "type" : "python_script",
@@ -3581,7 +3581,7 @@ meta = [
     "engine" : "native",
     "output" : "target/nextflow/methods/ss_opm",
     "viash_version" : "0.9.7",
-    "git_commit" : "0bb3beb05aab3ba89dd3a4785147bb4e3856d424",
+    "git_commit" : "abd49712da1bbacdd118dcc97651f130f16cd47c",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {

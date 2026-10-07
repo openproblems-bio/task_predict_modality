@@ -3563,6 +3563,10 @@ meta = [
     {
       "type" : "file",
       "path" : "/src/utils/exit_codes.py"
+    },
+    {
+      "type" : "file",
+      "path" : "/src/utils/cell_scale.py"
     }
   ],
   "test_resources" : [
@@ -3729,7 +3733,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/senkin_tmp_train",
     "viash_version" : "0.9.7",
-    "git_commit" : "0bb3beb05aab3ba89dd3a4785147bb4e3856d424",
+    "git_commit" : "abd49712da1bbacdd118dcc97651f130f16cd47c",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -4008,6 +4012,7 @@ dep = {
 ## VIASH END
 
 sys.path.append(meta["resources_dir"])
+from cell_scale import CellScale
 from exit_codes import exit_non_applicable
 
 # The original solution corrected batch effects per day and computed gene-protein correlations per donor and day.
@@ -4205,12 +4210,16 @@ train_preds = zscore(train_preds_cos) * 0.55 + zscore(train_preds_mse) * 0.45
 test_preds = zscore(test_preds_cos) * 0.55 + zscore(test_preds_mse) * 0.45
 
 # The original solution was scored with a per-cell Pearson correlation only, so its predictions are z-scored per
-# cell. The benchmark also computes RMSE/MAE, so bring the predictions back to the scale of the normalized proteins
-# with a single global affine transform fitted on the out-of-fold training predictions. One (slope, intercept) pair
-# for all cells and proteins leaves every per-cell and per-protein correlation untouched.
-slope, intercept = np.polyfit(train_preds.ravel(), Y_prot_train.ravel(), deg=1)
-logger.info(f"Rescaling z-scored predictions to the target scale: slope {slope:.4f}, intercept {intercept:.4f}")
-test_preds = test_preds * slope + intercept
+# cell. Give every test cell its own protein level and spread back, predicted from its RNA profile (see
+# src/utils/cell_scale.py); the shrinkage of the spread is fitted on the out-of-fold training predictions. Per-cell
+# correlations are unchanged; per-protein correlations and RMSE/MAE now see each cell's level.
+def _counts(adata):
+    return adata.layers["counts"] if "counts" in adata.layers else None
+
+cell_scale = CellScale().fit(adata_rna_train.layers["normalized"], Y_prot_train, _counts(adata_rna_train))
+cell_scale.fit_spread(train_preds, adata_rna_train.layers["normalized"], Y_prot_train, _counts(adata_rna_train))
+logger.info(f"Restoring the per-cell protein scale (spread shrinkage {cell_scale.spread_:.3f})")
+test_preds = cell_scale.apply(test_preds, adata_rna_test.layers["normalized"], _counts(adata_rna_test))
 
 # ---------------------------------------------------------------------------
 # Save the model: the solution is transductive, so the test predictions themselves are the model. They are stored as an

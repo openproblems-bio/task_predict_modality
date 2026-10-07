@@ -450,9 +450,9 @@ RUN pip install --upgrade pip && \
   pip install --upgrade --no-cache-dir "pyarrow" "fastparquet"
 
 LABEL org.opencontainers.image.description="Companion container for running component methods ss_opm_predict"
-LABEL org.opencontainers.image.created="2026-09-30T09:24:58Z"
+LABEL org.opencontainers.image.created="2026-10-07T11:05:32Z"
 LABEL org.opencontainers.image.source="https://github.com/openproblems-bio/task_predict_modality"
-LABEL org.opencontainers.image.revision="0bb3beb05aab3ba89dd3a4785147bb4e3856d424"
+LABEL org.opencontainers.image.revision="abd49712da1bbacdd118dcc97651f130f16cd47c"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER
@@ -1143,6 +1143,7 @@ dep = {
 ## VIASH END
 
 sys.path.append(meta["resources_dir"])
+from cell_scale import CellScale  # noqa: E402
 from ss_opm_common import (  # noqa: E402
     apply_runtime_patches,
     apply_standardization,
@@ -1202,9 +1203,16 @@ preprocessed_test_inputs = np.asarray(preprocessed_test_inputs, dtype=np.float32
 
 print("Predicting...", flush=True)
 predictions = model.predict(x=test_inputs, preprocessed_x=preprocessed_test_inputs, metadata=test_metadata)
-rescaling = task_info["prediction_rescaling"]
-predictions = predictions * rescaling["slope"] + rescaling["intercept"]
-predictions = np.nan_to_num(predictions, nan=rescaling["intercept"], posinf=rescaling["intercept"], neginf=rescaling["intercept"])
+# The network outputs per-cell z-scores, so a non-finite value is set to 0, the cell's mean.
+predictions = np.nan_to_num(predictions, nan=0.0, posinf=0.0, neginf=0.0)
+cell_scale_path = os.path.join(par["input_model"], "cell_scale.npz")
+if os.path.exists(cell_scale_path):
+    test_counts = to_sparse_csr(input_test_mod1.layers["counts"]) if "counts" in input_test_mod1.layers else None
+    predictions = CellScale.load(cell_scale_path).apply(predictions, test_inputs, test_counts)
+else:
+    # models trained before the per-cell scale was introduced store one global affine map
+    rescaling = task_info["prediction_rescaling"]
+    predictions = predictions * rescaling["slope"] + rescaling["intercept"]
 assert predictions.shape == (input_test_mod1.n_obs, mod2_var.shape[0])
 
 # ---- Write ----

@@ -13,6 +13,7 @@ resources:
   - path: script.py
     type: python_script
   - path: /src/utils/exit_codes.py
+  - path: /src/utils/cell_scale.py
 arguments:
   - name: "--n_folds"
     type: integer
