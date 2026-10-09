@@ -18,6 +18,7 @@ meta = {"name": "ss_opm_predict", "resources_dir": "src/methods/ss_opm"}
 ## VIASH END
 
 sys.path.append(meta["resources_dir"])
+from cell_scale import CellScale  # noqa: E402
 from ss_opm_common import (  # noqa: E402
     apply_runtime_patches,
     apply_standardization,
@@ -77,9 +78,16 @@ preprocessed_test_inputs = np.asarray(preprocessed_test_inputs, dtype=np.float32
 
 print("Predicting...", flush=True)
 predictions = model.predict(x=test_inputs, preprocessed_x=preprocessed_test_inputs, metadata=test_metadata)
-rescaling = task_info["prediction_rescaling"]
-predictions = predictions * rescaling["slope"] + rescaling["intercept"]
-predictions = np.nan_to_num(predictions, nan=rescaling["intercept"], posinf=rescaling["intercept"], neginf=rescaling["intercept"])
+# The network outputs per-cell z-scores, so a non-finite value is set to 0, the cell's mean.
+predictions = np.nan_to_num(predictions, nan=0.0, posinf=0.0, neginf=0.0)
+cell_scale_path = os.path.join(par["input_model"], "cell_scale.npz")
+if os.path.exists(cell_scale_path):
+    test_counts = to_sparse_csr(input_test_mod1.layers["counts"]) if "counts" in input_test_mod1.layers else None
+    predictions = CellScale.load(cell_scale_path).apply(predictions, test_inputs, test_counts)
+else:
+    # models trained before the per-cell scale was introduced store one global affine map
+    rescaling = task_info["prediction_rescaling"]
+    predictions = predictions * rescaling["slope"] + rescaling["intercept"]
 assert predictions.shape == (input_test_mod1.n_obs, mod2_var.shape[0])
 
 # ---- Write ----

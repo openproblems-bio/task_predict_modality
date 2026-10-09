@@ -1,6 +1,6 @@
 name: "simple_mlp_train"
 namespace: "methods"
-version: "0.2.0-rc7"
+version: "0.2.0"
 argument_groups:
 - name: "Arguments"
   arguments:
@@ -373,11 +373,11 @@ build_info:
   output: "target/executable/methods/simple_mlp_train"
   executable: "target/executable/methods/simple_mlp_train/simple_mlp_train"
   viash_version: "0.9.7"
-  git_commit: "0bb3beb05aab3ba89dd3a4785147bb4e3856d424"
+  git_commit: "a065cbb1e7a2ebfd1d0cefe2426f1c67977d347d"
   git_remote: "https://github.com/openproblems-bio/task_predict_modality"
 package_config:
   name: "task_predict_modality"
-  version: "0.2.0-rc7"
+  version: "0.2.0"
   label: "Predict Modality"
   summary: "Predicting the profiles of one modality (e.g. protein abundance) from\
     \ another (e.g. mRNA expression)."

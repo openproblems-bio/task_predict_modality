@@ -1,6 +1,6 @@
 name: "ss_opm_train"
 namespace: "methods"
-version: "0.2.0-rc7"
+version: "0.2.0"
 argument_groups:
 - name: "Arguments"
   arguments:
@@ -350,8 +350,8 @@ argument_groups:
     multiple_sep: ";"
   - type: "integer"
     name: "--n_rescaling_cells"
-    description: "Number of training cells used to fit the global affine map from\
-      \ the model's per-cell z-scored\noutput to the target scale.\n"
+    description: "Number of training cells whose predictions are used to fit the shrinkage\
+      \ of the restored\nper-cell spread (see src/utils/cell_scale.py).\n"
     info: null
     default:
     - 5000
@@ -365,6 +365,8 @@ resources:
   is_executable: true
 - type: "file"
   path: "ss_opm_common.py"
+- type: "file"
+  path: "cell_scale.py"
 test_resources:
 - type: "python_script"
   path: "run_and_check_output.py"
@@ -461,11 +463,11 @@ build_info:
   output: "target/executable/methods/ss_opm_train"
   executable: "target/executable/methods/ss_opm_train/ss_opm_train"
   viash_version: "0.9.7"
-  git_commit: "0bb3beb05aab3ba89dd3a4785147bb4e3856d424"
+  git_commit: "a065cbb1e7a2ebfd1d0cefe2426f1c67977d347d"
   git_remote: "https://github.com/openproblems-bio/task_predict_modality"
 package_config:
   name: "task_predict_modality"
-  version: "0.2.0-rc7"
+  version: "0.2.0"
   label: "Predict Modality"
   summary: "Predicting the profiles of one modality (e.g. protein abundance) from\
     \ another (e.g. mRNA expression)."
