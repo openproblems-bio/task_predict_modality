@@ -4,6 +4,7 @@ import pickle
 import sys
 
 import anndata as ad
+import numpy as np
 from scipy.sparse import csc_matrix
 
 logging.basicConfig(level=logging.INFO)
@@ -22,6 +23,7 @@ meta = {"name": "scbutterfly", "resources_dir": "src/methods/scbutterfly"}
 
 sys.path.append(meta["resources_dir"])
 import butterfly_common
+from cell_scale import CellScale
 
 butterfly_common.apply_runtime_patches()
 from scButterfly.butterfly import Butterfly
@@ -30,9 +32,11 @@ from scButterfly.butterfly import Butterfly
 # Load data + model metadata
 # ---------------------------------------------------------------------------
 logger.info("Reading input files...")
-train_mod1 = ad.read_h5ad(par["input_train_mod1"])
-train_mod2 = ad.read_h5ad(par["input_train_mod2"])
-test_mod1 = ad.read_h5ad(par["input_test_mod1"])
+train_mod1 = butterfly_common.read_modality(par["input_train_mod1"])
+train_mod2 = butterfly_common.read_modality(par["input_train_mod2"])
+test_mod1 = butterfly_common.read_modality(par["input_test_mod1"], layers=("counts", "normalized"))
+# The per-cell scale reads the test inputs; build_butterfly takes the counts out of test_mod1.
+test_inputs, test_counts = test_mod1.layers.pop("normalized"), test_mod1.layers["counts"]
 
 with open(os.path.join(par["input_model"], "metadata.pkl"), "rb") as f:
     metadata = pickle.load(f)
@@ -45,23 +49,23 @@ logger.info("Reconstructing scButterfly model...")
 built = butterfly_common.build_butterfly(
     train_mod1, train_mod2, test_mod1,
     n_top_genes=metadata["n_top_genes"], Butterfly=Butterfly,
+    # Models trained before every target feature was modelled lack the key.
+    model_all_target_features=metadata.get("model_all_target_features", False),
 )
-butterfly = built["butterfly"]
+batch_size = metadata["batch_size"]
 
 logger.info("Loading trained weights and predicting...")
-# test_model also runs PCA + a neighbour graph on both predicted matrices with no
-# way to opt out; none of it is read back. See suppress_unused_postprocessing.
-with butterfly_common.suppress_unused_postprocessing():
-    A2R_predict, R2A_predict = butterfly.test_model(
-        batch_size=metadata["batch_size"],
-        model_path=par["input_model"],
-        load_model=True,
-    )
-
-target_var_names = list(train_mod2.var_names)
-test_predictions = butterfly_common.extract_predictions(
-    built, A2R_predict, R2A_predict, target_var_names,
+test_predictions = butterfly_common.predict_cells(
+    built, built["test_id"], batch_size, model_path=par["input_model"],
 )
+
+# scButterfly predicts its own preprocessing of the target; give every cell the level
+# and spread of the target's normalized layer (fitted in scbutterfly_train).
+cell_scale_path = os.path.join(par["input_model"], "cell_scale.npz")
+if os.path.exists(cell_scale_path):
+    test_predictions = CellScale.load(cell_scale_path).apply(test_predictions, test_inputs, test_counts)
+else:
+    logger.warning("The model has no cell_scale.npz (trained before the per-cell scale): writing scButterfly's own output.")
 
 # ---------------------------------------------------------------------------
 # Write predictions.
@@ -76,7 +80,7 @@ for _suffix in ("_predict", "_train"):
 
 logger.info("Writing predictions...")
 adata_out = ad.AnnData(
-    layers={"normalized": csc_matrix(test_predictions)},
+    layers={"normalized": csc_matrix(test_predictions.astype(np.float32))},
     obs=test_mod1.obs,
     var=train_mod2.var,
     uns={

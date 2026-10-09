@@ -3474,7 +3474,7 @@ meta = [
   ],
   "label" : "scButterfly",
   "summary" : "Dual-VAE adversarial translator for paired single-cell multi-omics (GEX<->ATAC)",
-  "description" : "scButterfly (Basic variant, scButterfly-B) is a dual variational autoencoder with an\nadversarial translator that learns to convert between paired single-cell modalities.\nFor the predict-modality task it is trained on paired Multiome cells and used to translate\nthe held-out test modality. Chromosome grouping for the ATAC branch is parsed from peak\ncoordinates in the feature names. Only Multiome GEX<->ATAC is supported; CITE-seq (ADT)\ndatasets are not handled.\n",
+  "description" : "scButterfly (Basic variant, scButterfly-B) is a dual variational autoencoder with an\nadversarial translator that learns to convert between paired single-cell modalities.\nFor the predict-modality task it is trained on paired Multiome cells and used to translate\nthe held-out test modality. Chromosome grouping for the ATAC branch is parsed from peak\ncoordinates in the feature names. scButterfly's feature selection (highly variable genes,\npeak filtering) applies to the input modality only, so every target feature is modelled.\nscButterfly predicts its own preprocessing of the target, so every predicted cell is given\nthe level and spread of the target layer with the per-cell scale model shared with ss_opm\nand senkin_tmp (src/utils/cell_scale.py). Only Multiome GEX<->ATAC is supported; CITE-seq\n(ADT) datasets are not handled.\n",
   "test_resources" : [
     {
       "type" : "python_script",
@@ -3581,7 +3581,7 @@ meta = [
     "engine" : "native",
     "output" : "target/nextflow/methods/scbutterfly",
     "viash_version" : "0.9.7",
-    "git_commit" : "abd49712da1bbacdd118dcc97651f130f16cd47c",
+    "git_commit" : "a065cbb1e7a2ebfd1d0cefe2426f1c67977d347d",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
