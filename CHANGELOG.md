@@ -1,160 +1,104 @@
 # task_predict_modality 0.2.0
 
+Adds eight methods, selects the ATAC target peaks by `hvg_score`, and fixes the bugs surfaced by the first full benchmark runs.
+
 ## NEW FUNCTIONALITY
+
+* `babel`: Added BABEL, a cross-modal autoencoder with a chromosome-split ATAC encoder. Only ATAC -> GEX is exposed: GEX -> ATAC collapsed to predicting each peak's base rate regardless of the input (PR #19, #58, #59, #66).
+
+* `cellmapper_linear`, `cellmapper_scvi`: Added CellMapper, which maps the target modality from the training to the test cells by k-NN in a PCA/CCA space or in a modality-specific scvi-tools latent space (PR #10, #14, #15, #23, #38, #53, #58, #59, #74).
+
+* `novel`: Added Novel, an encoder-decoder MLP on the LSI of the GEX/ATAC input or the raw ADT input, from the NeurIPS 2021 competition (PR #2, #33, #37, #41, #44, #46, #47, #54, #57, #58, #59, #76).
+
+* `scbutterfly`: Added scButterfly-B, a dual VAE with an adversarial translator, for GEX <-> ATAC. Its feature selection only applies to the input modality, so every target feature is modelled, and every predicted cell gets the level and spread of the target layer from `src/utils/cell_scale.py` (PR #20, #59, #64, #71, #81).
+
+* `scipenn`: Added sciPENN, a recurrent network with skip connections, for GEX -> ADT (PR #72, #77).
+
+* `senkin_tmp`: Added the LightGBM + bidirectional GRU ensemble of team senkin & tmp, the best CITE-seq submission of the NeurIPS 2022 competition, for GEX -> ADT. LightGBM trains at learning rate 0.1 for at most 100 rounds rather than at 0.01 for up to 10000, which took days per dataset, and every predicted cell gets its protein level and spread back from `src/utils/cell_scale.py` (PR #18, #59, #68, #70, #73, #75, #80).
+
+* `simple_mlp`: Added the MLP ensemble of team AXX from the NeurIPS 2021 competition (PR #3, #24, #37, #44, #57, #58, #59).
+
+* `ss_opm`: Added the winning solution of the NeurIPS 2022 competition, an encoder-decoder MLP on SVD-reduced inputs and targets. The inputs the original derived from the competition tables (per-cell and per-batch statistics, the HGNC/Reactome CITE gene masks) are rebuilt from the task's files, and every predicted cell gets its target level and spread back from `src/utils/cell_scale.py` (PR #16, #58, #59, #69, #80).
 
 * Added `src/utils/exit_codes.py`, so components can mark themselves non-applicable for a dataset (PR #32).
 
+* Added `src/utils/cell_scale.py`, which predicts each cell's target level and spread from its input, for methods that do not predict on the scale of the target layer (PR #80).
+
+* `run_benchmark`: Run parameterised methods once per named paramset from `info.variants` or the new `--paramsets` file, tag scores with `paramset_name`/`paramset`, and allow `--methods_include`/`--methods_exclude` to target `<method_id>.<paramset_name>`. The `info.variants` of `cellmapper_linear` and `cellmapper_scvi` are run by default (ported from openproblems-bio/task_template#23, PR #74).
+
+* Added `scripts/run_benchmark/run_full_denbi.sh` to run the full benchmark on de.NBI (PR #21).
+
 ## MAJOR CHANGES
 
-* `process_dataset`: When the target modality is ATAC, keep the 10k peaks with the highest `hvg_score` instead of 10k random peaks, so the target is the part of the chromatin accessibility that actually differs between cells.
+* `process_dataset`: When the target modality is ATAC, keep the 10k peaks with the highest `hvg_score` instead of 10k random peaks, so the target is the part of the chromatin accessibility that actually differs between cells (PR #78).
 
-* `process_dataset`: Remove cells without counts in either modality, after the peak selection. Empty cells have no profile to predict, and made `cellmapper_scvi` fail on `pbmc_cite` (43 cells without ADT counts).
+* `process_dataset`: Remove cells without counts in either modality, after the peak selection. Empty cells have no profile to predict, and made `cellmapper_scvi` fail on `pbmc_cite` (43 cells without ADT counts) (PR #78).
+
+* `run_benchmark`: Replace `--method_ids` with `--methods_include`/`--methods_exclude`, and add `--metrics_include`/`--metrics_exclude` (ported from openproblems-bio/task_template#20, PR #74).
 
 ## MINOR CHANGES
-
-* `file_train_mod1`, `file_train_mod2`, `file_test_mod1`, `file_test_mod2`: Declare `uns["modality"]`, which `process_dataset` already writes and which six methods and the `run_benchmark` workflow already read (PR #29).
-
-* `run_benchmark`: Write the commit the workflow ran from and the launch time into `task_info.yaml`, instead of publishing `_viash.yaml` verbatim (ported from openproblems-bio/task_template#18).
-
-* `run_benchmark`: Replace `--method_ids` with `--methods_include`/`--methods_exclude`, and add `--metrics_include`/`--metrics_exclude` (ported from openproblems-bio/task_template#20).
-
-* `run_benchmark`: Run parameterised methods once per named paramset from `info.variants` or the new `--paramsets` file, tag scores with `paramset_name`/`paramset`, and allow `--methods_include`/`--methods_exclude` to target `<method_id>.<paramset_name>`. The existing `info.variants` of `cellmapper_linear` and `cellmapper_scvi` are now run by default (ported from openproblems-bio/task_template#23).
-
-* `mse`: Write the unbounded maximum as `"+.inf"` rather than `"+inf"`, which is the literal the metric schema accepts (PR #31).
-
-* `cellmapper_linear`: Write the unmasked variants as `mask_var: null` rather than `mask_var: None`, which YAML reads as the string `"None"` and which would resolve to `adata.var["None"]` (PR #38).
 
 * `comp_method`: Run `check_config.py` as part of the component tests, so method metadata is validated like control methods and metrics already are (PR #37).
 
-* `knnr_py`, `knnr_r`, `lm`, `guanlab_dengkw_pm`: Move `documentation_url` and `repository_url` out of `info` and into the top-level `links` (PR #37).
-
-* `novel`, `simple_mlp`: Add a placeholder Nextflow resource label. Viash renders no process for a `nextflow_script` component, so the label is inert -- it is only there because `check_config` requires one. Can be removed once openproblems-bio/core#41 is released (PR #37).
-
 * `correlation`: Read the paired correlations off proxyC's sparse diagonal instead of `diag(dynutils::calculate_similarity(...))`, which densified an `n_features^2` matrix first. Scores are unchanged (PR #36).
-
-* `novel`: Drop the first of the two identical validation passes in `train_and_valid()`. Its result was never read, so it cost one full pass over the validation set per epoch, 100 epochs per run (PR #41).
 
 * `correlation`: `overall_pearson` and `overall_spearman` are a single correlation of the flattened matrices, not a mean of correlations -- the descriptions said the latter. Also spelled out the zero-variance convention on all six metrics (PR #43).
 
-* Point the `## VIASH START` blocks at files that exist. Several still referenced the openproblems-v2 monorepo layout or the pre-`normal/`-`swap/` resource layout, so running a script directly for debugging failed on the first read. Also added the missing `meta` to `knnr_r`'s block and replaced the borrowed `--id cxg_mouse_pancreas_atlas` in `run_test_local.sh` (PR #45).
-
-* `file_test_mod2`: Label this file "Solution" and say in the description that only the metrics and control methods receive it. It holds the ground truth, but read like just another input (PR #49).
-
-* `run_benchmark`: Emit one dataset metadata entry per dataset by de-duplicating on `dataset_id`, rather than by keeping only the `log_cp10k` states. The old filter emitted nothing at all if a dataset ever arrived under a different normalization (PR #48).
+* `file_train_mod1`, `file_train_mod2`, `file_test_mod1`, `file_test_mod2`: Declare `uns["modality"]`, which `process_dataset` already writes and which six methods and the `run_benchmark` workflow already read (PR #29).
 
 * `file_test_mod2`: Declare `uns["normalization_id"]`, which `run_benchmark` reads off this file to decide which method to run on which dataset (PR #30).
 
-* `lm`: Drop the unused `n_cores` and ask for `lowcpu` rather than `highcpu`. The per-gene loop is `pbapply::pblapply()` without a cluster, so it has always run on one core (PR #42).
+* `file_test_mod2`: Label this file "Solution" and say in the description that only the metrics and control methods receive it. It holds the ground truth, but read like just another input (PR #49).
 
-* `novel_train`: Store only the metadata `novel_predict` needs in the model artifact, instead of a full copy of `train_mod2` (PR #47).
+* `knnr_py`, `knnr_r`, `lm`, `guanlab_dengkw_pm`: Move `documentation_url` and `repository_url` out of `info` and into the top-level `links` (PR #37).
+
+* `knnr_py`, `knnr_r`: Ask for `highmem` rather than `midmem`, and `lowcpu` rather than `midcpu` for `knnr_r`. `knnr_py` peaks at 82 GB against a 50 GB request, and was OOM-killed on the larger datasets (PR #58).
+
+* `lm`: Drop the unused `n_cores` and ask for `lowcpu` rather than `highcpu`. The per-gene loop is `pbapply::pblapply()` without a cluster, so it has always run on one core (PR #42).
 
 * `lm`: Fit every column of mod2 in one `solve()` of the normal equations instead of calling `RcppArmadillo::fastLm()` once per column. Every column shares the same design matrix, so the old loop redid an `n x n_pcs` decomposition for each of the ~229k ATAC peaks. Predictions are unchanged; `RcppArmadillo` and `pbapply` are no longer needed (PR #58).
 
-* `novel_predict`, `simple_mlp_predict`, `ss_opm_predict`, `babel_predict`: Ask for `midgpu` rather than `gpu`. All four peak below 4 GB, so they fit the `de.NBI GPU T4 medium` flavour and no longer occupy a whole large node. The train steps stay on `gpu` (PR #58).
+* `mse`: Write the unbounded maximum as `"+.inf"` rather than `"+inf"`, which is the literal the metric schema accepts (PR #31).
 
-* `knnr_py`, `knnr_r`, `cellmapper_linear`: Ask for `highmem` rather than `midmem`, and `lowcpu` rather than `midcpu` for the latter two. `knnr_py` peaks at 82 GB and `cellmapper_linear` at 68 GB against a 50 GB request, and both were OOM-killed on the larger datasets (PR #58).
+* `run_benchmark`: Write the commit the workflow ran from and the launch time into `task_info.yaml`, instead of publishing `_viash.yaml` verbatim (ported from openproblems-bio/task_template#18, PR #74).
+
+* `run_benchmark`: Emit one dataset metadata entry per dataset by de-duplicating on `dataset_id`, rather than by keeping only the `log_cp10k` states. The old filter emitted nothing at all if a dataset ever arrived under a different normalization (PR #48).
 
 * `solution`, `zeros`: Ask for `lowmem` rather than `midmem` -- they use 0.5 GB and 11 GB of the 50 GB they asked for (PR #58).
 
-## BUG FIXES
-
-* `scbutterfly`: Parse the chromosome of `chr1:1000-2000` peak names, not only `chr1-1000-2000`. NeurIPS 2022 names its peaks the former way, so every peak became its own chromosome, each with its own block in the ATAC encoder: `pbmc_multiome` was OOM-killed when GEX was the target (174,978 "chromosomes") and hit the 8 h limit when ATAC was (7,002 "chromosomes", 5.7 h for one pretraining epoch).
-
-* `scbutterfly`: Model every target feature and predict it on the scale of the target's `normalized` layer. scButterfly kept only the 3,000 most variable genes and the peaks open in at least 0.5% of the cells, also when they were the target, so the other genes and peaks were predicted as zero; and it predicts its own preprocessing of the target. Every predicted cell now gets the level and spread of the target layer from the per-cell scale model of `src/utils/cell_scale.py`, as in `ss_opm` and `senkin_tmp`. `scbutterfly_train` fits its ridge model on the training cells and its spread shrinkage on the cells scButterfly holds out for early stopping, and saves `cell_scale.npz`; `scbutterfly_predict` applies it. The HVG selection and peak filter still apply to the input modality. `scbutterfly_predict` reproduces the old preprocessing for model bundles trained before this change, and writes scButterfly's own output for bundles without `cell_scale.npz`.
-
-* `scbutterfly`: Keep the data sparse and densify each batch on the GPU. The model densified both whole modalities (92 GB for the ATAC input of `pbmc_multiome` alone), and its `DataLoader` workers built every batch from dense per-cell rows, so data loading dominated each step. Training on `pbmc_multiome` (ATAC -> GEX) now takes 5.9 h on a V100 instead of 10.0 h. Unused layers and intermediate copies are also dropped early. `scbutterfly_train` asks for `veryhighmem` and `veryhightime`, `scbutterfly_predict` for `veryhighmem`: the model rebuilds scButterfly's preprocessing in both, which peaks at ~100 GB on `pbmc_multiome`, and the T4 the benchmark runs on is slower than the V100.
-
-* `cellmapper_linear`: Write the unmasked variants as `mask_var: "none"` rather than `mask_var: null`. Viash drops null values from the config, so these variants fell back to the default `mask_var: "hvg"` and duplicated their `-hvg` counterparts.
-
-* `guanlab_dengkw_pm`: Restore the consensus scheme of the original submission -- five reshuffles of the batches into two halves, ten kernel ridge models averaged. The port had replaced it with a single fixed two-way split for ADT pairs and leave-one-batch-out otherwise, so the result depended on the order the batches happened to come in. `--n_repeats` and `--seed` are now arguments; the unused `--distance_method` and `--n_pcs` are gone (PR #32).
-
-* `guanlab_dengkw_pm`: Only map the predictions back through the mod2 SVD when that SVD was actually fitted. When the target had fewer features than `n_mod2`, the method raised `NameError: embedder_mod2`. Unsupported modality pairs now exit 99 (non-applicable) instead of raising a `KeyError` (PR #32).
-
-* `novel_train`: Seed the fallback that picks the internal validation batches, and log which ones were picked. Both `bmmc_multiome` datasets take this path, so the checkpoint `novel` kept differed from run to run (PR #46).
-
-* `process_dataset`: Fall back to holding out a quarter of the batches when the dataset has no `obs["is_train"]`, rather than silently producing four empty h5ads. `obs["is_train"]` carries the NeurIPS 2021 competition split and stays optional; `obs["cell_type"]` is now declared and required (PR #28).
-
-* Fix the component paths, build paths and `rename_keys` separator in the helper scripts, which prevented `scripts/create_datasets/test_resources.sh` and both `run_test.sh` scripts from running at all (PR #22).
-
-* `cellmapper_scvi`: Fix postfix due to breaking changes in package (PR #23).
-
-* `simple_mlp_predict`: Size the model output with `input_train_mod2.n_vars` instead of `input_test_mod1.n_vars`. The two only coincide on the test resources, so this crashed on every real dataset (PR #24).
-
-* `lm`: Add an intercept column to the design matrix. `fastLm()` uses the matrix as is, so the model was forced through the origin and could never fit the mean expression level. Improves 28 of the 32 metric/dataset combinations on the test resources (PR #25).
-
-* `mse`: Coerce both layers to sparse before differencing them. A method returning a dense `normalized` layer made the metric crash with `AttributeError: 'matrix' object has no attribute 'power'` instead of producing a score (PR #26).
-
-* `process_dataset`: Add the `--seed` argument the API and README already advertised, and pass it through from the `process_datasets` workflow. Without it `par$seed` was `NULL`, and `set.seed(NULL)` re-seeds from the clock -- so the test-cell and ATAC-peak subsampling were not reproducible (PR #27).
-
-* `novel`: Record every all-zero training feature in `uns["removed_vars"]`, not just the first. With more than one such feature, `novel_predict` left extra columns in the test matrix and the model dimensions no longer lined up (PR #33).
-
-* `correlation`: Score `overall_pearson` and `overall_spearman` as 0 when either matrix is constant, matching what the per-cell and per-gene metrics already do. The `zeros` control returned `NA` for both, so the negative end of the scale was missing for two of the six metrics (PR #34).
-
-* `process_dataset`: Sample ATAC peaks by position and cap the sample at the number of non-zero peaks. The guard tested `ncol(ad2) > 10000` but sampled from the non-zero peaks only, so a dataset with many peaks but fewer than 10000 non-zero ones errored out (PR #35).
-
-* `novel`: Merge `wf_method.yaml` rather than `comp_method.yaml`, matching `simple_mlp`. It is a Nextflow-only workflow, so the executable-based output check never applied to it (PR #44).
-
-* `simple_mlp`: Drop the `input_transform` key from the `simple_mlp_predict` call, which is not an argument of that component (PR #44).
-
-* `cellmapper_scvi`: Bump the base image from `openproblems/base_pytorch_nvidia:1.0.0` to `:1`. (PR #53).
-
-* `novel_predict`: Move the model and the input batch onto the selected device. It picked `cuda:0` when a GPU was present but never used it, so the component requested a GPU node and ran inference on CPU (PR #54).
-
-* `correlation`, `mse`: Score non-finite predictions as zero instead of halting. `sd()` on a prediction holding `NaN` returns `NA`, so `correlation` died on `if (NA)` rather than scoring the method, and `mse` wrote a `NaN` score. A method emitting `NaN` should land at the bottom of the scale, not take the metric down with it (PR #59).
-
-* `babel_train`, `scbutterfly`: Exit 99 for the modality pairs they do not support, rather than raising a `ValueError`. Both are GEX<->ATAC only, so on the four CITE datasets they failed with exit 1 and were retried three times each (PR #59).
-
-* `novel_predict`: Test `uns["removed_vars"]` for length rather than truthiness. It round-trips through h5ad as an array, so the check raised "The truth value of an array with more than one element is ambiguous" as soon as training dropped more than one all-zero feature (PR #59).
-
-* `senkin_tmp_train`: Build on `nvidia/cuda:12.8.1-cudnn-runtime-ubuntu24.04` with `tensorflow[and-cuda]`, and ask for a `gpu`. TensorFlow was installed on a PyTorch base shipping CUDA 13 while TF is built against CUDA 12, so it silently trained on CPU and hit its walltime on all eight datasets. `openproblems/base_tensorflow_nvidia:1` reaches the GPU but is frozen at TF 2.17, below the 2.20 the method requires -- nvcr no longer publishes TensorFlow images, so that base wants rebuilding on a CUDA image in openproblems-bio/core (PR #59).
-
-* `ss_opm`: Compute the per-cell statistics in `build_metadata()` one row block at a time. Densifying the whole normalized layer asked for a 222 GiB allocation on the multiome datasets, which fits on no node (PR #59).
-
-* `ss_opm_predict`: Apply the all-zero-row-safe `median_normalize()` and `row_normalize()` that `ss_opm_train` already monkey-patched in. Predict ran the originals, so an all-zero row produced a `NaN` median and the preprocessing chain handed `NaN` to `TruncatedSVD`. Both now call `apply_runtime_patches()` from `ss_opm_common` (PR #59).
-
-* `simple_mlp_train`: Hold out every third batch when the batch labels do not follow the NeurIPS 2021 `s{site}d{donor}` naming. `split()` matched `site` against `s1`/`s2`/`s3`, so on the 2022 pbmc datasets every fold got an empty validation half, `valid_RMSE` was never logged, and `.predict(ckpt_path="best")` found no checkpoint (PR #59).
-
-* `guanlab_dengkw_pm`: Limit the BLAS thread pool to `meta["cpus"]`. Nothing constrains cores on the cluster, so kernel ridge sized its pool from the node's 64 cores against a 30-core allocation (PR #59).
-
-* `cellmapper_linear`, `cellmapper_scvi`: Require `cellmapper>=0.2.6,<0.3`. The package has twice renamed the `map_obsm` output key under a compatible-looking version bump, each time breaking these components on every dataset (PR #59).
-
-* `scbutterfly_train`, `scbutterfly_predict`: Upgrade pip before installing torch. The pip shipped in `python:3.9` rejects the `typing_extensions` wheel over the underscore in its metadata name, falls back to the sdist, and cannot build it because `flit_core` is not on the PyTorch index -- so the image stopped building the moment `typing_extensions` started requiring `flit_core>=3.11` (PR #64).
-
-* `ss_opm`: Rebuild the derived inputs the original solution was written against instead of feeding it the raw h5ad columns: standardized per-cell statistics, the day and donor parsed from the `{day}_{donor}` batch labels (the 2021 donor was taken as the day), batch singular vectors from per-batch gene medians, and the HGNC/Reactome-selected CITE input genes rather than all 14k-22k genes (a 96 GB peak and a different model). Drop training cells with a constant target vector, which made the correlation loss `NaN` from epoch 0 on the 2022 CITE datasets; keep the multiome targets in float32, whose dense float64 copies OOM-killed 2022 ATAC->GEX; and map the per-cell z-scored network output back to the target scale, so RMSE and Spearman are meaningful. The image build and the runtime fallback download the Reactome gene sets with a browser-like user agent, because reactome.org answers HTTP 403 to Python's default one (PR #69).
-
-* `senkin_tmp_train`, `senkin_tmp_predict`: Store the model bundle (the test predictions, as the solution is transductive) as an h5ad file in a directory instead of a pickle. The train image is built from `nvidia/cuda` with the current pandas 3, the predict image `openproblems/base_pytorch_nvidia:1` ships pandas 2, and unpickling the bundled `var` DataFrame raised `NotImplementedError` in `NDArrayBacked.__setstate__`, so senkin_tmp finished both CITE training runs of run_2026-09-23 but never produced a prediction. The predict step still reads the old pickle until the test resources are regenerated (PR #73).
-
-* `novel`: Guard the TF-IDF and LSI of the ATAC input against cells without counts in the selected peaks. These turned into NaN, so the validation loss never improved, no model was saved and `novel_predict` failed with a missing `tensor.pt` on the multiome swap datasets (PR #76).
-
-* `senkin_tmp_predict`: Compare the cell and protein names of the stored predictions as lists. The train and predict images run different pandas versions, so the same names were read back with a different index dtype and `Index.equals()` failed on every dataset (PR #75).
-
-* `scipenn`: Exit 99 (non-applicable) instead of raising a `ValueError` on anything other than GEX -> ADT (PR #77).
-
-* `guanlab_dengkw_pm`: Solve the kernel ridge regression with `scipy.linalg.cho_factor()`/`cho_solve()` instead of `KernelRidge`, whose `scipy.linalg.solve()` raised a `MemoryError` or segfaulted beyond ~30k cells with the OpenBLAS in this image. Predictions are unchanged; the method failed on every dataset except `bmmc_multiome`.
-
-* `senkin_tmp_train`, `ss_opm_train`, `ss_opm_predict`: Give every predicted cell its own level and spread instead of one global slope and intercept. Both 2022 competition solutions predict a z-scored profile per cell, so every cell came out with the same mean (0.5955 on `bmmc_cite`, where the true per-cell mean ranges from 0.16 to 2.83): per-cell correlations were unaffected, but per-gene correlations, overall correlations and RMSE/MAE scored that missing level, not the methods. The new `src/utils/cell_scale.py` predicts each cell's target mean and log standard deviation from its input (ridge regression on a truncated SVD plus two sequencing-depth features) and shrinks the restored spread by one factor fitted on training-cell predictions. `ss_opm_predict` still applies the old global map to model bundles trained before this change.
-
-# task_predict_modality 0.1.1
-
-## NEW FUNCTIONALITY
-
-* Added CellMapper method (two variants: simple PCA/CCA fallback and modality-specific scvi-tools models for joint mod1 representation) (PR #10)
-
-* Added Novel method (PR #2).
-
-* Added Simple MLP method (PR #3).
-
-## MINOR CHANGES
+* Point the `## VIASH START` blocks at files that exist. Several still referenced the openproblems-v2 monorepo layout or the pre-`normal/`-`swap/` resource layout, so running a script directly for debugging failed on the first read. Also added the missing `meta` to `knnr_r`'s block and replaced the borrowed `--id cxg_mouse_pancreas_atlas` in `run_test_local.sh` (PR #45).
 
 * Bump image version for `openproblems/base_*` images to 1 -- a sliding release (PR #9).
 
 * Bump Viash version to 0.9.4 (PR #12), and to 0.9.7 (PR #15).
 
+* Added Benjamin Frey and Vladimir Shitov as authors (PR #65).
+
 ## BUG FIXES
 
-* `cellmapper_linear`, `cellmapper_scvi`: Fix NaNs in the linear variant, use the counts layer for the scvi models, disable HVG selection by default and correct the PCA key (PR #14).
+* `correlation`: Score `overall_pearson` and `overall_spearman` as 0 when either matrix is constant, matching what the per-cell and per-gene metrics already do. The `zeros` control returned `NA` for both, so the negative end of the scale was missing for two of the six metrics (PR #34).
 
-* `cellmapper_linear`, `guanlab_dengkw_pm`: Minor script corrections (PR #15).
+* `correlation`, `mse`: Score non-finite predictions as zero instead of halting. `sd()` on a prediction holding `NaN` returns `NA`, so `correlation` died on `if (NA)` rather than scoring the method, and `mse` wrote a `NaN` score. A method emitting `NaN` should land at the bottom of the scale, not take the metric down with it (PR #59).
+
+* `guanlab_dengkw_pm`: Restore the consensus scheme of the original submission -- five reshuffles of the batches into two halves, ten kernel ridge models averaged. The port had replaced it with a single fixed two-way split for ADT pairs and leave-one-batch-out otherwise, so the result depended on the order the batches happened to come in. `--n_repeats` and `--seed` are now arguments; the unused `--distance_method` and `--n_pcs` are gone (PR #32).
+
+* `guanlab_dengkw_pm`: Only map the predictions back through the mod2 SVD when that SVD was actually fitted. When the target had fewer features than `n_mod2`, the method raised `NameError: embedder_mod2`. Unsupported modality pairs now exit 99 (non-applicable) instead of raising a `KeyError` (PR #32).
+
+* `guanlab_dengkw_pm`: Limit the BLAS thread pool to `meta["cpus"]`. Nothing constrains cores on the cluster, so kernel ridge sized its pool from the node's 64 cores against a 30-core allocation (PR #59).
+
+* `guanlab_dengkw_pm`: Solve the kernel ridge regression with `scipy.linalg.cho_factor()`/`cho_solve()` instead of `KernelRidge`, whose `scipy.linalg.solve()` raised a `MemoryError` or segfaulted beyond ~30k cells with the OpenBLAS in this image. Predictions are unchanged; the method failed on every dataset except `bmmc_multiome` (PR #79).
+
+* `guanlab_dengkw_pm`: Allow anndata to write nullable strings, which newer anndata versions refuse by default (PR #15).
+
+* `lm`: Add an intercept column to the design matrix. `fastLm()` uses the matrix as is, so the model was forced through the origin and could never fit the mean expression level. Improves 28 of the 32 metric/dataset combinations on the test resources (PR #25).
+
+* `mse`: Coerce both layers to sparse before differencing them. A method returning a dense `normalized` layer made the metric crash with `AttributeError: 'matrix' object has no attribute 'power'` instead of producing a score (PR #26).
+
+* `process_dataset`: Fall back to holding out a quarter of the batches when the dataset has no `obs["is_train"]`, rather than silently producing four empty h5ads. `obs["is_train"]` carries the NeurIPS 2021 competition split and stays optional; `obs["cell_type"]` is now declared and required (PR #28).
+
+* `process_dataset`: Add the `--seed` argument the API and README already advertised, and pass it through from the `process_datasets` workflow. Without it `par$seed` was `NULL`, and `set.seed(NULL)` re-seeds from the clock -- so the test-cell and ATAC-peak subsampling were not reproducible (PR #27).
+
+* Fix the component paths, build paths and `rename_keys` separator in the helper scripts, which prevented `scripts/create_datasets/test_resources.sh` and both `run_test.sh` scripts from running at all (PR #22).
 
 # task_predict_modality 0.1.0
 
