@@ -17,6 +17,7 @@ resources:
   - path: ../butterfly_common.py
   - path: ../chrom_utils.py
   - path: /src/utils/exit_codes.py
+  - path: /src/utils/cell_scale.py
 test_resources:
   - path: /resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap
     dest: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap
@@ -44,7 +45,7 @@ arguments:
   - name: "--n_top_genes"
     type: integer
     default: 3000
-    description: Number of highly variable genes kept by scButterfly RNA preprocessing.
+    description: Number of highly variable genes scButterfly keeps when GEX is the input (GEX -> ATAC). When GEX is the target, every gene is modelled.
 engines:
   - type: docker
     image: python:3.9
@@ -61,4 +62,4 @@ runners:
   - type: executable
   - type: nextflow
     directives:
-      label: [highmem, hightime, midcpu, highsharedmem, gpu]
+      label: [veryhighmem, veryhightime, midcpu, highsharedmem, gpu]

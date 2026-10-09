@@ -16,6 +16,7 @@ import anndata as ad
 import numpy as np
 import pandas as pd
 import scanpy as sc
+import torch
 from scipy.sparse import csr_matrix, issparse
 
 import chrom_utils
@@ -30,8 +31,9 @@ def apply_runtime_patches():
     - BCE on a float32 sigmoid can drift >1.0 -> clamp input to [0,1]
     - scButterfly hardcodes ``.cuda()``; make it a no-op when no GPU is present
     - ``TFIDF`` builds dense (n_peaks, n_cells) tiles -> sparse equivalent
+    - ``Model`` densifies both whole modalities -> keep them sparse
+    - per-cell ``DataLoader`` batches -> batches densified on the device
     """
-    import torch
     import torch.nn as nn
     import torch.nn.functional as F
 
@@ -78,6 +80,11 @@ def apply_runtime_patches():
     data_processing.TFIDF = _sparse_tfidf
     logger.info("Patched scButterfly TFIDF with the sparse implementation.")
 
+    from scButterfly import train_model
+
+    train_model.Model.__init__ = _keep_data_sparse(train_model.Model.__init__)
+    train_model.DataLoader = _SparseBatchLoader
+
 
 def _sparse_tfidf(count_mat):
     """Sparse, O(nnz) drop-in for ``scButterfly.data_processing.TFIDF``.
@@ -120,15 +127,92 @@ def _sparse_tfidf(count_mat):
     return out, cell_totals, idf
 
 
+def _keep_data_sparse(original_init):
+    """Wrap ``Model.__init__`` so that it keeps the data as float32 CSR matrices.
+
+    Upstream stores ``RNA_data.X.toarray()`` and ``ATAC_data.X.toarray()``: every cell
+    of both modalities, training and test, as dense float32. At NeurIPS 2022 Multiome
+    scale (131k cells x 175k peaks after peak filtering) the ATAC matrix alone is 92 GB.
+    The model reads only their ``.shape`` and, through its datasets, batches of rows,
+    which :class:`_SparseBatchLoader` serves from the sparse matrices.
+    """
+
+    def init(self, RNA_data, ATAC_data, *args, **kwargs):
+        # The networks are sized from the dim lists, not the data, so build them on
+        # zero cells and attach the real matrices afterwards.
+        original_init(self, RNA_data[:0], ATAC_data[:0], *args, **kwargs)
+        self.RNA_data_obs, self.ATAC_data_obs = RNA_data.obs, ATAC_data.obs
+        # Upstream stores the RNA var as ATAC_data_var too; nothing reads either.
+        self.RNA_data_var, self.ATAC_data_var = RNA_data.var, RNA_data.var
+        self.RNA_data, self.ATAC_data = _float32_csr(RNA_data.X), _float32_csr(ATAC_data.X)
+
+    return init
+
+
+def _float32_csr(matrix):
+    """``matrix`` as float32 CSR, without a copy when it already is one."""
+    matrix = matrix.tocsr() if issparse(matrix) else csr_matrix(matrix)
+    return matrix.astype(np.float32, copy=False)
+
+
+class _SparseBatchLoader:
+    """Stand-in for the ``DataLoader`` scButterfly builds over its datasets.
+
+    ``DataLoader`` workers assembled every batch from dense per-cell rows on the CPU,
+    and the training loop copied it to the GPU. With every target feature modelled, a
+    NeurIPS 2022 Multiome cell is 198k floats (23k genes, 175k peaks), so a batch of 64
+    is 51 MB and data loading dominated each step: the GPU sat at ~28% and one ATAC
+    pretraining epoch took 128 s on a V100. This loader gathers a batch's rows from the
+    CSR matrices, ships only their stored entries to the device and scatters them into
+    a dense tensor there.
+
+    Batches hold the same values in the same layout (RNA columns, then ATAC), and come
+    back on the device as float32, so the training loop's ``.cuda().to(torch.float32)``
+    is a no-op. Shuffling draws a ``torch.randperm``, like ``DataLoader``, so it follows
+    the seed scButterfly sets.
+    """
+
+    def __init__(self, dataset, batch_size, shuffle=False, num_workers=0, drop_last=False):
+        if hasattr(dataset, "id_list"):  # Single_omics_dataset
+            self.blocks = [(dataset.dataset, np.asarray(dataset.id_list))]
+        else:  # RNA_ATAC_dataset
+            self.blocks = [
+                (dataset.RNA_dataset, np.asarray(dataset.id_list_r)),
+                (dataset.ATAC_dataset, np.asarray(dataset.id_list_a)),
+            ]
+        self.n_cells = len(self.blocks[0][1])
+        self.batch_size, self.shuffle, self.drop_last = batch_size, shuffle, drop_last
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    def __len__(self):
+        if self.drop_last:
+            return self.n_cells // self.batch_size
+        return -(-self.n_cells // self.batch_size)
+
+    def __iter__(self):
+        order = torch.randperm(self.n_cells).numpy() if self.shuffle else np.arange(self.n_cells)
+        for start in range(0, len(self) * self.batch_size, self.batch_size):
+            positions = order[start:start + self.batch_size]
+            yield torch.cat([self._dense_rows(matrix, cells[positions]) for matrix, cells in self.blocks], dim=1)
+
+    def _dense_rows(self, matrix, cells):
+        rows = matrix[cells]
+        row_of_entry = np.repeat(np.arange(len(cells)), np.diff(rows.indptr))
+        dense = torch.zeros((len(cells), matrix.shape[1]), dtype=torch.float32, device=self.device)
+        dense[torch.from_numpy(row_of_entry).to(self.device), torch.from_numpy(rows.indices.astype(np.int64)).to(self.device)] = (
+            torch.from_numpy(rows.data).to(self.device)
+        )
+        return dense
+
+
 @contextlib.contextmanager
 def suppress_unused_postprocessing():
     """Make ``sc.pp.pca``/``sc.pp.neighbors`` no-ops for the duration of the block.
 
     ``Model.test`` runs both, on *both* predicted matrices, whenever it is not asked
     to draw figures — and there is no flag to turn it off. Nothing reads the results
-    back: :func:`extract_predictions` only touches ``.X`` and ``.var_names``. On the
-    ATAC side it is a PCA over a near-dense ``n_test x n_peaks`` matrix, which
-    dominates the predict step.
+    back: :func:`predict_cells` only touches ``.X``. On the ATAC side it is a PCA over
+    a near-dense ``n_test x n_peaks`` matrix, which dominates the predict step.
     """
     orig_pca, orig_neighbors = sc.pp.pca, sc.pp.neighbors
     sc.pp.pca = lambda *args, **kwargs: None
@@ -151,8 +235,25 @@ def detect_direction(train_mod1, train_mod2):
     return direction, mod1, mod2
 
 
+def read_modality(path, layers=("counts",)):
+    """Read an h5ad, keeping only ``layers`` besides ``obs``, ``var`` and ``uns``.
+
+    scButterfly reads only the counts (predict also the target's ``normalized`` layer,
+    for the scale map). The NeurIPS 2022 Multiome ATAC files hold two 9 GB layers.
+    """
+    adata = ad.read_h5ad(path)
+    for key in [key for key in adata.layers.keys() if key not in layers]:
+        del adata.layers[key]
+    for key in list(adata.obsm.keys()):
+        del adata.obsm[key]
+    return adata
+
+
 def _to_counts_X(adata):
     """AnnData whose .X is the raw counts layer as float32, carrying obs and var.
+
+    Takes the counts layer out of ``adata``: nothing reads the float64 original again,
+    and for the NeurIPS 2022 ATAC input it is 9 GB.
 
     Counts are stored as float64; scButterfly's model is float32 and its data loader
     does not cast, so feed float32 to avoid a dtype mismatch.
@@ -163,7 +264,7 @@ def _to_counts_X(adata):
     duplicates the largest matrices in the file to throw them away a moment later.
     """
     return ad.AnnData(
-        X=adata.layers["counts"].astype(np.float32),
+        X=adata.layers.pop("counts").astype(np.float32),
         obs=adata.obs.copy(),
         var=adata.var.copy(),
     )
@@ -210,13 +311,34 @@ def _concat_blocks(train_block, test_block):
     return out
 
 
-def build_butterfly(train_mod1, train_mod2, test_mod1, n_top_genes, Butterfly):
+def validation_cells(n_train):
+    """The ~10% of the training cells held out for early stopping (row indices).
+
+    Deterministic, so train and predict hold out the same cells; ``scbutterfly_train``
+    also fits the spread of the per-cell scale on them.
+    """
+    shuffled = list(range(n_train))
+    np.random.RandomState(0).shuffle(shuffled)
+    return sorted(shuffled[:max(1, int(0.1 * n_train))])
+
+
+def build_butterfly(train_mod1, train_mod2, test_mod1, n_top_genes, Butterfly,
+                    model_all_target_features=True):
     """Build + preprocess + construct a Butterfly for the given data.
 
+    scButterfly's preprocessing keeps the ``n_top_genes`` most variable genes and drops
+    peaks open in fewer than 0.5% of the cells. With ``model_all_target_features`` that
+    only applies to the input modality: the benchmark scores every target feature, and
+    one the model drops could only be predicted as a constant zero. ``False`` reproduces
+    models trained before this option existed.
+
+    Consumes the ``counts`` layers of the three inputs (see :func:`_to_counts_X`).
+
     Returns a dict with the constructed ``butterfly``, the resolved ``direction``,
-    ``test_id`` (indices of the test cells), ``chrom_list``, and the preprocessed
-    target-modality var names. Deterministic given the same inputs, so train and
-    predict produce identical architecture/preprocessing.
+    ``test_id`` and ``validation_id`` (row indices of the test and held-out training
+    cells), ``chrom_list``, and the preprocessed and the original target var names.
+    Deterministic given the same inputs, so train and predict produce identical
+    architecture/preprocessing.
     """
     direction, mod1, mod2 = detect_direction(train_mod1, train_mod2)
     logger.info("Direction: %s (mod1=%s, mod2=%s)", direction, mod1, mod2)
@@ -252,17 +374,13 @@ def build_butterfly(train_mod1, train_mod2, test_mod1, n_top_genes, Butterfly):
 
     RNA_data = _concat_blocks(rna_train_c, rna_test_c)
     ATAC_data = _concat_blocks(atac_train_c, atac_test_c)
+    del rna_train_c, rna_test_c, atac_train_c, atac_test_c
 
     train_id = list(range(n_train))
     test_id = list(range(n_train, n_train + n_test))
 
-    # Deterministic ~10% validation carve (not five_fold_split_dataset).
-    rng = np.random.RandomState(0)
-    shuffled = list(train_id)
-    rng.shuffle(shuffled)
-    n_val = max(1, int(0.1 * n_train))
-    validation_id = sorted(shuffled[:n_val])
-    train_id_final = sorted(shuffled[n_val:])
+    validation_id = validation_cells(n_train)
+    train_id_final = sorted(set(train_id) - set(validation_id))
 
     # Chromosome ordering (peaks contiguous per chrom + chrom_list).
     sort_index, chrom_list = chrom_utils.sorted_chrom_order(ATAC_data)
@@ -270,14 +388,21 @@ def build_butterfly(train_mod1, train_mod2, test_mod1, n_top_genes, Butterfly):
 
     butterfly = Butterfly()
     butterfly.load_data(RNA_data, ATAC_data, train_id_final, test_id, validation_id)
-    butterfly.data_preprocessing(n_top_genes=n_top_genes)
+    del RNA_data, ATAC_data  # load_data keeps its own copies
+    butterfly.data_preprocessing(
+        n_top_genes=n_top_genes,
+        use_hvg=not (model_all_target_features and direction == "ATAC2GEX"),
+        filter_features=not (model_all_target_features and direction == "GEX2ATAC"),
+    )
     butterfly.augmentation(aug_type=None)
+    # Only the preprocessed copies are read from here on.
+    butterfly.RNA_data = butterfly.ATAC_data = None
 
     # scButterfly casts to float32 only on the CUDA path; force float32 for CPU.
     for _attr in ("RNA_data_p", "ATAC_data_p"):
         _adata = getattr(butterfly, _attr, None)
         if _adata is not None and _adata.X is not None:
-            _adata.X = _adata.X.astype(np.float32)
+            _adata.X = _adata.X.astype(np.float32, copy=False)
 
     # Rebuild chrom_list from the preprocessed (peak-filtered) ATAC so model dims match.
     atac_p = getattr(butterfly, "ATAC_data_p", None)
@@ -298,31 +423,41 @@ def build_butterfly(train_mod1, train_mod2, test_mod1, n_top_genes, Butterfly):
         "n_train": n_train,
         "n_test": n_test,
         "test_id": test_id,
+        "validation_id": validation_id,
         "chrom_list": chrom_list,
         "target_p_var_names": list(target_p.var_names),
+        "target_var_names": list(train_mod2.var_names),
     }
 
 
-def extract_predictions(built, A2R_predict, R2A_predict, target_var_names):
-    """Select the target-modality prediction, name its vars, and scatter to target order."""
-    direction = built["direction"]
-    n_train, n_test = built["n_train"], built["n_test"]
-    pred = A2R_predict if direction == "ATAC2GEX" else R2A_predict
+def predict_cells(built, cell_ids, batch_size, model_path=None):
+    """scButterfly's prediction of the target modality for rows ``cell_ids``.
 
-    # tensor2adata gives integer var names; assign the preprocessed target var names.
-    p_names = built["target_p_var_names"]
-    if pred.n_vars == len(p_names):
-        pred.var_names = p_names
-    else:
-        logger.warning("Prediction vars (%d) != preprocessed target vars (%d)",
-                       pred.n_vars, len(p_names))
-
-    if pred.n_obs == (n_train + n_test):
-        pred = pred[built["test_id"]].copy()
-    elif pred.n_obs != n_test:
-        logger.warning("Unexpected prediction rows: %d (n_test=%d)", pred.n_obs, n_test)
-
-    out = chrom_utils.scatter_to_target(pred, target_var_names)
-    overlap = len(set(pred.var_names) & set(target_var_names))
-    logger.info("Var overlap with target: %d / %d", overlap, len(target_var_names))
-    return out
+    Returned as a dense float32 array in the target's original var order, still on
+    scButterfly's scale (``cell_scale.CellScale`` maps it onto the target's). ``model_path``
+    loads the trained weights first; leave it out once they are loaded.
+    """
+    # Model.test predicts both directions; give the unused one a single cell, which
+    # for ATAC -> GEX on NeurIPS 2022 saves a cells x 175k-peak matrix. It also runs
+    # PCA + a neighbour graph on both predicted matrices with no way to opt out; none
+    # of it is read back. See suppress_unused_postprocessing.
+    gex_to_atac = built["direction"] == "GEX2ATAC"
+    with suppress_unused_postprocessing():
+        A2R_predict, R2A_predict = built["butterfly"].model.test(
+            test_id_r=cell_ids if gex_to_atac else cell_ids[:1],
+            test_id_a=cell_ids[:1] if gex_to_atac else cell_ids,
+            batch_size=batch_size,
+            model_path=model_path,
+            load_model=model_path is not None,
+            test_cluster=False,
+            test_figure=False,
+            output_data=False,
+            return_predict=True,
+        )
+    prediction = R2A_predict if gex_to_atac else A2R_predict
+    # tensor2adata gives integer var names; name them, then scatter by name, which
+    # undoes the chromosome sort and zero-fills target features the model dropped.
+    prediction.var_names = built["target_p_var_names"]
+    n_modelled = len(set(prediction.var_names) & set(built["target_var_names"]))
+    logger.info("Modelled target features: %d / %d", n_modelled, len(built["target_var_names"]))
+    return chrom_utils.scatter_to_target(prediction, built["target_var_names"])
