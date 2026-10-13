@@ -449,9 +449,9 @@ RUN pip install --upgrade pip && \
   pip install --upgrade --no-cache-dir "scikit-learn" "pandas" "numpy" "threadpoolctl"
 
 LABEL org.opencontainers.image.description="Companion container for running component methods guanlab_dengkw_pm"
-LABEL org.opencontainers.image.created="2026-10-09T08:09:21Z"
+LABEL org.opencontainers.image.created="2026-10-13T21:29:20Z"
 LABEL org.opencontainers.image.source="https://github.com/openproblems-bio/neurips2021_multimodal_topmethods/tree/main/src/predict_modality/methods/Guanlab-dengkw"
-LABEL org.opencontainers.image.revision="a065cbb1e7a2ebfd1d0cefe2426f1c67977d347d"
+LABEL org.opencontainers.image.revision="4d73d31645c57097a6765ff3d3585503aaa99d33"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER
