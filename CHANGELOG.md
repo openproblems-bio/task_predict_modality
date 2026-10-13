@@ -134,6 +134,8 @@
 
 * `senkin_tmp_train`, `ss_opm_train`, `ss_opm_predict`: Give every predicted cell its own level and spread instead of one global slope and intercept. Both 2022 competition solutions predict a z-scored profile per cell, so every cell came out with the same mean (0.5955 on `bmmc_cite`, where the true per-cell mean ranges from 0.16 to 2.83): per-cell correlations were unaffected, but per-gene correlations, overall correlations and RMSE/MAE scored that missing level, not the methods. The new `src/utils/cell_scale.py` predicts each cell's target mean and log standard deviation from its input (ridge regression on a truncated SVD plus two sequencing-depth features) and shrinks the restored spread by one factor fitted on training-cell predictions. `ss_opm_predict` still applies the old global map to model bundles trained before this change.
 
+* `correlation`: Convert the solution and the prediction to CSC before ranking them. `dynutils::spearman_rank_sparse()` ranks along the compressed dimension of the matrix it is given, which is a column only for CSC: a CSR prediction (read as a `dgRMatrix`) was ranked per feature for the per-cell correlations and per cell for the per-feature ones, so the per-cell and per-feature Spearman correlations of `ss_opm` -- the only method that writes CSR -- were wrong on every dataset (e.g. per-cell Spearman 0.126 instead of 0.428 on `pbmc_multiome` ATAC -> GEX, 0.528 instead of 0.732 on `bmmc_cite` GEX -> ADT). Pearson correlations and every other method's scores are unchanged.
+
 # task_predict_modality 0.1.1
 
 ## NEW FUNCTIONALITY
