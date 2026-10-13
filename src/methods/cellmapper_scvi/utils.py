@@ -5,6 +5,7 @@ from scipy.sparse import issparse, csr_matrix, csc_matrix
 import muon
 import scanpy as sc
 import numpy as np
+from hvg import hvg_applies
 
 
 
@@ -25,7 +26,8 @@ def preprocess_features(
     modality
         The modality type, affects filtering strategy
     use_hvg
-        Whether to apply HVG selection (applies to all modalities if requested)
+        Whether to subset GEX and ADT features to the dataset's highly variable genes. ATAC inputs keep every peak
+        that passes the feature filter, see `hvg_applies`.
     min_cells_fraction
         Minimum fraction of cells a feature must be detected in to be kept
     feature_filter_threshold
@@ -51,7 +53,9 @@ def preprocess_features(
         print(f"Skipping feature filtering (only {adata.n_vars} features, threshold is {feature_filter_threshold})")
     
     # HVG selection: apply if requested
-    if use_hvg:
+    if use_hvg and not hvg_applies(modality):
+        print(f"Skipping HVG selection for {modality}, using all remaining features")
+    elif use_hvg:
         n_hvg = adata.var["hvg"].sum()
         print(f"Applying HVG selection: subsetting to {n_hvg} highly variable features ({n_hvg/adata.n_vars:.2%})")
         adata = adata[:, adata.var["hvg"]].copy()

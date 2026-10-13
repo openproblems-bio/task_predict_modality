@@ -52,7 +52,7 @@ arguments:
   - name: "--use_hvg"
     type: boolean
     default: false
-    description: Whether to use highly variable genes (HVG) for the mapping (Generic analysis parameter).
+    description: Whether to use highly variable genes (HVG) for the mapping (Generic analysis parameter). Applies to GEX and ADT inputs; ATAC inputs use every peak detected in at least 1% of the cells.
   - name: "--adt_normalization"
     type: "string"
     choices: ["clr", "log_cp10k"]
@@ -67,6 +67,7 @@ resources:
     path: script.py
   - path: utils.py
     dest: utils.py 
+  - path: /src/utils/hvg.py
 engines:
   - type: docker
     image: openproblems/base_pytorch_nvidia:1

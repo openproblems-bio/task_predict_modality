@@ -1,3 +1,4 @@
+import sys
 import anndata as ad
 import cellmapper as cm
 from scipy.sparse import csc_matrix
@@ -17,8 +18,12 @@ par = {
 }
 meta = {
   'name': 'cellmapper_linear',
+  'resources_dir': 'src/utils',
 }
 ## VIASH END
+
+sys.path.append(meta['resources_dir'])
+from hvg import hvg_applies
 
 print('Reading input files', flush=True)
 input_train_mod1 = ad.read_h5ad(par['input_train_mod1'])
@@ -36,6 +41,12 @@ input_train_mod1.obsm["mod2"] = input_train_mod2.layers["normalized"]
 # choose the kNN method based on total cell number
 n_obs = input_test_mod1.n_obs + input_train_mod1.n_obs
 
+mask_var = None if par['mask_var'] == "none" else par['mask_var']
+modality = input_train_mod1.uns["modality"]
+if mask_var == "hvg" and not hvg_applies(modality):
+    print(f"Not masking {modality} features to the hvg flag, using all features", flush=True)
+    mask_var = None
+
 print("Set up and prepare Cellmapper", flush=True)
 cmap = cm.CellMapper(query=input_test_mod1, reference=input_train_mod1)
 cmap.compute_neighbors(
@@ -43,7 +54,7 @@ cmap.compute_neighbors(
     knn_method="sklearn" if n_obs < 60000 else "pynndescent",
     fallback_representation=par['fallback_representation'],
     n_neighbors=par['n_neighbors'],
-    fallback_kwargs={"mask_var": None if par['mask_var'] == "none" else par['mask_var']},
+    fallback_kwargs={"mask_var": mask_var},
     )
 cmap.compute_mapping_matrix(kernel_method=par['kernel_method'])
 

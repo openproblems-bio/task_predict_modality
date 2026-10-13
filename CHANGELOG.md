@@ -134,6 +134,8 @@
 
 * `senkin_tmp_train`, `ss_opm_train`, `ss_opm_predict`: Give every predicted cell its own level and spread instead of one global slope and intercept. Both 2022 competition solutions predict a z-scored profile per cell, so every cell came out with the same mean (0.5955 on `bmmc_cite`, where the true per-cell mean ranges from 0.16 to 2.83): per-cell correlations were unaffected, but per-gene correlations, overall correlations and RMSE/MAE scored that missing level, not the methods. The new `src/utils/cell_scale.py` predicts each cell's target mean and log standard deviation from its input (ridge regression on a truncated SVD plus two sequencing-depth features) and shrinks the restored spread by one factor fitted on training-cell predictions. `ss_opm_predict` still applies the old global map to model bundles trained before this change.
 
+* `cellmapper_linear`, `cellmapper_scvi`: Apply the `hvg` feature subset to GEX and ADT inputs only. The NeurIPS 2021 and 2022 Multiome datasets flag 1,000 of their 116k and 229k ATAC peaks as highly variable, peaks no more often detected than the rest, and 5,306 (`bmmc_multiome`) and 9,068 (`pbmc_multiome`) cells have no counts in the ones detected in at least 1% of the cells. So on ATAC -> GEX, the `hvg` variants of `cellmapper_scvi` stopped on the empty-cell check and the CCA variants of `cellmapper_linear` gave the cells without counts in the `hvg` peaks a `NaN` embedding -- 10 failed runs in rc7, the first run of these paramsets. ATAC inputs now use every peak, as the variants without `hvg` do. The shared rule is `hvg_applies()` in `src/utils/hvg.py`.
+
 # task_predict_modality 0.1.1
 
 ## NEW FUNCTIONALITY

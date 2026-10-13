@@ -47,7 +47,7 @@ arguments:
   - name: "--mask_var"
     type: "string"
     default: "hvg"
-    description: Variable to mask for fallback representation, or "none" to use all features.
+    description: Variable to mask for fallback representation, or "none" to use all features. The "hvg" mask applies to GEX and ADT inputs; ATAC inputs use all peaks.
   - name: "--kernel_method"
     type: "string"
     choices: ["hnoca", "gauss"]
@@ -60,6 +60,7 @@ arguments:
 resources:
   - type: python_script
     path: script.py
+  - path: /src/utils/hvg.py
 engines:
   - type: docker
     image: openproblems/base_python:1
