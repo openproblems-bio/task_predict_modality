@@ -6,6 +6,8 @@
 
 * `guanlab_dengkw_pm`: Solve the kernel ridge regression with `numpy.linalg.solve()` instead of `scipy.linalg.cho_factor()`/`cho_solve()`. The Cholesky of the 32-bit-integer OpenBLAS that scipy's wheels link reports the kernel matrix as not positive definite once a half of the batches holds more than ~30-46k cells (`LinAlgError: Internal potrf return info = [49313]` on `pbmc_multiome` ATAC -> GEX in 0.2.0, where the halves hold 56k-74k cells); numpy's wheels link a 64-bit-integer OpenBLAS whose LU solve handles these systems. Also ask for `veryhighmem` and `veryhightime` rather than `highmem` and `hightime`: ATAC -> GEX peaks at 112-118 GB, and GEX -> ATAC, which 0.2.0 stopped at `hightime`'s 8 hours, takes 6.5-8 hours on 30 cores.
 
+* `simple_mlp_train`, `simple_mlp_predict`: Keep the inputs and targets sparse and densify one batch at a time (`utils.SparseRows` + `utils.batch_loader()`), and drop the unused `counts` layers after reading. `split()` densified whole folds, 143 GB for the ATAC input of `pbmc_multiome`, so ATAC -> GEX failed on it in every run since run_2026-08-14, 0.2.0 included. Batches are drawn as before.
+
 # task_predict_modality 0.2.0
 
 Adds eight methods, selects the ATAC target peaks by `hvg_score`, and fixes the bugs surfaced by the first full benchmark runs.
