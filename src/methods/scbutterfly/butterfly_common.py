@@ -20,8 +20,12 @@ import torch
 from scipy.sparse import csr_matrix, issparse
 
 import chrom_utils
+from seed import seed_everything
 
 logger = logging.getLogger(__name__)
+
+# scButterfly seeds python, numpy and torch with this itself (Butterfly(), train_model())
+SEED = 19193
 
 
 def apply_runtime_patches():
@@ -386,6 +390,8 @@ def build_butterfly(train_mod1, train_mod2, test_mod1, n_top_genes, Butterfly,
     sort_index, chrom_list = chrom_utils.sorted_chrom_order(ATAC_data)
     ATAC_data = chrom_utils.apply_sort(ATAC_data, sort_index)
 
+    # adds deterministic GPU algorithms to the seeding scButterfly does
+    seed_everything(SEED)
     butterfly = Butterfly()
     butterfly.load_data(RNA_data, ATAC_data, train_id_final, test_id, validation_id)
     del RNA_data, ATAC_data  # load_data keeps its own copies

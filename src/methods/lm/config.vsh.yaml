@@ -19,6 +19,10 @@ arguments:
     type: "integer"
     default: 50
     description: Number of principal components to use.
+  - name: "--seed"
+    type: "integer"
+    default: 0
+    description: Seed for the landmarks of the landmark MDS.
 resources:
   - type: r_script
     path: script.R

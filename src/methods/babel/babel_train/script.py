@@ -26,6 +26,7 @@ par = {
     "batch_size": 64,
     "loss2_weight": 3.0,
     "early_stopping_patience": 20,
+    "seed": 0,
 }
 meta = {"name": "babel", "resources_dir": "src/methods/babel"}
 ## VIASH END
@@ -36,6 +37,7 @@ from chrom_utils import parse_chrom_groups
 from exit_codes import exit_non_applicable
 from model import AssymSplicedAutoEncoder
 from losses import QuadLoss
+from seed import seed_everything
 
 
 def _as_csr(X):
@@ -130,6 +132,8 @@ class BabelNet(skorch.NeuralNet):
         target2_bin = y_true[:, self._n_genes : self._n_genes + self._n_peaks]
         return self.criterion_(preds11, preds12, preds21, preds22, target1, target2_bin)
 
+
+seed_everything(par["seed"])
 
 logger.info("Reading input files...")
 adata_mod1_train = ad.read_h5ad(par["input_train_mod1"])

@@ -19,7 +19,8 @@ par = {
     'input_train_mod2': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap/train_mod2.h5ad',
     'input_test_mod1': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap/test_mod1.h5ad',
     'output': 'output/model',
-    'n_epochs': None
+    'n_epochs': None,
+    'seed': 0
 }
 meta = {
     'resources_dir': 'src/methods/simple_mlp',
@@ -31,7 +32,9 @@ resources_dir = f"{meta['resources_dir']}/resources"
 
 import sys
 sys.path.append(resources_dir)
+sys.path.append(meta['resources_dir'])
 from models import MLP
+from seed import seed_everything
 import utils
 
 def _train(X, y, Xt, yt, logger, config, num_workers):
@@ -82,6 +85,8 @@ def _train(X, y, Xt, yt, logger, config, num_workers):
     return score,yp.detach().numpy()
 
 
+
+seed_everything(par['seed'])
 
 input_train_mod1 = ad.read_h5ad(par['input_train_mod1'])
 input_train_mod2 = ad.read_h5ad(par['input_train_mod2'])

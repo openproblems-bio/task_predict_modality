@@ -17,6 +17,7 @@ resources:
   - path: ../chrom_utils.py
     dest: chrom_utils.py
   - path: /src/utils/exit_codes.py
+  - path: /src/utils/seed.py
 test_resources:
   - path: /resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap
     dest: resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap
@@ -47,6 +48,10 @@ arguments:
     type: integer
     default: 20
     description: Epochs without validation loss improvement before stopping early.
+  - name: "--seed"
+    type: integer
+    default: 0
+    description: Seed for the weight initialisation, the validation split and the order of the training batches.
 engines:
   - type: docker
     image: openproblems/base_pytorch_nvidia:1

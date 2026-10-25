@@ -87,7 +87,7 @@ print(f"{n_mod1}, {n_mod2}, {scale}, {alpha}", flush=True)
 print('Models using the Truncated SVD to reduce the dimension', flush=True)
 
 if n_mod1 is not None and n_mod1 < input_train.n_vars:
-    embedder_mod1 = TruncatedSVD(n_components=n_mod1)
+    embedder_mod1 = TruncatedSVD(n_components=n_mod1, random_state=par['seed'])
     mod1_pca = embedder_mod1.fit_transform(input_train.layers["normalized"]).astype(np.float32)
     train_matrix = mod1_pca[input_train.obs['group'] == 'train']
     test_matrix = mod1_pca[input_train.obs['group'] == 'test']
@@ -96,7 +96,7 @@ else:
     test_matrix = input_test_mod1.to_df(layer="normalized").values.astype(np.float32)
   
 if n_mod2 is not None and n_mod2 < input_train_mod2.n_vars:
-    embedder_mod2 = TruncatedSVD(n_components=n_mod2)
+    embedder_mod2 = TruncatedSVD(n_components=n_mod2, random_state=par['seed'])
     train_gs = embedder_mod2.fit_transform(input_train_mod2.layers["normalized"]).astype(np.float32)
 else:
     # no dimensionality reduction, so the KRR predicts the mod2 features directly

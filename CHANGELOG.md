@@ -1,5 +1,9 @@
 # task_predict_modality 0.2.1
 
+## MAJOR CHANGES
+
+* Seed every stochastic method and control, so that rerunning the benchmark reproduces its predictions. Unseeded in 0.2.0 were the truncated SVDs of `guanlab_dengkw_pm` (its `np.random.seed()` came after them) and `knnr_py`, the `lmds` landmarks of `lm` and `knnr_r`, the draws of `random_predict`, the scvi-tools model and pynndescent search of `cellmapper_scvi` and `cellmapper_linear`, and the training of `simple_mlp`, `novel`, `babel` and the `senkin_tmp` networks. The new `src/utils/seed.py` seeds python, numpy, torch and tensorflow and makes them use deterministic GPU algorithms, which `ss_opm`, `scipenn` and `scbutterfly`, already seeded, now use too; the R components call `set.seed()`. Methods without one get a `--seed` argument (default 0).
+
 ## BUG FIXES
 
 * `correlation`: Convert the solution and the prediction to CSC before correlating them. `dynutils::spearman_rank_sparse()` ranks along the compressed dimension, which is a column only for CSC, so a CSR matrix (read as a `dgRMatrix`) was ranked per feature for the per-cell Spearman correlation and per cell for the per-gene one. In 0.2.0 this hit `mean_spearman_per_cell` and `mean_spearman_per_gene` of `ss_opm`, which writes CSR, on every dataset, and of every method on GEX -> ATAC, whose solution holds the ATAC layer as CSR (`random_predict` also writes CSR there). All other scores are unchanged. A new component test scores a prediction as CSR and as CSC and checks both against dense ranks.

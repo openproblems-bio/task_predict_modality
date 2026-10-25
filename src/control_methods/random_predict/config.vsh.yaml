@@ -3,6 +3,11 @@ name: random_predict
 label: Random predictions
 summary: Returns random training profiles.
 description: Returns random training profiles.
+arguments:
+  - name: "--seed"
+    type: "integer"
+    default: 0
+    description: Seed for drawing the random training cells.
 resources:
   - type: r_script
     path: script.R
