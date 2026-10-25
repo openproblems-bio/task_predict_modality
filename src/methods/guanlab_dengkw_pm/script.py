@@ -1,7 +1,6 @@
 import sys
 import anndata as ad
 import numpy as np
-from scipy.linalg import cho_factor, cho_solve
 from scipy.sparse import csc_matrix
 from sklearn.decomposition import TruncatedSVD
 from sklearn.gaussian_process.kernels import RBF
@@ -32,22 +31,18 @@ if meta.get('cpus'):
 # Workaround for sklearn's KernelRidge: this computes
 # KernelRidge(alpha=alpha, kernel=kernel).fit(X, y).predict(X_test), but solves the system itself.
 #
-# KernelRidge solves (K + alpha * I) w = y with scipy.linalg.solve(assume_a="pos"). In this image
-# (scipy 1.17 and 1.18 with OpenBLAS) that call raises a MemoryError or segfaults once a half of the
-# batches holds more than ~30-40k cells, no matter how much memory the job gets (200 GB was not enough
-# for 40k cells, which need ~13 GB). So the method failed on every dataset except bmmc_multiome.
+# KernelRidge solves (K + alpha * I) w = y with scipy.linalg.solve(assume_a="pos"). The Cholesky of the
+# 32-bit-integer OpenBLAS that scipy's wheels link breaks down on large systems: solve() raised a MemoryError
+# or segfaulted, and cho_factor() reports K + alpha * I as not positive definite ("potrf return info") for
+# every RBF system of 46k-60k cells tried (30k still works) and for every half of the batches of pbmc_multiome
+# (56k-74k cells). numpy's wheels link a 64-bit-integer OpenBLAS (scipy-openblas64), whose LU solve handles
+# them; where scipy's Cholesky works, the coefficients agree to 6e-13.
 #
-# K + alpha * I is symmetric positive definite, so solve() does a Cholesky factorisation anyway.
-# cho_factor()/cho_solve() run that same factorisation directly and handle 46k cells in about a minute;
-# the predictions are identical to KernelRidge's. They also factorise K in place, whereas KernelRidge
-# copies it first, which saves one n x n float64 matrix of peak memory.
-#
-# Switch back to KernelRidge once scipy.linalg.solve() handles matrices of this size again.
+# Switch back to KernelRidge once scipy ships a 64-bit-integer LAPACK.
 def kernel_ridge_predict(kernel, alpha, X, y, X_test):
     K = kernel(X)
     K.flat[::K.shape[0] + 1] += alpha
-    # K is symmetric, so its transpose is a Fortran-ordered view LAPACK can factorise in place
-    dual_coef = cho_solve(cho_factor(K.T, overwrite_a=True), y)
+    dual_coef = np.linalg.solve(K, y)
     return kernel(X_test, X) @ dual_coef
 
 
