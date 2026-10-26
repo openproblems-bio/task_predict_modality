@@ -29,6 +29,7 @@ meta = {"name": "scipenn", "resources_dir": "src/utils"}
 
 sys.path.append(meta["resources_dir"])
 from exit_codes import exit_non_applicable
+from seed import seed_everything
 
 logger.info("Reading input files...")
 rna_train = ad.read_h5ad(par["input_train_mod1"])   # mod1 = RNA (GEX)
@@ -46,8 +47,7 @@ if mod1 != "GEX" or mod2 != "ADT":
         f"got mod1={mod1!r}, mod2={mod2!r}."
     )
 
-np.random.seed(par["seed"])
-torch.manual_seed(par["seed"])
+seed_everything(par["seed"])
 
 # Feed sciPENN the task's log_cp10k layer (its internal normalize_total/log1p are
 # disabled below) so predictions live in the same space as the ground truth. sciPENN

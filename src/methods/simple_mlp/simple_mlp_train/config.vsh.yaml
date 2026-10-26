@@ -7,10 +7,15 @@ arguments:
     description: Number of training epochs. Defaults to the value in the bundled model config.
     info:
       test_default: 2
+  - name: "--seed"
+    type: integer
+    default: 0
+    description: Seed for the weight initialisation and the order of the training batches.
 resources:
   - type: python_script
     path: script.py
   - path: ../resources/
+  - path: /src/utils/seed.py
 engines:
   - type: docker
     image: openproblems/base_pytorch_nvidia:1

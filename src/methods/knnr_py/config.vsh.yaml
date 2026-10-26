@@ -23,6 +23,10 @@ arguments:
     type: "integer"
     default: 100
     description: Number of neighbors to use.
+  - name: "--seed"
+    type: "integer"
+    default: 0
+    description: Seed for the truncated SVD.
 resources:
   - type: python_script
     path: script.py

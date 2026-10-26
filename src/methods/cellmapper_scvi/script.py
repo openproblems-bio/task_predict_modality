@@ -16,7 +16,7 @@ par = {
     'use_hvg': False,
     'adt_normalization': 'clr',  # Normalization method for ADT data
     'plot_umap': True,
-
+    'seed': 0,
 }
 meta = {
   'name': 'cellmapper_scvi',
@@ -25,7 +25,12 @@ meta = {
 ## VIASH END
 
 sys.path.append(meta['resources_dir'])
+import scvi
+from seed import seed_everything
 from utils import get_representation
+
+seed_everything(par['seed'])
+scvi.settings.seed = par['seed']
 
 print('Reading input files', flush=True)
 input_train_mod1 = ad.read_h5ad(par['input_train_mod1'])

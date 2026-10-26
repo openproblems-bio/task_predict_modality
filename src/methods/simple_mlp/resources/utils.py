@@ -1,6 +1,9 @@
 import numpy as np
+import scipy.sparse
+import torch
 import yaml
 from collections import namedtuple
+from torch.utils.data import BatchSampler, DataLoader, Dataset, RandomSampler, SequentialSampler
 
 
 def to_site_donor(data):
@@ -26,15 +29,45 @@ def split(tr1, tr2, fold):
 
     maskr = ~mask
 
-    Xt = tr1[mask].layers["normalized"].toarray()
-    X = tr1[maskr].layers["normalized"].toarray()
+    # kept sparse: densified, the NeurIPS 2022 ATAC input alone needs 143 GB; see batch_loader
+    Xt = float32_rows(tr1.layers["normalized"], mask)
+    X = float32_rows(tr1.layers["normalized"], maskr)
 
-    yt = tr2[mask].layers["normalized"].toarray()
-    y = tr2[maskr].layers["normalized"].toarray()
+    yt = float32_rows(tr2.layers["normalized"], mask)
+    y = float32_rows(tr2.layers["normalized"], maskr)
 
     print(f"{X.shape}, {y.shape}, {Xt.shape}, {yt.shape}")
 
     return X,y,Xt,yt
+
+
+def float32_rows(matrix, rows):
+    """The selected rows of a sparse matrix as float32 CSR, the precision the MLP trains in."""
+    return scipy.sparse.csr_matrix(matrix[rows], dtype=np.float32)
+
+
+class SparseRows(Dataset):
+    """Rows of one or more sparse matrices, served as dense float32 tensors a whole batch at a time."""
+
+    def __init__(self, *matrices):
+        self.matrices = [scipy.sparse.csr_matrix(matrix, dtype=np.float32) for matrix in matrices]
+
+    def __len__(self):
+        return self.matrices[0].shape[0]
+
+    def __getitem__(self, rows):
+        return tuple(torch.from_numpy(matrix[rows].toarray()) for matrix in self.matrices)
+
+
+def batch_loader(dataset, batch_size, shuffle, drop_last, num_workers):
+    """DataLoader that hands `dataset` the row indices of a whole batch, so only one batch is densified at a time."""
+    rows = RandomSampler(dataset) if shuffle else SequentialSampler(dataset)
+    return DataLoader(
+        dataset,
+        sampler=BatchSampler(rows, batch_size=batch_size, drop_last=drop_last),
+        batch_size=None,
+        num_workers=num_workers,
+    )
 
 
 def load_yaml(path):

@@ -15,6 +15,7 @@ resources:
   - path: script.py
     type: python_script
   - path: ../helper_functions.py
+  - path: /src/utils/seed.py
 engines:
   - type: docker
     image: openproblems/base_pytorch_nvidia:1

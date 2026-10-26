@@ -23,6 +23,10 @@ arguments:
     type: "integer"
     default: 20
     description: Number of neighbors to use in the knn regression.
+  - name: "--seed"
+    type: "integer"
+    default: 0
+    description: Seed for the landmarks of the landmark MDS.
 resources:
   - type: r_script
     path: script.R

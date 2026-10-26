@@ -28,6 +28,7 @@ meta = {"name": "ss_opm_train", "resources_dir": "src/methods/ss_opm", "cpus": N
 
 sys.path.append(meta["resources_dir"])
 from cell_scale import CellScale  # noqa: E402
+from seed import seed_everything  # noqa: E402
 from ss_opm_common import (  # noqa: E402
     ROW_BLOCK,
     BatchSingularVectors,
@@ -55,7 +56,6 @@ apply_runtime_patches()
 from ss_opm.model.encoder_decoder.encoder_decoder import EncoderDecoder  # noqa: E402
 from ss_opm.pre_post_processing.pre_post_processing import PrePostProcessing  # noqa: E402
 from ss_opm.utility.row_normalize import row_normalize  # noqa: E402
-from ss_opm.utility.set_seed import set_seed  # noqa: E402
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using device: {device}", flush=True)
@@ -80,7 +80,7 @@ if meta.get("cpus"):
     os.environ.setdefault("OMP_NUM_THREADS", str(max(1, min(int(meta["cpus"]), 8))))
 
 SEED = 42
-set_seed(SEED)
+seed_everything(SEED)  # the original's set_seed(), plus deterministic GPU algorithms
 
 # ---- Load data ----
 print("Loading data...", flush=True)

@@ -8,7 +8,6 @@ import numpy as np
 
 import torch
 import pytorch_lightning as pl
-from torch.utils.data import TensorDataset, DataLoader
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import TensorBoardLogger,WandbLogger
 
@@ -20,7 +19,8 @@ par = {
     'input_train_mod2': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap/train_mod2.h5ad',
     'input_test_mod1': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/swap/test_mod1.h5ad',
     'output': 'output/model',
-    'n_epochs': None
+    'n_epochs': None,
+    'seed': 0
 }
 meta = {
     'resources_dir': 'src/methods/simple_mlp',
@@ -32,29 +32,25 @@ resources_dir = f"{meta['resources_dir']}/resources"
 
 import sys
 sys.path.append(resources_dir)
+sys.path.append(meta['resources_dir'])
 from models import MLP
+from seed import seed_everything
 import utils
 
 def _train(X, y, Xt, yt, logger, config, num_workers):
 
-    X = torch.from_numpy(X).float()
-    y = torch.from_numpy(y).float()
-    ymean = torch.mean(y, dim=0, keepdim=True)
+    ymean = torch.from_numpy(np.asarray(y.mean(axis=0), dtype=np.float32))
 
-    tr_ds = TensorDataset(X,y)
-    tr_loader = DataLoader(
-        tr_ds,
+    tr_loader = utils.batch_loader(
+        utils.SparseRows(X, y),
         batch_size=config.batch_size,
         num_workers=num_workers,
         shuffle=True,
         drop_last=True
     )
 
-    Xt = torch.from_numpy(Xt).float()
-    yt = torch.from_numpy(yt).float()
-    te_ds = TensorDataset(Xt,yt)
-    te_loader = DataLoader(
-        te_ds,
+    te_loader = utils.batch_loader(
+        utils.SparseRows(Xt, yt),
         batch_size=config.batch_size,
         num_workers=num_workers,
         shuffle=False,
@@ -83,15 +79,20 @@ def _train(X, y, Xt, yt, logger, config, num_workers):
     yp = trainer.predict(net, te_loader, ckpt_path='best')
     yp = torch.cat(yp, dim=0)
 
-    score = ((yp-yt)**2).mean()**0.5
+    score = ((yp - torch.from_numpy(yt.toarray()).float())**2).mean()**0.5
     print(f"VALID RMSE {score:.3f}")
     del trainer
     return score,yp.detach().numpy()
 
 
 
+seed_everything(par['seed'])
+
 input_train_mod1 = ad.read_h5ad(par['input_train_mod1'])
 input_train_mod2 = ad.read_h5ad(par['input_train_mod2'])
+# only the normalized layers are used, and the counts take as much memory again
+for adata in (input_train_mod1, input_train_mod2):
+    del adata.layers["counts"]
 
 mod_1 = input_train_mod1.uns["modality"]
 mod_2 = input_train_mod2.uns["modality"]

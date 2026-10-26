@@ -45,12 +45,15 @@ meta = {"name": "senkin_tmp", "resources_dir": "src/methods/senkin_tmp/senkin_tm
 sys.path.append(meta["resources_dir"])
 from cell_scale import CellScale
 from exit_codes import exit_non_applicable
+from seed import seed_everything
 
 # The original solution corrected batch effects per day and computed gene-protein correlations per donor and day.
 # The benchmark datasets only carry a generic `batch` column (e.g. "s1d1" in NeurIPS 2021, "day_donor" in
 # NeurIPS 2022), which is used for both purposes here. Nothing dataset specific is assumed about its format.
 BATCH_KEY = "batch"
 SEED = 42
+# the neural networks (tensorflow, imported by senkin_tmp_cite_pred) shuffle with numpy and were not seeded
+seed_everything(SEED)
 
 # ---------------------------------------------------------------------------
 # Load data
