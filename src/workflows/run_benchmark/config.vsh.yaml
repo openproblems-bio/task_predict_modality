@@ -133,6 +133,7 @@ dependencies:
   - name: methods/ss_opm
   - name: methods/scipenn
   - name: metrics/correlation
+  - name: metrics/deg
   - name: metrics/mse
 runners:
   - type: nextflow
