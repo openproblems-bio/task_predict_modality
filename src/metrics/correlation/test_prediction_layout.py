@@ -13,8 +13,7 @@ meta = {
 ## VIASH END
 
 # A prediction must get the same scores whether its layer is stored as CSR or CSC, and its per-cell and per-gene
-# Spearman correlations must match those of dense ranks. dynutils' spearman_rank_sparse() ranks along the compressed
-# dimension, so a CSR prediction used to be ranked along the wrong axis.
+# Spearman correlations must match those of dense ranks. dynutils < 1.0.13 ranks a CSR prediction along the wrong axis.
 input_dir = f"{meta['resources_dir']}/resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap"
 solution = ad.read_h5ad(f"{input_dir}/test_mod2.h5ad")
 prediction = ad.read_h5ad(f"{input_dir}/prediction.h5ad")

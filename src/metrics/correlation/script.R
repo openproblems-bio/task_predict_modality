@@ -30,8 +30,7 @@ expect_true(
 
 cat("Computing correlation metrics\n")
 # Wrangle data
-# dynutils' spearman_rank_sparse() ranks along the compressed dimension, so a CSR (dgRMatrix) prediction
-# would be ranked along the wrong axis
+# dynutils < 1.0.13 ranks a CSR matrix (dgRMatrix) along the wrong axis
 tv <- methods::as(ad_sol$layers[["normalized"]], "CsparseMatrix")
 pv <- methods::as(ad_pred$layers[["normalized"]], "CsparseMatrix")
 
