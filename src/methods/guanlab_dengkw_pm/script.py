@@ -31,14 +31,14 @@ if meta.get('cpus'):
 # Workaround for sklearn's KernelRidge: this computes
 # KernelRidge(alpha=alpha, kernel=kernel).fit(X, y).predict(X_test), but solves the system itself.
 #
-# KernelRidge solves (K + alpha * I) w = y with scipy.linalg.solve(assume_a="pos"). The Cholesky of the
-# 32-bit-integer OpenBLAS that scipy's wheels link breaks down on large systems: solve() raised a MemoryError
-# or segfaulted, and cho_factor() reports K + alpha * I as not positive definite ("potrf return info") for
-# every RBF system of 46k-60k cells tried (30k still works) and for every half of the batches of pbmc_multiome
-# (56k-74k cells). numpy's wheels link a 64-bit-integer OpenBLAS (scipy-openblas64), whose LU solve handles
-# them; where scipy's Cholesky works, the coefficients agree to 6e-13.
+# KernelRidge solves (K + alpha * I) w = y with scipy.linalg.solve(assume_a="pos"). That call raised a MemoryError
+# or segfaulted on large systems, and cho_factor() reports K + alpha * I as not positive definite ("potrf return
+# info") for every half of the batches of pbmc_multiome (56k-74k cells). This depends on the CPU: on the Cascade Lake
+# workers of de.NBI, OpenBLAS picks its AVX-512 kernel (SkylakeX) and cho_factor() fails at 66k cells, whereas it
+# succeeds with the Haswell kernel, on AMD CPUs or with OPENBLAS_CORETYPE=Haswell. The LU solve of numpy.linalg.solve()
+# handles these systems; where scipy's Cholesky works, the coefficients agree to 6e-13.
 #
-# Switch back to KernelRidge once scipy ships a 64-bit-integer LAPACK.
+# Switch back to KernelRidge once OpenBLAS's Cholesky handles these systems on every CPU.
 def kernel_ridge_predict(kernel, alpha, X, y, X_test):
     K = kernel(X)
     K.flat[::K.shape[0] + 1] += alpha
