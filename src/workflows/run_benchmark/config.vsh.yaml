@@ -47,6 +47,12 @@ argument_groups:
         required: true
         direction: output
         default: task_info.yaml
+  - name: Method arguments
+    arguments:
+      - name: "--seed"
+        type: integer
+        default: 0
+        description: Seed for all of the methods and control methods. A `seed` in a parameter set takes precedence.
   - name: Method filtering
     description: |
       Use these arguments to filter methods by name. By default, all methods are

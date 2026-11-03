@@ -4,7 +4,6 @@ import numpy as np
 from scipy.sparse import csc_matrix
 import anndata as ad
 import torch
-from torch.utils.data import TensorDataset,DataLoader
 
 ## VIASH START
 par = {
@@ -68,10 +67,7 @@ else:
     ymean = torch.from_numpy(ymean).float()
     yaml_path=f"{resources_dir}/yaml/mlp_{task}.yaml"
     config = utils.load_yaml(yaml_path)
-    X = input_test_mod1.layers["normalized"].toarray()
-    X = torch.from_numpy(X).float()
-
-    te_ds = TensorDataset(X)
+    te_ds = utils.SparseRows(input_test_mod1.layers["normalized"])
 
     yp = 0
     for fold in folds:
@@ -81,12 +77,12 @@ else:
         ckpt = glob(load_path)[0]
         model_inf = MLP.load_from_checkpoint(
             ckpt,
-            in_dim=X.shape[1],
+            in_dim=input_test_mod1.n_vars,
             out_dim=input_train_mod2.n_vars,
             ymean=ymean,
             config=config
         )
-        te_loader = DataLoader(
+        te_loader = utils.batch_loader(
             te_ds,
             batch_size=config.batch_size,
             num_workers=0,

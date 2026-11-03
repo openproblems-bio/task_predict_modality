@@ -49,6 +49,8 @@ logger.info("Reconstructing scButterfly model...")
 built = butterfly_common.build_butterfly(
     train_mod1, train_mod2, test_mod1,
     n_top_genes=metadata["n_top_genes"], Butterfly=Butterfly,
+    # Models trained before --seed was added used scButterfly's own seed.
+    seed=metadata.get("seed", 19193),
     # Models trained before every target feature was modelled lack the key.
     model_all_target_features=metadata.get("model_all_target_features", False),
 )

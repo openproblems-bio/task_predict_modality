@@ -12,6 +12,7 @@ par = {
     'output': 'output.h5ad',
     'n_pcs': 4,
     'n_neighbors': 5,
+    'seed': 0,
 }
 meta = { 'name': 'foo' }
 ## VIASH END
@@ -31,7 +32,7 @@ input_train = ad.concat(
 )
 
 print('Performing dimensionality reduction on modality 1 values...', flush=True)
-embedder = TruncatedSVD(n_components=par['n_pcs'])
+embedder = TruncatedSVD(n_components=par['n_pcs'], random_state=par['seed'])
 X = embedder.fit_transform(input_train.layers["normalized"])
 
 # split dimred back up

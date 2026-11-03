@@ -25,6 +25,10 @@ arguments:
     __merge__: file_prediction.yaml
     direction: output
     required: true
+  - name: "--seed"
+    type: integer
+    default: 0
+    description: Seed for the random number generators of the method.
 test_resources:
   - type: python_script
     path: /common/component_tests/check_config.py
