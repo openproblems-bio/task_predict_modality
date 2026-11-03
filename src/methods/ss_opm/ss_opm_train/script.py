@@ -22,6 +22,7 @@ par = {
     "n_epochs": 40,
     "burnin_length_epoch": 10,
     "n_rescaling_cells": 5000,
+    "seed": 0,
 }
 meta = {"name": "ss_opm_train", "resources_dir": "src/methods/ss_opm", "cpus": None}
 ## VIASH END
@@ -79,7 +80,7 @@ encoder_decoder_module.EncoderDecoder._train_step_forward = _float32_train_step_
 if meta.get("cpus"):
     os.environ.setdefault("OMP_NUM_THREADS", str(max(1, min(int(meta["cpus"]), 8))))
 
-SEED = 42
+SEED = par["seed"]
 seed_everything(SEED)  # the original's set_seed(), plus deterministic GPU algorithms
 
 # ---- Load data ----

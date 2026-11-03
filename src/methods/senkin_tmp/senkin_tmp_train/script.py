@@ -38,6 +38,7 @@ par = {
     "lgbm_learning_rate": 0.1,
     "lgbm_max_bin": 63,
     "lgbm_n_jobs": -1,
+    "seed": 0,
 }
 meta = {"name": "senkin_tmp", "resources_dir": "src/methods/senkin_tmp/senkin_tmp_train", "cpus": None, "memory_gb": None}
 ## VIASH END
@@ -51,8 +52,8 @@ from seed import seed_everything
 # The benchmark datasets only carry a generic `batch` column (e.g. "s1d1" in NeurIPS 2021, "day_donor" in
 # NeurIPS 2022), which is used for both purposes here. Nothing dataset specific is assumed about its format.
 BATCH_KEY = "batch"
-SEED = 42
-# the neural networks (tensorflow, imported by senkin_tmp_cite_pred) shuffle with numpy and were not seeded
+SEED = par["seed"]
+# the neural networks (tensorflow, imported by senkin_tmp_cite_pred) shuffle with numpy
 seed_everything(SEED)
 
 # ---------------------------------------------------------------------------
