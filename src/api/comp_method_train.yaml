@@ -23,6 +23,10 @@ arguments:
     __merge__: file_pretrained_model.yaml
     direction: output
     required: true
+  - name: "--seed"
+    type: integer
+    default: 0
+    description: Seed for the random number generators used for training the model.
 test_resources:
   - type: python_script
     path: /common/component_tests/run_and_check_output.py

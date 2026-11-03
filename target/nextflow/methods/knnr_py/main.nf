@@ -3462,6 +3462,18 @@ meta = [
           "multiple_sep" : ";"
         },
         {
+          "type" : "integer",
+          "name" : "--seed",
+          "description" : "Seed for the random number generators of the method.",
+          "default" : [
+            0
+          ],
+          "required" : false,
+          "direction" : "input",
+          "multiple" : false,
+          "multiple_sep" : ";"
+        },
+        {
           "type" : "string",
           "name" : "--distance_method",
           "description" : "The distance metric to use. Possible values include `euclidean` and `minkowski`.",
@@ -3615,7 +3627,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/knnr_py",
     "viash_version" : "0.9.7",
-    "git_commit" : "4d73d31645c57097a6765ff3d3585503aaa99d33",
+    "git_commit" : "bc9313f98ac3d0f1b8e6915dbdf8926a95976d9d",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3837,6 +3849,7 @@ par = {
   'input_train_mod2': $( if [ ! -z ${VIASH_PAR_INPUT_TRAIN_MOD2+x} ]; then echo "r'${VIASH_PAR_INPUT_TRAIN_MOD2//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
   'input_test_mod1': $( if [ ! -z ${VIASH_PAR_INPUT_TEST_MOD1+x} ]; then echo "r'${VIASH_PAR_INPUT_TEST_MOD1//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
   'output': $( if [ ! -z ${VIASH_PAR_OUTPUT+x} ]; then echo "r'${VIASH_PAR_OUTPUT//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
+  'seed': $( if [ ! -z ${VIASH_PAR_SEED+x} ]; then echo "int(r'${VIASH_PAR_SEED//\\'/\\'\\"\\'\\"r\\'}')"; else echo None; fi ),
   'distance_method': $( if [ ! -z ${VIASH_PAR_DISTANCE_METHOD+x} ]; then echo "r'${VIASH_PAR_DISTANCE_METHOD//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
   'n_pcs': $( if [ ! -z ${VIASH_PAR_N_PCS+x} ]; then echo "int(r'${VIASH_PAR_N_PCS//\\'/\\'\\"\\'\\"r\\'}')"; else echo None; fi ),
   'n_neighbors': $( if [ ! -z ${VIASH_PAR_N_NEIGHBORS+x} ]; then echo "int(r'${VIASH_PAR_N_NEIGHBORS//\\'/\\'\\"\\'\\"r\\'}')"; else echo None; fi )
@@ -3882,7 +3895,7 @@ input_train = ad.concat(
 )
 
 print('Performing dimensionality reduction on modality 1 values...', flush=True)
-embedder = TruncatedSVD(n_components=par['n_pcs'])
+embedder = TruncatedSVD(n_components=par['n_pcs'], random_state=par['seed'])
 X = embedder.fit_transform(input_train.layers["normalized"])
 
 # split dimred back up

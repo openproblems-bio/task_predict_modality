@@ -25,7 +25,7 @@ par = {
   'input_train_mod2': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/normal/train_mod2.h5ad',
   'output': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/normal/models/novel',
   'n_epochs': 100,
-  'seed': 1
+  'seed': 0
 }
 meta = {
   'resources_dir': 'src/methods/novel',
@@ -35,6 +35,9 @@ meta = {
 sys.path.append(meta['resources_dir'])
 from helper_functions import train_and_valid, lsiTransformer, ModalityMatchingDataset
 from helper_functions import ModelRegressionAtac2Gex, ModelRegressionAdt2Gex, ModelRegressionGex2Adt, ModelRegressionGex2Atac
+from seed import seed_everything
+
+seed_everything(par['seed'])
 
 print('Load data', flush=True)
 input_train_mod1 = ad.read_h5ad(par['input_train_mod1'])

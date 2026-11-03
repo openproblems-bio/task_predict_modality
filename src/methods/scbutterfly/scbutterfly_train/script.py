@@ -20,6 +20,7 @@ par = {
     "patience": 50,
     "batch_size": 64,
     "n_top_genes": 3000,
+    "seed": 0,
 }
 meta = {"name": "scbutterfly", "resources_dir": "src/methods/scbutterfly"}
 ## VIASH END
@@ -66,7 +67,7 @@ os.makedirs(par["output"], exist_ok=True)
 logger.info("Building scButterfly model...")
 built = butterfly_common.build_butterfly(
     train_mod1, train_mod2, test_mod1,
-    n_top_genes=par["n_top_genes"], Butterfly=Butterfly,
+    n_top_genes=par["n_top_genes"], Butterfly=Butterfly, seed=par["seed"],
 )
 butterfly = built["butterfly"]
 
@@ -78,6 +79,7 @@ butterfly.train_model(
     patience=par["patience"],
     batch_size=par["batch_size"],
     output_path=par["output"],
+    seed=par["seed"],
 )
 
 # Spread of the per-cell scale, from the held-out cells predicted with the weights
@@ -100,6 +102,7 @@ metadata = {
     "n_top_genes": par["n_top_genes"],
     "model_all_target_features": True,
     "batch_size": par["batch_size"],
+    "seed": par["seed"],
     "target_var_names": list(train_mod2.var_names),
     "dataset_id": train_mod1.uns.get("dataset_id", ""),
 }

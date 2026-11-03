@@ -3462,6 +3462,18 @@ meta = [
           "multiple_sep" : ";"
         },
         {
+          "type" : "integer",
+          "name" : "--seed",
+          "description" : "Seed for the random number generators of the method.",
+          "default" : [
+            0
+          ],
+          "required" : false,
+          "direction" : "input",
+          "multiple" : false,
+          "multiple_sep" : ";"
+        },
+        {
           "type" : "string",
           "name" : "--fallback_representation",
           "description" : "Fallback representation to use for k-NN mapping (computed if use_rep is None).",
@@ -3525,6 +3537,10 @@ meta = [
       "type" : "python_script",
       "path" : "script.py",
       "is_executable" : true
+    },
+    {
+      "type" : "file",
+      "path" : "/src/utils/seed.py"
     }
   ],
   "label" : "CellMapper+PCA/CCA",
@@ -3677,7 +3693,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/cellmapper_linear",
     "viash_version" : "0.9.7",
-    "git_commit" : "4d73d31645c57097a6765ff3d3585503aaa99d33",
+    "git_commit" : "bc9313f98ac3d0f1b8e6915dbdf8926a95976d9d",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3887,6 +3903,8 @@ def innerWorkflowFactory(args) {
   def rawScript = '''set -e
 tempscript=".viash_script.py"
 cat > "$tempscript" << VIASHMAIN
+import sys
+
 import anndata as ad
 import cellmapper as cm
 from scipy.sparse import csc_matrix
@@ -3898,6 +3916,7 @@ par = {
   'input_train_mod2': $( if [ ! -z ${VIASH_PAR_INPUT_TRAIN_MOD2+x} ]; then echo "r'${VIASH_PAR_INPUT_TRAIN_MOD2//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
   'input_test_mod1': $( if [ ! -z ${VIASH_PAR_INPUT_TEST_MOD1+x} ]; then echo "r'${VIASH_PAR_INPUT_TEST_MOD1//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
   'output': $( if [ ! -z ${VIASH_PAR_OUTPUT+x} ]; then echo "r'${VIASH_PAR_OUTPUT//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
+  'seed': $( if [ ! -z ${VIASH_PAR_SEED+x} ]; then echo "int(r'${VIASH_PAR_SEED//\\'/\\'\\"\\'\\"r\\'}')"; else echo None; fi ),
   'fallback_representation': $( if [ ! -z ${VIASH_PAR_FALLBACK_REPRESENTATION+x} ]; then echo "r'${VIASH_PAR_FALLBACK_REPRESENTATION//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
   'mask_var': $( if [ ! -z ${VIASH_PAR_MASK_VAR+x} ]; then echo "r'${VIASH_PAR_MASK_VAR//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
   'kernel_method': $( if [ ! -z ${VIASH_PAR_KERNEL_METHOD+x} ]; then echo "r'${VIASH_PAR_KERNEL_METHOD//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
@@ -3928,6 +3947,11 @@ dep = {
 }
 
 ## VIASH END
+
+sys.path.append(meta['resources_dir'])
+from seed import seed_everything
+
+seed_everything(par['seed'])
 
 print('Reading input files', flush=True)
 input_train_mod1 = ad.read_h5ad(par['input_train_mod1'])

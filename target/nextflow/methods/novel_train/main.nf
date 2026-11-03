@@ -3436,13 +3436,10 @@ meta = [
         },
         {
           "type" : "integer",
-          "name" : "--n_epochs",
-          "description" : "Number of training epochs.",
-          "info" : {
-            "test_default" : 2
-          },
+          "name" : "--seed",
+          "description" : "Seed for the random number generators used for training the model.",
           "default" : [
-            100
+            0
           ],
           "required" : false,
           "direction" : "input",
@@ -3451,10 +3448,13 @@ meta = [
         },
         {
           "type" : "integer",
-          "name" : "--seed",
-          "description" : "Seed for choosing the internal validation batches, when the dataset does not contain the batches used in the competition.",
+          "name" : "--n_epochs",
+          "description" : "Number of training epochs.",
+          "info" : {
+            "test_default" : 2
+          },
           "default" : [
-            1
+            100
           ],
           "required" : false,
           "direction" : "input",
@@ -3473,6 +3473,10 @@ meta = [
     {
       "type" : "file",
       "path" : "../helper_functions.py"
+    },
+    {
+      "type" : "file",
+      "path" : "/src/utils/seed.py"
     }
   ],
   "test_resources" : [
@@ -3581,7 +3585,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/novel_train",
     "viash_version" : "0.9.7",
-    "git_commit" : "4d73d31645c57097a6765ff3d3585503aaa99d33",
+    "git_commit" : "bc9313f98ac3d0f1b8e6915dbdf8926a95976d9d",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3819,8 +3823,8 @@ par = {
   'input_train_mod2': $( if [ ! -z ${VIASH_PAR_INPUT_TRAIN_MOD2+x} ]; then echo "r'${VIASH_PAR_INPUT_TRAIN_MOD2//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
   'input_test_mod1': $( if [ ! -z ${VIASH_PAR_INPUT_TEST_MOD1+x} ]; then echo "r'${VIASH_PAR_INPUT_TEST_MOD1//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
   'output': $( if [ ! -z ${VIASH_PAR_OUTPUT+x} ]; then echo "r'${VIASH_PAR_OUTPUT//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
-  'n_epochs': $( if [ ! -z ${VIASH_PAR_N_EPOCHS+x} ]; then echo "int(r'${VIASH_PAR_N_EPOCHS//\\'/\\'\\"\\'\\"r\\'}')"; else echo None; fi ),
-  'seed': $( if [ ! -z ${VIASH_PAR_SEED+x} ]; then echo "int(r'${VIASH_PAR_SEED//\\'/\\'\\"\\'\\"r\\'}')"; else echo None; fi )
+  'seed': $( if [ ! -z ${VIASH_PAR_SEED+x} ]; then echo "int(r'${VIASH_PAR_SEED//\\'/\\'\\"\\'\\"r\\'}')"; else echo None; fi ),
+  'n_epochs': $( if [ ! -z ${VIASH_PAR_N_EPOCHS+x} ]; then echo "int(r'${VIASH_PAR_N_EPOCHS//\\'/\\'\\"\\'\\"r\\'}')"; else echo None; fi )
 }
 meta = {
   'name': $( if [ ! -z ${VIASH_META_NAME+x} ]; then echo "r'${VIASH_META_NAME//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
@@ -3851,6 +3855,9 @@ dep = {
 sys.path.append(meta['resources_dir'])
 from helper_functions import train_and_valid, lsiTransformer, ModalityMatchingDataset
 from helper_functions import ModelRegressionAtac2Gex, ModelRegressionAdt2Gex, ModelRegressionGex2Adt, ModelRegressionGex2Atac
+from seed import seed_everything
+
+seed_everything(par['seed'])
 
 print('Load data', flush=True)
 input_train_mod1 = ad.read_h5ad(par['input_train_mod1'])

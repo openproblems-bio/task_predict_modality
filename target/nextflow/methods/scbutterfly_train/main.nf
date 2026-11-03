@@ -3436,6 +3436,18 @@ meta = [
         },
         {
           "type" : "integer",
+          "name" : "--seed",
+          "description" : "Seed for the random number generators used for training the model.",
+          "default" : [
+            0
+          ],
+          "required" : false,
+          "direction" : "input",
+          "multiple" : false,
+          "multiple_sep" : ";"
+        },
+        {
+          "type" : "integer",
           "name" : "--rna_pretrain_epoch",
           "description" : "RNA autoencoder pretraining epochs (R2R_pretrain_epoch).",
           "default" : [
@@ -3530,6 +3542,10 @@ meta = [
     {
       "type" : "file",
       "path" : "/src/utils/cell_scale.py"
+    },
+    {
+      "type" : "file",
+      "path" : "/src/utils/seed.py"
     }
   ],
   "test_resources" : [
@@ -3657,7 +3673,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/scbutterfly_train",
     "viash_version" : "0.9.7",
-    "git_commit" : "4d73d31645c57097a6765ff3d3585503aaa99d33",
+    "git_commit" : "bc9313f98ac3d0f1b8e6915dbdf8926a95976d9d",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3884,6 +3900,7 @@ par = {
   'input_train_mod2': $( if [ ! -z ${VIASH_PAR_INPUT_TRAIN_MOD2+x} ]; then echo "r'${VIASH_PAR_INPUT_TRAIN_MOD2//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
   'input_test_mod1': $( if [ ! -z ${VIASH_PAR_INPUT_TEST_MOD1+x} ]; then echo "r'${VIASH_PAR_INPUT_TEST_MOD1//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
   'output': $( if [ ! -z ${VIASH_PAR_OUTPUT+x} ]; then echo "r'${VIASH_PAR_OUTPUT//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
+  'seed': $( if [ ! -z ${VIASH_PAR_SEED+x} ]; then echo "int(r'${VIASH_PAR_SEED//\\'/\\'\\"\\'\\"r\\'}')"; else echo None; fi ),
   'rna_pretrain_epoch': $( if [ ! -z ${VIASH_PAR_RNA_PRETRAIN_EPOCH+x} ]; then echo "int(r'${VIASH_PAR_RNA_PRETRAIN_EPOCH//\\'/\\'\\"\\'\\"r\\'}')"; else echo None; fi ),
   'atac_pretrain_epoch': $( if [ ! -z ${VIASH_PAR_ATAC_PRETRAIN_EPOCH+x} ]; then echo "int(r'${VIASH_PAR_ATAC_PRETRAIN_EPOCH//\\'/\\'\\"\\'\\"r\\'}')"; else echo None; fi ),
   'translator_epoch': $( if [ ! -z ${VIASH_PAR_TRANSLATOR_EPOCH+x} ]; then echo "int(r'${VIASH_PAR_TRANSLATOR_EPOCH//\\'/\\'\\"\\'\\"r\\'}')"; else echo None; fi ),
@@ -3959,7 +3976,7 @@ os.makedirs(par["output"], exist_ok=True)
 logger.info("Building scButterfly model...")
 built = butterfly_common.build_butterfly(
     train_mod1, train_mod2, test_mod1,
-    n_top_genes=par["n_top_genes"], Butterfly=Butterfly,
+    n_top_genes=par["n_top_genes"], Butterfly=Butterfly, seed=par["seed"],
 )
 butterfly = built["butterfly"]
 
@@ -3971,6 +3988,7 @@ butterfly.train_model(
     patience=par["patience"],
     batch_size=par["batch_size"],
     output_path=par["output"],
+    seed=par["seed"],
 )
 
 # Spread of the per-cell scale, from the held-out cells predicted with the weights
@@ -3993,6 +4011,7 @@ metadata = {
     "n_top_genes": par["n_top_genes"],
     "model_all_target_features": True,
     "batch_size": par["batch_size"],
+    "seed": par["seed"],
     "target_var_names": list(train_mod2.var_names),
     "dataset_id": train_mod1.uns.get("dataset_id", ""),
 }

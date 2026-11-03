@@ -3307,6 +3307,11 @@ meta = [
       "type" : "file",
       "path" : "/resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap",
       "dest" : "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/swap"
+    },
+    {
+      "type" : "python_script",
+      "path" : "test_prediction_layout.py",
+      "is_executable" : true
     }
   ],
   "info" : {
@@ -3476,7 +3481,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/metrics/correlation",
     "viash_version" : "0.9.7",
-    "git_commit" : "4d73d31645c57097a6765ff3d3585503aaa99d33",
+    "git_commit" : "bc9313f98ac3d0f1b8e6915dbdf8926a95976d9d",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3751,15 +3756,15 @@ expect_true(
 
 cat("Computing correlation metrics\\\\n")
 # Wrangle data
-tv <- ad_sol\\$layers[["normalized"]]
-pv <- ad_pred\\$layers[["normalized"]]
+# dynutils < 1.0.13 ranks a CSR matrix (dgRMatrix) along the wrong axis
+tv <- methods::as(ad_sol\\$layers[["normalized"]], "CsparseMatrix")
+pv <- methods::as(ad_pred\\$layers[["normalized"]], "CsparseMatrix")
 
 # score non-finite predictions as zero, like the zero-variance case below
-pv_values <- if (methods::is(pv, "sparseMatrix")) pv@x else pv
-non_finite <- !is.finite(pv_values)
+non_finite <- !is.finite(pv@x)
 if (any(non_finite)) {
   cat("Prediction contains", sum(non_finite), "non-finite values, scoring them as 0\\\\n")
-  if (methods::is(pv, "sparseMatrix")) pv@x[non_finite] <- 0 else pv[non_finite] <- 0
+  pv@x[non_finite] <- 0
 }
 
 # precompute sds

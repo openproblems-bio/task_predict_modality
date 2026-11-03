@@ -1,3 +1,17 @@
+# task_predict_modality 0.2.1
+
+## MAJOR CHANGES
+
+* Add `--seed` to all methods, controls and `run_benchmark`, so that reruns reproduce the predictions (PR #83).
+
+## BUG FIXES
+
+* `correlation`: Convert matrices to CSC, since dynutils < 1.0.13 gave wrong Spearman scores on CSR (PR #83).
+
+* `guanlab_dengkw_pm`: Replace `scipy.linalg.cho_factor()`, which failed on `pbmc_multiome`, with `numpy.linalg.solve()`, and ask for more memory and time (PR #83).
+
+* `simple_mlp`: Densify one batch at a time, which fixes running out of memory on `pbmc_multiome` (PR #83).
+
 # task_predict_modality 0.2.0
 
 Adds eight methods, selects the ATAC target peaks by `hvg_score`, and fixes the bugs surfaced by the first full benchmark runs.

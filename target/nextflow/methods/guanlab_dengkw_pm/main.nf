@@ -3463,13 +3463,10 @@ meta = [
         },
         {
           "type" : "integer",
-          "name" : "--n_repeats",
-          "description" : "Number of times the batches are reshuffled into two halves. Each half fits one\nkernel ridge model, so the consensus averages `2 * n_repeats` predictions.\n",
-          "info" : {
-            "test_default" : 1
-          },
+          "name" : "--seed",
+          "description" : "Seed for the random number generators of the method.",
           "default" : [
-            5
+            0
           ],
           "required" : false,
           "direction" : "input",
@@ -3478,10 +3475,13 @@ meta = [
         },
         {
           "type" : "integer",
-          "name" : "--seed",
-          "description" : "Seed for the batch reshuffling.",
+          "name" : "--n_repeats",
+          "description" : "Number of times the batches are reshuffled into two halves. Each half fits one\nkernel ridge model, so the consensus averages `2 * n_repeats` predictions.\n",
+          "info" : {
+            "test_default" : 1
+          },
           "default" : [
-            1000
+            5
           ],
           "required" : false,
           "direction" : "input",
@@ -3567,8 +3567,8 @@ meta = [
       "id" : "nextflow",
       "directives" : {
         "label" : [
-          "hightime",
-          "highmem",
+          "veryhightime",
+          "veryhighmem",
           "highcpu"
         ],
         "tag" : "$id"
@@ -3624,7 +3624,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/guanlab_dengkw_pm",
     "viash_version" : "0.9.7",
-    "git_commit" : "4d73d31645c57097a6765ff3d3585503aaa99d33",
+    "git_commit" : "bc9313f98ac3d0f1b8e6915dbdf8926a95976d9d",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3837,7 +3837,6 @@ cat > "$tempscript" << VIASHMAIN
 import sys
 import anndata as ad
 import numpy as np
-from scipy.linalg import cho_factor, cho_solve
 from scipy.sparse import csc_matrix
 from sklearn.decomposition import TruncatedSVD
 from sklearn.gaussian_process.kernels import RBF
@@ -3850,8 +3849,8 @@ par = {
   'input_train_mod2': $( if [ ! -z ${VIASH_PAR_INPUT_TRAIN_MOD2+x} ]; then echo "r'${VIASH_PAR_INPUT_TRAIN_MOD2//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
   'input_test_mod1': $( if [ ! -z ${VIASH_PAR_INPUT_TEST_MOD1+x} ]; then echo "r'${VIASH_PAR_INPUT_TEST_MOD1//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
   'output': $( if [ ! -z ${VIASH_PAR_OUTPUT+x} ]; then echo "r'${VIASH_PAR_OUTPUT//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
-  'n_repeats': $( if [ ! -z ${VIASH_PAR_N_REPEATS+x} ]; then echo "int(r'${VIASH_PAR_N_REPEATS//\\'/\\'\\"\\'\\"r\\'}')"; else echo None; fi ),
-  'seed': $( if [ ! -z ${VIASH_PAR_SEED+x} ]; then echo "int(r'${VIASH_PAR_SEED//\\'/\\'\\"\\'\\"r\\'}')"; else echo None; fi )
+  'seed': $( if [ ! -z ${VIASH_PAR_SEED+x} ]; then echo "int(r'${VIASH_PAR_SEED//\\'/\\'\\"\\'\\"r\\'}')"; else echo None; fi ),
+  'n_repeats': $( if [ ! -z ${VIASH_PAR_N_REPEATS+x} ]; then echo "int(r'${VIASH_PAR_N_REPEATS//\\'/\\'\\"\\'\\"r\\'}')"; else echo None; fi )
 }
 meta = {
   'name': $( if [ ! -z ${VIASH_META_NAME+x} ]; then echo "r'${VIASH_META_NAME//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
@@ -3889,22 +3888,23 @@ if meta.get('cpus'):
 # Workaround for sklearn's KernelRidge: this computes
 # KernelRidge(alpha=alpha, kernel=kernel).fit(X, y).predict(X_test), but solves the system itself.
 #
-# KernelRidge solves (K + alpha * I) w = y with scipy.linalg.solve(assume_a="pos"). In this image
-# (scipy 1.17 and 1.18 with OpenBLAS) that call raises a MemoryError or segfaults once a half of the
-# batches holds more than ~30-40k cells, no matter how much memory the job gets (200 GB was not enough
-# for 40k cells, which need ~13 GB). So the method failed on every dataset except bmmc_multiome.
+# KernelRidge solves (K + alpha * I) w = y with scipy.linalg.solve(assume_a="pos"), which fails on large systems.
+# Tried on the halves of the batches of pbmc_multiome (56k-74k cells), or at the same size:
+# - scipy.linalg.solve(assume_a="pos"): raises a MemoryError or segfaults, already from ~30-40k cells
+# - scipy.linalg.cho_factor(): reports K + alpha * I as not positive definite ("potrf return info")
+# - numpy.linalg.cholesky(): segfaults
+# - numpy.linalg.solve(): works, 270 s for 66k cells on 30 threads. Where scipy's Cholesky works, the coefficients
+#   agree to 6e-13.
 #
-# K + alpha * I is symmetric positive definite, so solve() does a Cholesky factorisation anyway.
-# cho_factor()/cho_solve() run that same factorisation directly and handle 46k cells in about a minute;
-# the predictions are identical to KernelRidge's. They also factorise K in place, whereas KernelRidge
-# copies it first, which saves one n x n float64 matrix of peak memory.
+# The Cholesky failures depend on the CPU: on the Cascade Lake workers of de.NBI, OpenBLAS picks its AVX-512 kernel
+# (SkylakeX). cho_factor() succeeds at 66k cells with the Haswell kernel, on AMD CPUs or with
+# OPENBLAS_CORETYPE=Haswell, but numpy.linalg.solve() doesn't need that set on every backend.
 #
-# Switch back to KernelRidge once scipy.linalg.solve() handles matrices of this size again.
+# Switch back to KernelRidge once OpenBLAS's Cholesky handles these systems on every CPU.
 def kernel_ridge_predict(kernel, alpha, X, y, X_test):
     K = kernel(X)
     K.flat[::K.shape[0] + 1] += alpha
-    # K is symmetric, so its transpose is a Fortran-ordered view LAPACK can factorise in place
-    dual_coef = cho_solve(cho_factor(K.T, overwrite_a=True), y)
+    dual_coef = np.linalg.solve(K, y)
     return kernel(X_test, X) @ dual_coef
 
 
@@ -3949,7 +3949,7 @@ print(f"{n_mod1}, {n_mod2}, {scale}, {alpha}", flush=True)
 print('Models using the Truncated SVD to reduce the dimension', flush=True)
 
 if n_mod1 is not None and n_mod1 < input_train.n_vars:
-    embedder_mod1 = TruncatedSVD(n_components=n_mod1)
+    embedder_mod1 = TruncatedSVD(n_components=n_mod1, random_state=par['seed'])
     mod1_pca = embedder_mod1.fit_transform(input_train.layers["normalized"]).astype(np.float32)
     train_matrix = mod1_pca[input_train.obs['group'] == 'train']
     test_matrix = mod1_pca[input_train.obs['group'] == 'test']
@@ -3958,7 +3958,7 @@ else:
     test_matrix = input_test_mod1.to_df(layer="normalized").values.astype(np.float32)
   
 if n_mod2 is not None and n_mod2 < input_train_mod2.n_vars:
-    embedder_mod2 = TruncatedSVD(n_components=n_mod2)
+    embedder_mod2 = TruncatedSVD(n_components=n_mod2, random_state=par['seed'])
     train_gs = embedder_mod2.fit_transform(input_train_mod2.layers["normalized"]).astype(np.float32)
 else:
     # no dimensionality reduction, so the KRR predicts the mod2 features directly
@@ -4419,8 +4419,8 @@ meta["defaults"] = [
     "tag" : "build_main"
   },
   "label" : [
-    "hightime",
-    "highmem",
+    "veryhightime",
+    "veryhighmem",
     "highcpu"
   ],
   "tag" : "$id"

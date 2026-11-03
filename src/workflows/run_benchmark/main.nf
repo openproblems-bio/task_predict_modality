@@ -126,7 +126,8 @@ workflow run_wf {
         def new_args = [
           input_train_mod1: state.input_train_mod1,
           input_train_mod2: state.input_train_mod2,
-          input_test_mod1: state.input_test_mod1
+          input_test_mod1: state.input_test_mod1,
+          seed: state.seed
         ]
         if (comp.config.info.type == "control_method") {
           new_args.input_test_mod2 = state.input_test_mod2

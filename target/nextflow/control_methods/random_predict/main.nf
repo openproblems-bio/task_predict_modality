@@ -3605,6 +3605,18 @@ meta = [
           "direction" : "output",
           "multiple" : false,
           "multiple_sep" : ";"
+        },
+        {
+          "type" : "integer",
+          "name" : "--seed",
+          "description" : "Seed for the random number generators of the control method, if it uses any.",
+          "default" : [
+            0
+          ],
+          "required" : false,
+          "direction" : "input",
+          "multiple" : false,
+          "multiple_sep" : ";"
         }
       ]
     }
@@ -3718,7 +3730,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/control_methods/random_predict",
     "viash_version" : "0.9.7",
-    "git_commit" : "4d73d31645c57097a6765ff3d3585503aaa99d33",
+    "git_commit" : "bc9313f98ac3d0f1b8e6915dbdf8926a95976d9d",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3942,7 +3954,8 @@ par <- list(
   "input_train_mod2" = $( if [ ! -z ${VIASH_PAR_INPUT_TRAIN_MOD2+x} ]; then echo -n "'"; echo -n "$VIASH_PAR_INPUT_TRAIN_MOD2" | sed "s#['\\\\]#\\\\\\\\&#g"; echo "'"; else echo NULL; fi ),
   "input_test_mod1" = $( if [ ! -z ${VIASH_PAR_INPUT_TEST_MOD1+x} ]; then echo -n "'"; echo -n "$VIASH_PAR_INPUT_TEST_MOD1" | sed "s#['\\\\]#\\\\\\\\&#g"; echo "'"; else echo NULL; fi ),
   "input_test_mod2" = $( if [ ! -z ${VIASH_PAR_INPUT_TEST_MOD2+x} ]; then echo -n "'"; echo -n "$VIASH_PAR_INPUT_TEST_MOD2" | sed "s#['\\\\]#\\\\\\\\&#g"; echo "'"; else echo NULL; fi ),
-  "output" = $( if [ ! -z ${VIASH_PAR_OUTPUT+x} ]; then echo -n "'"; echo -n "$VIASH_PAR_OUTPUT" | sed "s#['\\\\]#\\\\\\\\&#g"; echo "'"; else echo NULL; fi )
+  "output" = $( if [ ! -z ${VIASH_PAR_OUTPUT+x} ]; then echo -n "'"; echo -n "$VIASH_PAR_OUTPUT" | sed "s#['\\\\]#\\\\\\\\&#g"; echo "'"; else echo NULL; fi ),
+  "seed" = $( if [ ! -z ${VIASH_PAR_SEED+x} ]; then echo -n "as.integer('"; echo -n "$VIASH_PAR_SEED" | sed "s#['\\\\]#\\\\\\\\&#g"; echo "')"; else echo NULL; fi )
 )
 meta <- list(
   "name" = $( if [ ! -z ${VIASH_META_NAME+x} ]; then echo -n "'"; echo -n "$VIASH_META_NAME" | sed "s#['\\\\]#\\\\\\\\&#g"; echo "'"; else echo NULL; fi ),
@@ -3974,6 +3987,8 @@ options(.viash_orig_warn)
 rm(.viash_orig_warn)
 
 ## VIASH END
+
+set.seed(par\\$seed)
 
 cat("Reading h5ad files\\\\n")
 input_train_mod2 <- anndata::read_h5ad(par\\$input_train_mod2)

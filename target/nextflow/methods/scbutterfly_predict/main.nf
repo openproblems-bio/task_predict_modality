@@ -3500,6 +3500,10 @@ meta = [
     {
       "type" : "file",
       "path" : "/src/utils/cell_scale.py"
+    },
+    {
+      "type" : "file",
+      "path" : "/src/utils/seed.py"
     }
   ],
   "test_resources" : [
@@ -3623,7 +3627,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/scbutterfly_predict",
     "viash_version" : "0.9.7",
-    "git_commit" : "4d73d31645c57097a6765ff3d3585503aaa99d33",
+    "git_commit" : "bc9313f98ac3d0f1b8e6915dbdf8926a95976d9d",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3908,6 +3912,8 @@ logger.info("Reconstructing scButterfly model...")
 built = butterfly_common.build_butterfly(
     train_mod1, train_mod2, test_mod1,
     n_top_genes=metadata["n_top_genes"], Butterfly=Butterfly,
+    # Models trained before --seed was added used scButterfly's own seed.
+    seed=metadata.get("seed", 19193),
     # Models trained before every target feature was modelled lack the key.
     model_all_target_features=metadata.get("model_all_target_features", False),
 )

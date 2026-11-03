@@ -3638,6 +3638,23 @@ meta = [
       ]
     },
     {
+      "name" : "Method arguments",
+      "arguments" : [
+        {
+          "type" : "integer",
+          "name" : "--seed",
+          "description" : "Seed for all of the methods and control methods. A `seed` in a parameter set takes precedence.",
+          "default" : [
+            0
+          ],
+          "required" : false,
+          "direction" : "input",
+          "multiple" : false,
+          "multiple_sep" : ";"
+        }
+      ]
+    },
+    {
       "name" : "Method filtering",
       "description" : "Use these arguments to filter methods by name. By default, all methods are\nrun. If `--methods_include` is defined, only those methods are run. If\n`--methods_exclude` is defined, all methods except those specified are run.\nThese arguments are mutually exclusive, so only `--methods_include` OR\n`--methods_exclude` can set but not both.\n",
       "arguments" : [
@@ -3898,7 +3915,7 @@ meta = [
     "engine" : "native",
     "output" : "target/nextflow/workflows/run_benchmark",
     "viash_version" : "0.9.7",
-    "git_commit" : "4d73d31645c57097a6765ff3d3585503aaa99d33",
+    "git_commit" : "bc9313f98ac3d0f1b8e6915dbdf8926a95976d9d",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -4252,7 +4269,8 @@ workflow run_wf {
         def new_args = [
           input_train_mod1: state.input_train_mod1,
           input_train_mod2: state.input_train_mod2,
-          input_test_mod1: state.input_test_mod1
+          input_test_mod1: state.input_test_mod1,
+          seed: state.seed
         ]
         if (comp.config.info.type == "control_method") {
           new_args.input_test_mod2 = state.input_test_mod2

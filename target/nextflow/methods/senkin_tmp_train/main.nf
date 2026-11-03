@@ -3436,6 +3436,18 @@ meta = [
         },
         {
           "type" : "integer",
+          "name" : "--seed",
+          "description" : "Seed for the random number generators used for training the model.",
+          "default" : [
+            0
+          ],
+          "required" : false,
+          "direction" : "input",
+          "multiple" : false,
+          "multiple_sep" : ";"
+        },
+        {
+          "type" : "integer",
           "name" : "--n_folds",
           "description" : "Number of cross-validation folds for the neural networks (one network per fold, predictions averaged).",
           "default" : [
@@ -3567,6 +3579,10 @@ meta = [
     {
       "type" : "file",
       "path" : "/src/utils/cell_scale.py"
+    },
+    {
+      "type" : "file",
+      "path" : "/src/utils/seed.py"
     }
   ],
   "test_resources" : [
@@ -3733,7 +3749,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/senkin_tmp_train",
     "viash_version" : "0.9.7",
-    "git_commit" : "4d73d31645c57097a6765ff3d3585503aaa99d33",
+    "git_commit" : "bc9313f98ac3d0f1b8e6915dbdf8926a95976d9d",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3975,6 +3991,7 @@ par = {
   'input_train_mod2': $( if [ ! -z ${VIASH_PAR_INPUT_TRAIN_MOD2+x} ]; then echo "r'${VIASH_PAR_INPUT_TRAIN_MOD2//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
   'input_test_mod1': $( if [ ! -z ${VIASH_PAR_INPUT_TEST_MOD1+x} ]; then echo "r'${VIASH_PAR_INPUT_TEST_MOD1//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
   'output': $( if [ ! -z ${VIASH_PAR_OUTPUT+x} ]; then echo "r'${VIASH_PAR_OUTPUT//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
+  'seed': $( if [ ! -z ${VIASH_PAR_SEED+x} ]; then echo "int(r'${VIASH_PAR_SEED//\\'/\\'\\"\\'\\"r\\'}')"; else echo None; fi ),
   'n_folds': $( if [ ! -z ${VIASH_PAR_N_FOLDS+x} ]; then echo "int(r'${VIASH_PAR_N_FOLDS//\\'/\\'\\"\\'\\"r\\'}')"; else echo None; fi ),
   'lgbm_n_folds': $( if [ ! -z ${VIASH_PAR_LGBM_N_FOLDS+x} ]; then echo "int(r'${VIASH_PAR_LGBM_N_FOLDS//\\'/\\'\\"\\'\\"r\\'}')"; else echo None; fi ),
   'lgbm_boost_rounds': $( if [ ! -z ${VIASH_PAR_LGBM_BOOST_ROUNDS+x} ]; then echo "int(r'${VIASH_PAR_LGBM_BOOST_ROUNDS//\\'/\\'\\"\\'\\"r\\'}')"; else echo None; fi ),
@@ -4014,12 +4031,15 @@ dep = {
 sys.path.append(meta["resources_dir"])
 from cell_scale import CellScale
 from exit_codes import exit_non_applicable
+from seed import seed_everything
 
 # The original solution corrected batch effects per day and computed gene-protein correlations per donor and day.
 # The benchmark datasets only carry a generic \\`batch\\` column (e.g. "s1d1" in NeurIPS 2021, "day_donor" in
 # NeurIPS 2022), which is used for both purposes here. Nothing dataset specific is assumed about its format.
 BATCH_KEY = "batch"
-SEED = 42
+SEED = par["seed"]
+# the neural networks (tensorflow, imported by senkin_tmp_cite_pred) shuffle with numpy
+seed_everything(SEED)
 
 # ---------------------------------------------------------------------------
 # Load data

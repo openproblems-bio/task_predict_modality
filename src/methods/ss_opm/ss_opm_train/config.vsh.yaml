@@ -53,6 +53,7 @@ resources:
     path: script.py
   - path: ../ss_opm_common.py
   - path: /src/utils/cell_scale.py
+  - path: /src/utils/seed.py
 engines:
   - type: docker
     image: openproblems/base_pytorch_nvidia:1

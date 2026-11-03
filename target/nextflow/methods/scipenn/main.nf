@@ -3463,6 +3463,18 @@ meta = [
         },
         {
           "type" : "integer",
+          "name" : "--seed",
+          "description" : "Seed for the random number generators of the method.",
+          "default" : [
+            0
+          ],
+          "required" : false,
+          "direction" : "input",
+          "multiple" : false,
+          "multiple_sep" : ";"
+        },
+        {
+          "type" : "integer",
           "name" : "--n_epochs",
           "description" : "Maximum training epochs (early stopping applies).",
           "info" : {
@@ -3487,18 +3499,6 @@ meta = [
           "direction" : "input",
           "multiple" : false,
           "multiple_sep" : ";"
-        },
-        {
-          "type" : "integer",
-          "name" : "--seed",
-          "description" : "Seed for the train/validation split, shuffling and weight initialization.",
-          "default" : [
-            0
-          ],
-          "required" : false,
-          "direction" : "input",
-          "multiple" : false,
-          "multiple_sep" : ";"
         }
       ]
     }
@@ -3512,6 +3512,10 @@ meta = [
     {
       "type" : "file",
       "path" : "/src/utils/exit_codes.py"
+    },
+    {
+      "type" : "file",
+      "path" : "/src/utils/seed.py"
     }
   ],
   "label" : "sciPENN",
@@ -3643,7 +3647,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/scipenn",
     "viash_version" : "0.9.7",
-    "git_commit" : "4d73d31645c57097a6765ff3d3585503aaa99d33",
+    "git_commit" : "bc9313f98ac3d0f1b8e6915dbdf8926a95976d9d",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3876,9 +3880,9 @@ par = {
   'input_train_mod2': $( if [ ! -z ${VIASH_PAR_INPUT_TRAIN_MOD2+x} ]; then echo "r'${VIASH_PAR_INPUT_TRAIN_MOD2//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
   'input_test_mod1': $( if [ ! -z ${VIASH_PAR_INPUT_TEST_MOD1+x} ]; then echo "r'${VIASH_PAR_INPUT_TEST_MOD1//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
   'output': $( if [ ! -z ${VIASH_PAR_OUTPUT+x} ]; then echo "r'${VIASH_PAR_OUTPUT//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
+  'seed': $( if [ ! -z ${VIASH_PAR_SEED+x} ]; then echo "int(r'${VIASH_PAR_SEED//\\'/\\'\\"\\'\\"r\\'}')"; else echo None; fi ),
   'n_epochs': $( if [ ! -z ${VIASH_PAR_N_EPOCHS+x} ]; then echo "int(r'${VIASH_PAR_N_EPOCHS//\\'/\\'\\"\\'\\"r\\'}')"; else echo None; fi ),
-  'batch_size': $( if [ ! -z ${VIASH_PAR_BATCH_SIZE+x} ]; then echo "int(r'${VIASH_PAR_BATCH_SIZE//\\'/\\'\\"\\'\\"r\\'}')"; else echo None; fi ),
-  'seed': $( if [ ! -z ${VIASH_PAR_SEED+x} ]; then echo "int(r'${VIASH_PAR_SEED//\\'/\\'\\"\\'\\"r\\'}')"; else echo None; fi )
+  'batch_size': $( if [ ! -z ${VIASH_PAR_BATCH_SIZE+x} ]; then echo "int(r'${VIASH_PAR_BATCH_SIZE//\\'/\\'\\"\\'\\"r\\'}')"; else echo None; fi )
 }
 meta = {
   'name': $( if [ ! -z ${VIASH_META_NAME+x} ]; then echo "r'${VIASH_META_NAME//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
@@ -3908,6 +3912,7 @@ dep = {
 
 sys.path.append(meta["resources_dir"])
 from exit_codes import exit_non_applicable
+from seed import seed_everything
 
 logger.info("Reading input files...")
 rna_train = ad.read_h5ad(par["input_train_mod1"])   # mod1 = RNA (GEX)
@@ -3925,8 +3930,7 @@ if mod1 != "GEX" or mod2 != "ADT":
         f"got mod1={mod1!r}, mod2={mod2!r}."
     )
 
-np.random.seed(par["seed"])
-torch.manual_seed(par["seed"])
+seed_everything(par["seed"])
 
 # Feed sciPENN the task's log_cp10k layer (its internal normalize_total/log1p are
 # disabled below) so predictions live in the same space as the ground truth. sciPENN

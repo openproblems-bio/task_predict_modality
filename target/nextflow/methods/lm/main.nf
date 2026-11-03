@@ -3462,6 +3462,18 @@ meta = [
           "multiple_sep" : ";"
         },
         {
+          "type" : "integer",
+          "name" : "--seed",
+          "description" : "Seed for the random number generators of the method.",
+          "default" : [
+            0
+          ],
+          "required" : false,
+          "direction" : "input",
+          "multiple" : false,
+          "multiple_sep" : ";"
+        },
+        {
           "type" : "string",
           "name" : "--distance_method",
           "description" : "The distance method to use. Possible values are euclidean, pearson, spearman and others.",
@@ -3613,7 +3625,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/lm",
     "viash_version" : "0.9.7",
-    "git_commit" : "4d73d31645c57097a6765ff3d3585503aaa99d33",
+    "git_commit" : "bc9313f98ac3d0f1b8e6915dbdf8926a95976d9d",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3837,6 +3849,7 @@ par <- list(
   "input_train_mod2" = $( if [ ! -z ${VIASH_PAR_INPUT_TRAIN_MOD2+x} ]; then echo -n "'"; echo -n "$VIASH_PAR_INPUT_TRAIN_MOD2" | sed "s#['\\\\]#\\\\\\\\&#g"; echo "'"; else echo NULL; fi ),
   "input_test_mod1" = $( if [ ! -z ${VIASH_PAR_INPUT_TEST_MOD1+x} ]; then echo -n "'"; echo -n "$VIASH_PAR_INPUT_TEST_MOD1" | sed "s#['\\\\]#\\\\\\\\&#g"; echo "'"; else echo NULL; fi ),
   "output" = $( if [ ! -z ${VIASH_PAR_OUTPUT+x} ]; then echo -n "'"; echo -n "$VIASH_PAR_OUTPUT" | sed "s#['\\\\]#\\\\\\\\&#g"; echo "'"; else echo NULL; fi ),
+  "seed" = $( if [ ! -z ${VIASH_PAR_SEED+x} ]; then echo -n "as.integer('"; echo -n "$VIASH_PAR_SEED" | sed "s#['\\\\]#\\\\\\\\&#g"; echo "')"; else echo NULL; fi ),
   "distance_method" = $( if [ ! -z ${VIASH_PAR_DISTANCE_METHOD+x} ]; then echo -n "'"; echo -n "$VIASH_PAR_DISTANCE_METHOD" | sed "s#['\\\\]#\\\\\\\\&#g"; echo "'"; else echo NULL; fi ),
   "n_pcs" = $( if [ ! -z ${VIASH_PAR_N_PCS+x} ]; then echo -n "as.integer('"; echo -n "$VIASH_PAR_N_PCS" | sed "s#['\\\\]#\\\\\\\\&#g"; echo "')"; else echo NULL; fi )
 )
@@ -3870,6 +3883,8 @@ options(.viash_orig_warn)
 rm(.viash_orig_warn)
 
 ## VIASH END
+
+set.seed(par\\$seed)
 
 cat("Reading mod1 files\\\\n")
 input_train_mod1 <- anndata::read_h5ad(par\\$input_train_mod1)

@@ -4,7 +4,7 @@ workflow run_wf {
   output_ch = input_ch
 
     | simple_mlp_train.run(
-      fromState: ["input_train_mod1", "input_train_mod2"],
+      fromState: ["input_train_mod1", "input_train_mod2", "seed"],
       toState: ["input_model": "output"]
     )
 

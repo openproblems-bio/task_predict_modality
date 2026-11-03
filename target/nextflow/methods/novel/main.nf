@@ -3460,6 +3460,18 @@ meta = [
           "direction" : "output",
           "multiple" : false,
           "multiple_sep" : ";"
+        },
+        {
+          "type" : "integer",
+          "name" : "--seed",
+          "description" : "Seed for the random number generators of the method.",
+          "default" : [
+            0
+          ],
+          "required" : false,
+          "direction" : "input",
+          "multiple" : false,
+          "multiple_sep" : ";"
         }
       ]
     }
@@ -3578,7 +3590,7 @@ meta = [
     "engine" : "native",
     "output" : "target/nextflow/methods/novel",
     "viash_version" : "0.9.7",
-    "git_commit" : "4d73d31645c57097a6765ff3d3585503aaa99d33",
+    "git_commit" : "bc9313f98ac3d0f1b8e6915dbdf8926a95976d9d",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3791,7 +3803,7 @@ workflow run_wf {
   main:
   output_ch = input_ch
     | novel_train.run(
-      fromState: ["input_train_mod1", "input_train_mod2"],
+      fromState: ["input_train_mod1", "input_train_mod2", "seed"],
       toState: ["input_model": "output"]
     )
     | novel_predict.run(

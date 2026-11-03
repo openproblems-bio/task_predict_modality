@@ -459,9 +459,9 @@ rm ReactomePathways.gmt.zip
 
 ENV SS_OPM_REFERENCE_DIR=/opt/ss_opm_reference
 LABEL org.opencontainers.image.description="Companion container for running component methods ss_opm_train"
-LABEL org.opencontainers.image.created="2026-10-13T21:29:20Z"
+LABEL org.opencontainers.image.created="2026-11-03T14:12:22Z"
 LABEL org.opencontainers.image.source="https://github.com/openproblems-bio/task_predict_modality"
-LABEL org.opencontainers.image.revision="4d73d31645c57097a6765ff3d3585503aaa99d33"
+LABEL org.opencontainers.image.revision="bc9313f98ac3d0f1b8e6915dbdf8926a95976d9d"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER
@@ -600,6 +600,11 @@ function ViashHelp {
   echo "    --output"
   echo "        type: file, required parameter, output, file must exist"
   echo "        example: model"
+  echo ""
+  echo "    --seed"
+  echo "        type: integer"
+  echo "        default: 0"
+  echo "        Seed for the random number generators used for training the model."
   echo ""
   echo "    --n_epochs"
   echo "        type: integer"
@@ -744,6 +749,17 @@ while [[ $# -gt 0 ]]; do
         --output=*)
             [ -n "$VIASH_PAR_OUTPUT" ] && ViashError Bad arguments for option \'--output=*\': \'$VIASH_PAR_OUTPUT\' \& \'$2\' - you should provide exactly one argument for this option. && exit 1
             VIASH_PAR_OUTPUT=$(ViashRemoveFlags "$1")
+            shift 1
+            ;;
+        --seed)
+            [ -n "$VIASH_PAR_SEED" ] && ViashError Bad arguments for option \'--seed\': \'$VIASH_PAR_SEED\' \& \'$2\' - you should provide exactly one argument for this option. && exit 1
+            VIASH_PAR_SEED="$2"
+            [ $# -lt 2 ] && ViashError Not enough arguments passed to --seed. Use "--help" to get more information on the parameters. && exit 1
+            shift 2
+            ;;
+        --seed=*)
+            [ -n "$VIASH_PAR_SEED" ] && ViashError Bad arguments for option \'--seed=*\': \'$VIASH_PAR_SEED\' \& \'$2\' - you should provide exactly one argument for this option. && exit 1
+            VIASH_PAR_SEED=$(ViashRemoveFlags "$1")
             shift 1
             ;;
         --n_epochs)
@@ -1031,6 +1047,9 @@ if [ -z ${VIASH_META_TEMP_DIR+x} ]; then
 fi
 
 # filling in defaults
+if [ -z ${VIASH_PAR_SEED+x} ]; then
+  VIASH_PAR_SEED="0"
+fi
 if [ -z ${VIASH_PAR_N_EPOCHS+x} ]; then
   VIASH_PAR_N_EPOCHS="40"
 fi
@@ -1070,6 +1089,12 @@ if [ ! -z "$VIASH_PAR_REACTOME_PATHWAYS" ] && [ ! -e "$VIASH_PAR_REACTOME_PATHWA
 fi
 
 # check whether parameters values are of the right type
+if [[ -n "$VIASH_PAR_SEED" ]]; then
+  if ! [[ "$VIASH_PAR_SEED" =~ ^[-+]?[0-9]+$ ]]; then
+    ViashError '--seed' has to be an integer. Use "--help" to get more information on the parameters.
+    exit 1
+  fi
+fi
 if [[ -n "$VIASH_PAR_N_EPOCHS" ]]; then
   if ! [[ "$VIASH_PAR_N_EPOCHS" =~ ^[-+]?[0-9]+$ ]]; then
     ViashError '--n_epochs' has to be an integer. Use "--help" to get more information on the parameters.
@@ -1279,6 +1304,7 @@ par = {
   'input_train_mod2': $( if [ ! -z ${VIASH_PAR_INPUT_TRAIN_MOD2+x} ]; then echo "r'${VIASH_PAR_INPUT_TRAIN_MOD2//\'/\'\"\'\"r\'}'"; else echo None; fi ),
   'input_test_mod1': $( if [ ! -z ${VIASH_PAR_INPUT_TEST_MOD1+x} ]; then echo "r'${VIASH_PAR_INPUT_TEST_MOD1//\'/\'\"\'\"r\'}'"; else echo None; fi ),
   'output': $( if [ ! -z ${VIASH_PAR_OUTPUT+x} ]; then echo "r'${VIASH_PAR_OUTPUT//\'/\'\"\'\"r\'}'"; else echo None; fi ),
+  'seed': $( if [ ! -z ${VIASH_PAR_SEED+x} ]; then echo "int(r'${VIASH_PAR_SEED//\'/\'\"\'\"r\'}')"; else echo None; fi ),
   'n_epochs': $( if [ ! -z ${VIASH_PAR_N_EPOCHS+x} ]; then echo "int(r'${VIASH_PAR_N_EPOCHS//\'/\'\"\'\"r\'}')"; else echo None; fi ),
   'burnin_length_epoch': $( if [ ! -z ${VIASH_PAR_BURNIN_LENGTH_EPOCH+x} ]; then echo "int(r'${VIASH_PAR_BURNIN_LENGTH_EPOCH//\'/\'\"\'\"r\'}')"; else echo None; fi ),
   'day_pattern': $( if [ ! -z ${VIASH_PAR_DAY_PATTERN+x} ]; then echo "r'${VIASH_PAR_DAY_PATTERN//\'/\'\"\'\"r\'}'"; else echo None; fi ),
@@ -1315,6 +1341,7 @@ dep = {
 
 sys.path.append(meta["resources_dir"])
 from cell_scale import CellScale  # noqa: E402
+from seed import seed_everything  # noqa: E402
 from ss_opm_common import (  # noqa: E402
     ROW_BLOCK,
     BatchSingularVectors,
@@ -1342,7 +1369,6 @@ apply_runtime_patches()
 from ss_opm.model.encoder_decoder.encoder_decoder import EncoderDecoder  # noqa: E402
 from ss_opm.pre_post_processing.pre_post_processing import PrePostProcessing  # noqa: E402
 from ss_opm.utility.row_normalize import row_normalize  # noqa: E402
-from ss_opm.utility.set_seed import set_seed  # noqa: E402
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using device: {device}", flush=True)
@@ -1366,8 +1392,8 @@ encoder_decoder_module.EncoderDecoder._train_step_forward = _float32_train_step_
 if meta.get("cpus"):
     os.environ.setdefault("OMP_NUM_THREADS", str(max(1, min(int(meta["cpus"]), 8))))
 
-SEED = 42
-set_seed(SEED)
+SEED = par["seed"]
+seed_everything(SEED)  # the original's set_seed(), plus deterministic GPU algorithms
 
 # ---- Load data ----
 print("Loading data...", flush=True)

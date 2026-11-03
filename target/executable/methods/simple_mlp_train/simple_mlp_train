@@ -449,9 +449,9 @@ RUN pip install --upgrade pip && \
   pip install --upgrade --no-cache-dir "scikit-learn" "scanpy" "pytorch-lightning"
 
 LABEL org.opencontainers.image.description="Companion container for running component methods simple_mlp_train"
-LABEL org.opencontainers.image.created="2026-10-13T21:29:20Z"
+LABEL org.opencontainers.image.created="2026-11-03T14:12:23Z"
 LABEL org.opencontainers.image.source="https://github.com/openproblems-bio/task_predict_modality"
-LABEL org.opencontainers.image.revision="4d73d31645c57097a6765ff3d3585503aaa99d33"
+LABEL org.opencontainers.image.revision="bc9313f98ac3d0f1b8e6915dbdf8926a95976d9d"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER
@@ -591,6 +591,11 @@ function ViashHelp {
   echo "        type: file, required parameter, output, file must exist"
   echo "        example: model"
   echo ""
+  echo "    --seed"
+  echo "        type: integer"
+  echo "        default: 0"
+  echo "        Seed for the random number generators used for training the model."
+  echo ""
   echo "    --n_epochs"
   echo "        type: integer"
   echo "        Number of training epochs. Defaults to the value in the bundled model"
@@ -688,6 +693,17 @@ while [[ $# -gt 0 ]]; do
         --output=*)
             [ -n "$VIASH_PAR_OUTPUT" ] && ViashError Bad arguments for option \'--output=*\': \'$VIASH_PAR_OUTPUT\' \& \'$2\' - you should provide exactly one argument for this option. && exit 1
             VIASH_PAR_OUTPUT=$(ViashRemoveFlags "$1")
+            shift 1
+            ;;
+        --seed)
+            [ -n "$VIASH_PAR_SEED" ] && ViashError Bad arguments for option \'--seed\': \'$VIASH_PAR_SEED\' \& \'$2\' - you should provide exactly one argument for this option. && exit 1
+            VIASH_PAR_SEED="$2"
+            [ $# -lt 2 ] && ViashError Not enough arguments passed to --seed. Use "--help" to get more information on the parameters. && exit 1
+            shift 2
+            ;;
+        --seed=*)
+            [ -n "$VIASH_PAR_SEED" ] && ViashError Bad arguments for option \'--seed=*\': \'$VIASH_PAR_SEED\' \& \'$2\' - you should provide exactly one argument for this option. && exit 1
+            VIASH_PAR_SEED=$(ViashRemoveFlags "$1")
             shift 1
             ;;
         --n_epochs)
@@ -908,6 +924,11 @@ if [ -z ${VIASH_META_TEMP_DIR+x} ]; then
   exit 1
 fi
 
+# filling in defaults
+if [ -z ${VIASH_PAR_SEED+x} ]; then
+  VIASH_PAR_SEED="0"
+fi
+
 # check whether required files exist
 if [ ! -z "$VIASH_PAR_INPUT_TRAIN_MOD1" ] && [ ! -e "$VIASH_PAR_INPUT_TRAIN_MOD1" ]; then
   ViashError "Input file '$VIASH_PAR_INPUT_TRAIN_MOD1' does not exist."
@@ -923,6 +944,12 @@ if [ ! -z "$VIASH_PAR_INPUT_TEST_MOD1" ] && [ ! -e "$VIASH_PAR_INPUT_TEST_MOD1" 
 fi
 
 # check whether parameters values are of the right type
+if [[ -n "$VIASH_PAR_SEED" ]]; then
+  if ! [[ "$VIASH_PAR_SEED" =~ ^[-+]?[0-9]+$ ]]; then
+    ViashError '--seed' has to be an integer. Use "--help" to get more information on the parameters.
+    exit 1
+  fi
+fi
 if [[ -n "$VIASH_PAR_N_EPOCHS" ]]; then
   if ! [[ "$VIASH_PAR_N_EPOCHS" =~ ^[-+]?[0-9]+$ ]]; then
     ViashError '--n_epochs' has to be an integer. Use "--help" to get more information on the parameters.
@@ -1104,7 +1131,6 @@ import numpy as np
 
 import torch
 import pytorch_lightning as pl
-from torch.utils.data import TensorDataset, DataLoader
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import TensorBoardLogger,WandbLogger
 
@@ -1117,6 +1143,7 @@ par = {
   'input_train_mod2': $( if [ ! -z ${VIASH_PAR_INPUT_TRAIN_MOD2+x} ]; then echo "r'${VIASH_PAR_INPUT_TRAIN_MOD2//\'/\'\"\'\"r\'}'"; else echo None; fi ),
   'input_test_mod1': $( if [ ! -z ${VIASH_PAR_INPUT_TEST_MOD1+x} ]; then echo "r'${VIASH_PAR_INPUT_TEST_MOD1//\'/\'\"\'\"r\'}'"; else echo None; fi ),
   'output': $( if [ ! -z ${VIASH_PAR_OUTPUT+x} ]; then echo "r'${VIASH_PAR_OUTPUT//\'/\'\"\'\"r\'}'"; else echo None; fi ),
+  'seed': $( if [ ! -z ${VIASH_PAR_SEED+x} ]; then echo "int(r'${VIASH_PAR_SEED//\'/\'\"\'\"r\'}')"; else echo None; fi ),
   'n_epochs': $( if [ ! -z ${VIASH_PAR_N_EPOCHS+x} ]; then echo "int(r'${VIASH_PAR_N_EPOCHS//\'/\'\"\'\"r\'}')"; else echo None; fi )
 }
 meta = {
@@ -1149,29 +1176,25 @@ resources_dir = f"{meta['resources_dir']}/resources"
 
 import sys
 sys.path.append(resources_dir)
+sys.path.append(meta['resources_dir'])
 from models import MLP
+from seed import seed_everything
 import utils
 
 def _train(X, y, Xt, yt, logger, config, num_workers):
 
-    X = torch.from_numpy(X).float()
-    y = torch.from_numpy(y).float()
-    ymean = torch.mean(y, dim=0, keepdim=True)
+    ymean = torch.from_numpy(np.asarray(y.mean(axis=0), dtype=np.float32))
 
-    tr_ds = TensorDataset(X,y)
-    tr_loader = DataLoader(
-        tr_ds,
+    tr_loader = utils.batch_loader(
+        utils.SparseRows(X, y),
         batch_size=config.batch_size,
         num_workers=num_workers,
         shuffle=True,
         drop_last=True
     )
 
-    Xt = torch.from_numpy(Xt).float()
-    yt = torch.from_numpy(yt).float()
-    te_ds = TensorDataset(Xt,yt)
-    te_loader = DataLoader(
-        te_ds,
+    te_loader = utils.batch_loader(
+        utils.SparseRows(Xt, yt),
         batch_size=config.batch_size,
         num_workers=num_workers,
         shuffle=False,
@@ -1200,15 +1223,20 @@ def _train(X, y, Xt, yt, logger, config, num_workers):
     yp = trainer.predict(net, te_loader, ckpt_path='best')
     yp = torch.cat(yp, dim=0)
 
-    score = ((yp-yt)**2).mean()**0.5
+    score = ((yp - torch.from_numpy(yt.toarray()).float())**2).mean()**0.5
     print(f"VALID RMSE {score:.3f}")
     del trainer
     return score,yp.detach().numpy()
 
 
 
+seed_everything(par['seed'])
+
 input_train_mod1 = ad.read_h5ad(par['input_train_mod1'])
 input_train_mod2 = ad.read_h5ad(par['input_train_mod2'])
+# only the normalized layers are used, and the counts take as much memory again
+for adata in (input_train_mod1, input_train_mod2):
+    del adata.layers["counts"]
 
 mod_1 = input_train_mod1.uns["modality"]
 mod_2 = input_train_mod2.uns["modality"]

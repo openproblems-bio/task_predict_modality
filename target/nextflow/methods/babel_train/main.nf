@@ -3436,6 +3436,18 @@ meta = [
         },
         {
           "type" : "integer",
+          "name" : "--seed",
+          "description" : "Seed for the random number generators used for training the model.",
+          "default" : [
+            0
+          ],
+          "required" : false,
+          "direction" : "input",
+          "multiple" : false,
+          "multiple_sep" : ";"
+        },
+        {
+          "type" : "integer",
           "name" : "--hidden_dim",
           "description" : "Latent dimensionality of the shared encoder/decoder bottleneck.",
           "default" : [
@@ -3536,6 +3548,10 @@ meta = [
     {
       "type" : "file",
       "path" : "/src/utils/exit_codes.py"
+    },
+    {
+      "type" : "file",
+      "path" : "/src/utils/seed.py"
     }
   ],
   "test_resources" : [
@@ -3657,7 +3673,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/babel_train",
     "viash_version" : "0.9.7",
-    "git_commit" : "4d73d31645c57097a6765ff3d3585503aaa99d33",
+    "git_commit" : "bc9313f98ac3d0f1b8e6915dbdf8926a95976d9d",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3890,6 +3906,7 @@ par = {
   'input_train_mod2': $( if [ ! -z ${VIASH_PAR_INPUT_TRAIN_MOD2+x} ]; then echo "r'${VIASH_PAR_INPUT_TRAIN_MOD2//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
   'input_test_mod1': $( if [ ! -z ${VIASH_PAR_INPUT_TEST_MOD1+x} ]; then echo "r'${VIASH_PAR_INPUT_TEST_MOD1//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
   'output': $( if [ ! -z ${VIASH_PAR_OUTPUT+x} ]; then echo "r'${VIASH_PAR_OUTPUT//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
+  'seed': $( if [ ! -z ${VIASH_PAR_SEED+x} ]; then echo "int(r'${VIASH_PAR_SEED//\\'/\\'\\"\\'\\"r\\'}')"; else echo None; fi ),
   'hidden_dim': $( if [ ! -z ${VIASH_PAR_HIDDEN_DIM+x} ]; then echo "int(r'${VIASH_PAR_HIDDEN_DIM//\\'/\\'\\"\\'\\"r\\'}')"; else echo None; fi ),
   'nn_epochs': $( if [ ! -z ${VIASH_PAR_NN_EPOCHS+x} ]; then echo "int(r'${VIASH_PAR_NN_EPOCHS//\\'/\\'\\"\\'\\"r\\'}')"; else echo None; fi ),
   'lr': $( if [ ! -z ${VIASH_PAR_LR+x} ]; then echo "float(r'${VIASH_PAR_LR//\\'/\\'\\"\\'\\"r\\'}')"; else echo None; fi ),
@@ -3929,6 +3946,7 @@ from chrom_utils import parse_chrom_groups
 from exit_codes import exit_non_applicable
 from model import AssymSplicedAutoEncoder
 from losses import QuadLoss
+from seed import seed_everything
 
 
 def _as_csr(X):
@@ -4023,6 +4041,8 @@ class BabelNet(skorch.NeuralNet):
         target2_bin = y_true[:, self._n_genes : self._n_genes + self._n_peaks]
         return self.criterion_(preds11, preds12, preds21, preds22, target1, target2_bin)
 
+
+seed_everything(par["seed"])
 
 logger.info("Reading input files...")
 adata_mod1_train = ad.read_h5ad(par["input_train_mod1"])

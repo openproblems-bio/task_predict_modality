@@ -3436,6 +3436,18 @@ meta = [
         },
         {
           "type" : "integer",
+          "name" : "--seed",
+          "description" : "Seed for the random number generators used for training the model.",
+          "default" : [
+            0
+          ],
+          "required" : false,
+          "direction" : "input",
+          "multiple" : false,
+          "multiple_sep" : ";"
+        },
+        {
+          "type" : "integer",
           "name" : "--n_epochs",
           "description" : "Number of training epochs. Defaults to the value in the bundled model config.",
           "info" : {
@@ -3458,6 +3470,10 @@ meta = [
     {
       "type" : "file",
       "path" : "../resources/"
+    },
+    {
+      "type" : "file",
+      "path" : "/src/utils/seed.py"
     }
   ],
   "test_resources" : [
@@ -3567,7 +3583,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/simple_mlp_train",
     "viash_version" : "0.9.7",
-    "git_commit" : "4d73d31645c57097a6765ff3d3585503aaa99d33",
+    "git_commit" : "bc9313f98ac3d0f1b8e6915dbdf8926a95976d9d",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3787,7 +3803,6 @@ import numpy as np
 
 import torch
 import pytorch_lightning as pl
-from torch.utils.data import TensorDataset, DataLoader
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import TensorBoardLogger,WandbLogger
 
@@ -3800,6 +3815,7 @@ par = {
   'input_train_mod2': $( if [ ! -z ${VIASH_PAR_INPUT_TRAIN_MOD2+x} ]; then echo "r'${VIASH_PAR_INPUT_TRAIN_MOD2//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
   'input_test_mod1': $( if [ ! -z ${VIASH_PAR_INPUT_TEST_MOD1+x} ]; then echo "r'${VIASH_PAR_INPUT_TEST_MOD1//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
   'output': $( if [ ! -z ${VIASH_PAR_OUTPUT+x} ]; then echo "r'${VIASH_PAR_OUTPUT//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
+  'seed': $( if [ ! -z ${VIASH_PAR_SEED+x} ]; then echo "int(r'${VIASH_PAR_SEED//\\'/\\'\\"\\'\\"r\\'}')"; else echo None; fi ),
   'n_epochs': $( if [ ! -z ${VIASH_PAR_N_EPOCHS+x} ]; then echo "int(r'${VIASH_PAR_N_EPOCHS//\\'/\\'\\"\\'\\"r\\'}')"; else echo None; fi )
 }
 meta = {
@@ -3832,29 +3848,25 @@ resources_dir = f"{meta['resources_dir']}/resources"
 
 import sys
 sys.path.append(resources_dir)
+sys.path.append(meta['resources_dir'])
 from models import MLP
+from seed import seed_everything
 import utils
 
 def _train(X, y, Xt, yt, logger, config, num_workers):
 
-    X = torch.from_numpy(X).float()
-    y = torch.from_numpy(y).float()
-    ymean = torch.mean(y, dim=0, keepdim=True)
+    ymean = torch.from_numpy(np.asarray(y.mean(axis=0), dtype=np.float32))
 
-    tr_ds = TensorDataset(X,y)
-    tr_loader = DataLoader(
-        tr_ds,
+    tr_loader = utils.batch_loader(
+        utils.SparseRows(X, y),
         batch_size=config.batch_size,
         num_workers=num_workers,
         shuffle=True,
         drop_last=True
     )
 
-    Xt = torch.from_numpy(Xt).float()
-    yt = torch.from_numpy(yt).float()
-    te_ds = TensorDataset(Xt,yt)
-    te_loader = DataLoader(
-        te_ds,
+    te_loader = utils.batch_loader(
+        utils.SparseRows(Xt, yt),
         batch_size=config.batch_size,
         num_workers=num_workers,
         shuffle=False,
@@ -3883,15 +3895,20 @@ def _train(X, y, Xt, yt, logger, config, num_workers):
     yp = trainer.predict(net, te_loader, ckpt_path='best')
     yp = torch.cat(yp, dim=0)
 
-    score = ((yp-yt)**2).mean()**0.5
+    score = ((yp - torch.from_numpy(yt.toarray()).float())**2).mean()**0.5
     print(f"VALID RMSE {score:.3f}")
     del trainer
     return score,yp.detach().numpy()
 
 
 
+seed_everything(par['seed'])
+
 input_train_mod1 = ad.read_h5ad(par['input_train_mod1'])
 input_train_mod2 = ad.read_h5ad(par['input_train_mod2'])
+# only the normalized layers are used, and the counts take as much memory again
+for adata in (input_train_mod1, input_train_mod2):
+    del adata.layers["counts"]
 
 mod_1 = input_train_mod1.uns["modality"]
 mod_2 = input_train_mod2.uns["modality"]

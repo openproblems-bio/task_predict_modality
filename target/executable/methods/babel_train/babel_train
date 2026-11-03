@@ -449,9 +449,9 @@ RUN pip install --upgrade pip && \
   pip install --upgrade --no-cache-dir "skorch>=0.15" "scanpy>=1.9" "scikit-learn>=1.1"
 
 LABEL org.opencontainers.image.description="Companion container for running component methods babel_train"
-LABEL org.opencontainers.image.created="2026-10-13T21:29:21Z"
+LABEL org.opencontainers.image.created="2026-11-03T14:12:23Z"
 LABEL org.opencontainers.image.source="https://github.com/openproblems-bio/task_predict_modality"
-LABEL org.opencontainers.image.revision="4d73d31645c57097a6765ff3d3585503aaa99d33"
+LABEL org.opencontainers.image.revision="bc9313f98ac3d0f1b8e6915dbdf8926a95976d9d"
 LABEL org.opencontainers.image.version="build_main"
 
 VIASHDOCKER
@@ -591,6 +591,11 @@ function ViashHelp {
   echo "        type: file, required parameter, output, file must exist"
   echo "        example: model"
   echo ""
+  echo "    --seed"
+  echo "        type: integer"
+  echo "        default: 0"
+  echo "        Seed for the random number generators used for training the model."
+  echo ""
   echo "    --hidden_dim"
   echo "        type: integer"
   echo "        default: 16"
@@ -714,6 +719,17 @@ while [[ $# -gt 0 ]]; do
         --output=*)
             [ -n "$VIASH_PAR_OUTPUT" ] && ViashError Bad arguments for option \'--output=*\': \'$VIASH_PAR_OUTPUT\' \& \'$2\' - you should provide exactly one argument for this option. && exit 1
             VIASH_PAR_OUTPUT=$(ViashRemoveFlags "$1")
+            shift 1
+            ;;
+        --seed)
+            [ -n "$VIASH_PAR_SEED" ] && ViashError Bad arguments for option \'--seed\': \'$VIASH_PAR_SEED\' \& \'$2\' - you should provide exactly one argument for this option. && exit 1
+            VIASH_PAR_SEED="$2"
+            [ $# -lt 2 ] && ViashError Not enough arguments passed to --seed. Use "--help" to get more information on the parameters. && exit 1
+            shift 2
+            ;;
+        --seed=*)
+            [ -n "$VIASH_PAR_SEED" ] && ViashError Bad arguments for option \'--seed=*\': \'$VIASH_PAR_SEED\' \& \'$2\' - you should provide exactly one argument for this option. && exit 1
+            VIASH_PAR_SEED=$(ViashRemoveFlags "$1")
             shift 1
             ;;
         --hidden_dim)
@@ -990,6 +1006,9 @@ if [ -z ${VIASH_META_TEMP_DIR+x} ]; then
 fi
 
 # filling in defaults
+if [ -z ${VIASH_PAR_SEED+x} ]; then
+  VIASH_PAR_SEED="0"
+fi
 if [ -z ${VIASH_PAR_HIDDEN_DIM+x} ]; then
   VIASH_PAR_HIDDEN_DIM="16"
 fi
@@ -1024,6 +1043,12 @@ if [ ! -z "$VIASH_PAR_INPUT_TEST_MOD1" ] && [ ! -e "$VIASH_PAR_INPUT_TEST_MOD1" 
 fi
 
 # check whether parameters values are of the right type
+if [[ -n "$VIASH_PAR_SEED" ]]; then
+  if ! [[ "$VIASH_PAR_SEED" =~ ^[-+]?[0-9]+$ ]]; then
+    ViashError '--seed' has to be an integer. Use "--help" to get more information on the parameters.
+    exit 1
+  fi
+fi
 if [[ -n "$VIASH_PAR_HIDDEN_DIM" ]]; then
   if ! [[ "$VIASH_PAR_HIDDEN_DIM" =~ ^[-+]?[0-9]+$ ]]; then
     ViashError '--hidden_dim' has to be an integer. Use "--help" to get more information on the parameters.
@@ -1248,6 +1273,7 @@ par = {
   'input_train_mod2': $( if [ ! -z ${VIASH_PAR_INPUT_TRAIN_MOD2+x} ]; then echo "r'${VIASH_PAR_INPUT_TRAIN_MOD2//\'/\'\"\'\"r\'}'"; else echo None; fi ),
   'input_test_mod1': $( if [ ! -z ${VIASH_PAR_INPUT_TEST_MOD1+x} ]; then echo "r'${VIASH_PAR_INPUT_TEST_MOD1//\'/\'\"\'\"r\'}'"; else echo None; fi ),
   'output': $( if [ ! -z ${VIASH_PAR_OUTPUT+x} ]; then echo "r'${VIASH_PAR_OUTPUT//\'/\'\"\'\"r\'}'"; else echo None; fi ),
+  'seed': $( if [ ! -z ${VIASH_PAR_SEED+x} ]; then echo "int(r'${VIASH_PAR_SEED//\'/\'\"\'\"r\'}')"; else echo None; fi ),
   'hidden_dim': $( if [ ! -z ${VIASH_PAR_HIDDEN_DIM+x} ]; then echo "int(r'${VIASH_PAR_HIDDEN_DIM//\'/\'\"\'\"r\'}')"; else echo None; fi ),
   'nn_epochs': $( if [ ! -z ${VIASH_PAR_NN_EPOCHS+x} ]; then echo "int(r'${VIASH_PAR_NN_EPOCHS//\'/\'\"\'\"r\'}')"; else echo None; fi ),
   'lr': $( if [ ! -z ${VIASH_PAR_LR+x} ]; then echo "float(r'${VIASH_PAR_LR//\'/\'\"\'\"r\'}')"; else echo None; fi ),
@@ -1287,6 +1313,7 @@ from chrom_utils import parse_chrom_groups
 from exit_codes import exit_non_applicable
 from model import AssymSplicedAutoEncoder
 from losses import QuadLoss
+from seed import seed_everything
 
 
 def _as_csr(X):
@@ -1381,6 +1408,8 @@ class BabelNet(skorch.NeuralNet):
         target2_bin = y_true[:, self._n_genes : self._n_genes + self._n_peaks]
         return self.criterion_(preds11, preds12, preds21, preds22, target1, target2_bin)
 
+
+seed_everything(par["seed"])
 
 logger.info("Reading input files...")
 adata_mod1_train = ad.read_h5ad(par["input_train_mod1"])

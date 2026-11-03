@@ -3,7 +3,7 @@ workflow run_wf {
   main:
   output_ch = input_ch
     | novel_train.run(
-      fromState: ["input_train_mod1", "input_train_mod2"],
+      fromState: ["input_train_mod1", "input_train_mod2", "seed"],
       toState: ["input_model": "output"]
     )
     | novel_predict.run(

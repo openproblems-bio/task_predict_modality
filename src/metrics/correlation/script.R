@@ -30,15 +30,15 @@ expect_true(
 
 cat("Computing correlation metrics\n")
 # Wrangle data
-tv <- ad_sol$layers[["normalized"]]
-pv <- ad_pred$layers[["normalized"]]
+# dynutils < 1.0.13 ranks a CSR matrix (dgRMatrix) along the wrong axis
+tv <- methods::as(ad_sol$layers[["normalized"]], "CsparseMatrix")
+pv <- methods::as(ad_pred$layers[["normalized"]], "CsparseMatrix")
 
 # score non-finite predictions as zero, like the zero-variance case below
-pv_values <- if (methods::is(pv, "sparseMatrix")) pv@x else pv
-non_finite <- !is.finite(pv_values)
+non_finite <- !is.finite(pv@x)
 if (any(non_finite)) {
   cat("Prediction contains", sum(non_finite), "non-finite values, scoring them as 0\n")
-  if (methods::is(pv, "sparseMatrix")) pv@x[non_finite] <- 0 else pv[non_finite] <- 0
+  pv@x[non_finite] <- 0
 }
 
 # precompute sds

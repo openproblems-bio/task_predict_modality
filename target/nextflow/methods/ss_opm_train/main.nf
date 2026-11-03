@@ -3436,6 +3436,18 @@ meta = [
         },
         {
           "type" : "integer",
+          "name" : "--seed",
+          "description" : "Seed for the random number generators used for training the model.",
+          "default" : [
+            0
+          ],
+          "required" : false,
+          "direction" : "input",
+          "multiple" : false,
+          "multiple_sep" : ";"
+        },
+        {
+          "type" : "integer",
           "name" : "--n_epochs",
           "description" : "Number of training epochs (the authors' setting).",
           "info" : {
@@ -3538,6 +3550,10 @@ meta = [
     {
       "type" : "file",
       "path" : "/src/utils/cell_scale.py"
+    },
+    {
+      "type" : "file",
+      "path" : "/src/utils/seed.py"
     }
   ],
   "test_resources" : [
@@ -3664,7 +3680,7 @@ meta = [
     "engine" : "docker",
     "output" : "target/nextflow/methods/ss_opm_train",
     "viash_version" : "0.9.7",
-    "git_commit" : "4d73d31645c57097a6765ff3d3585503aaa99d33",
+    "git_commit" : "bc9313f98ac3d0f1b8e6915dbdf8926a95976d9d",
     "git_remote" : "https://github.com/openproblems-bio/task_predict_modality"
   },
   "package_config" : {
@@ -3892,6 +3908,7 @@ par = {
   'input_train_mod2': $( if [ ! -z ${VIASH_PAR_INPUT_TRAIN_MOD2+x} ]; then echo "r'${VIASH_PAR_INPUT_TRAIN_MOD2//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
   'input_test_mod1': $( if [ ! -z ${VIASH_PAR_INPUT_TEST_MOD1+x} ]; then echo "r'${VIASH_PAR_INPUT_TEST_MOD1//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
   'output': $( if [ ! -z ${VIASH_PAR_OUTPUT+x} ]; then echo "r'${VIASH_PAR_OUTPUT//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
+  'seed': $( if [ ! -z ${VIASH_PAR_SEED+x} ]; then echo "int(r'${VIASH_PAR_SEED//\\'/\\'\\"\\'\\"r\\'}')"; else echo None; fi ),
   'n_epochs': $( if [ ! -z ${VIASH_PAR_N_EPOCHS+x} ]; then echo "int(r'${VIASH_PAR_N_EPOCHS//\\'/\\'\\"\\'\\"r\\'}')"; else echo None; fi ),
   'burnin_length_epoch': $( if [ ! -z ${VIASH_PAR_BURNIN_LENGTH_EPOCH+x} ]; then echo "int(r'${VIASH_PAR_BURNIN_LENGTH_EPOCH//\\'/\\'\\"\\'\\"r\\'}')"; else echo None; fi ),
   'day_pattern': $( if [ ! -z ${VIASH_PAR_DAY_PATTERN+x} ]; then echo "r'${VIASH_PAR_DAY_PATTERN//\\'/\\'\\"\\'\\"r\\'}'"; else echo None; fi ),
@@ -3928,6 +3945,7 @@ dep = {
 
 sys.path.append(meta["resources_dir"])
 from cell_scale import CellScale  # noqa: E402
+from seed import seed_everything  # noqa: E402
 from ss_opm_common import (  # noqa: E402
     ROW_BLOCK,
     BatchSingularVectors,
@@ -3955,7 +3973,6 @@ apply_runtime_patches()
 from ss_opm.model.encoder_decoder.encoder_decoder import EncoderDecoder  # noqa: E402
 from ss_opm.pre_post_processing.pre_post_processing import PrePostProcessing  # noqa: E402
 from ss_opm.utility.row_normalize import row_normalize  # noqa: E402
-from ss_opm.utility.set_seed import set_seed  # noqa: E402
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using device: {device}", flush=True)
@@ -3979,8 +3996,8 @@ encoder_decoder_module.EncoderDecoder._train_step_forward = _float32_train_step_
 if meta.get("cpus"):
     os.environ.setdefault("OMP_NUM_THREADS", str(max(1, min(int(meta["cpus"]), 8))))
 
-SEED = 42
-set_seed(SEED)
+SEED = par["seed"]
+seed_everything(SEED)  # the original's set_seed(), plus deterministic GPU algorithms
 
 # ---- Load data ----
 print("Loading data...", flush=True)
