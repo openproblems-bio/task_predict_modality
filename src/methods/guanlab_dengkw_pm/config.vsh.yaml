@@ -26,10 +26,6 @@ arguments:
       kernel ridge model, so the consensus averages `2 * n_repeats` predictions.
     info:
       test_default: 1
-  - name: "--seed"
-    type: "integer"
-    default: 1000
-    description: Seed for the truncated SVDs and the batch reshuffling.
 resources:
   - type: python_script
     path: script.py

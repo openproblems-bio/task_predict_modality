@@ -3,7 +3,7 @@ workflow run_wf {
   main:
   output_ch = input_ch
     | babel_train.run(
-      fromState: ["input_train_mod1", "input_train_mod2", "input_test_mod1"],
+      fromState: ["input_train_mod1", "input_train_mod2", "input_test_mod1", "seed"],
       toState: ["input_model": "output"]
     )
     | babel_predict.run(

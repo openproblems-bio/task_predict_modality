@@ -25,7 +25,7 @@ par = {
   'input_train_mod2': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/normal/train_mod2.h5ad',
   'output': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/normal/models/novel',
   'n_epochs': 100,
-  'seed': 1
+  'seed': 0
 }
 meta = {
   'resources_dir': 'src/methods/novel',

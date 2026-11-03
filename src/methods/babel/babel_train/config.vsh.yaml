@@ -48,10 +48,6 @@ arguments:
     type: integer
     default: 20
     description: Epochs without validation loss improvement before stopping early.
-  - name: "--seed"
-    type: integer
-    default: 0
-    description: Seed for the weight initialisation, the validation split and the order of the training batches.
 engines:
   - type: docker
     image: openproblems/base_pytorch_nvidia:1

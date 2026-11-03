@@ -3,7 +3,7 @@ workflow run_wf {
   main:
   output_ch = input_ch
     | ss_opm_train.run(
-      fromState: ["input_train_mod1", "input_train_mod2", "input_test_mod1"],
+      fromState: ["input_train_mod1", "input_train_mod2", "input_test_mod1", "seed"],
       toState: ["input_model": "output"]
     )
     | ss_opm_predict.run(

@@ -62,10 +62,6 @@ arguments:
     type: boolean
     default: false
     description: Whether to plot the UMAP embedding of the latent space (for diagnoscic purposes)
-  - name: "--seed"
-    type: "integer"
-    default: 0
-    description: Seed for the scvi-tools model and the approximate nearest neighbor search (pynndescent).
 resources:
   - type: python_script
     path: script.py

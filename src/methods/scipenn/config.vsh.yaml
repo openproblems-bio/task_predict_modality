@@ -37,10 +37,6 @@ arguments:
     type: integer
     description: "Training batch size."
     default: 128
-  - name: "--seed"
-    type: integer
-    description: "Seed for the train/validation split, shuffling and weight initialization."
-    default: 0
 resources:
   - type: python_script
     path: script.py

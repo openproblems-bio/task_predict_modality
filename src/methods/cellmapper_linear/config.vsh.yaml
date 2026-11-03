@@ -57,10 +57,6 @@ arguments:
     type: "integer"
     default: 50
     description: Number of neighbors to consider for k-NN graph construction.
-  - name: "--seed"
-    type: "integer"
-    default: 0
-    description: Seed for the approximate nearest neighbor search (pynndescent) and the fallback representation.
 resources:
   - type: python_script
     path: script.py

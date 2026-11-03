@@ -13,7 +13,7 @@ par = {
     'input_test_mod1': 'resources_test/task_predict_modality/openproblems_neurips2021/bmmc_multiome/normal/test_mod1.h5ad',
     'output': 'output.h5ad',
     'n_repeats': 5,
-    'seed': 1000
+    'seed': 0
 }
 meta = {
     'name': 'guanlab_dengkw_pm',
