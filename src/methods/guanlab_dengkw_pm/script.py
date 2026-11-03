@@ -31,12 +31,17 @@ if meta.get('cpus'):
 # Workaround for sklearn's KernelRidge: this computes
 # KernelRidge(alpha=alpha, kernel=kernel).fit(X, y).predict(X_test), but solves the system itself.
 #
-# KernelRidge solves (K + alpha * I) w = y with scipy.linalg.solve(assume_a="pos"). That call raised a MemoryError
-# or segfaulted on large systems, and cho_factor() reports K + alpha * I as not positive definite ("potrf return
-# info") for every half of the batches of pbmc_multiome (56k-74k cells). This depends on the CPU: on the Cascade Lake
-# workers of de.NBI, OpenBLAS picks its AVX-512 kernel (SkylakeX) and cho_factor() fails at 66k cells, whereas it
-# succeeds with the Haswell kernel, on AMD CPUs or with OPENBLAS_CORETYPE=Haswell. The LU solve of numpy.linalg.solve()
-# handles these systems; where scipy's Cholesky works, the coefficients agree to 6e-13.
+# KernelRidge solves (K + alpha * I) w = y with scipy.linalg.solve(assume_a="pos"), which fails on large systems.
+# Tried on the halves of the batches of pbmc_multiome (56k-74k cells), or at the same size:
+# - scipy.linalg.solve(assume_a="pos"): raises a MemoryError or segfaults, already from ~30-40k cells
+# - scipy.linalg.cho_factor(): reports K + alpha * I as not positive definite ("potrf return info")
+# - numpy.linalg.cholesky(): segfaults
+# - numpy.linalg.solve(): works, 270 s for 66k cells on 30 threads. Where scipy's Cholesky works, the coefficients
+#   agree to 6e-13.
+#
+# The Cholesky failures depend on the CPU: on the Cascade Lake workers of de.NBI, OpenBLAS picks its AVX-512 kernel
+# (SkylakeX). cho_factor() succeeds at 66k cells with the Haswell kernel, on AMD CPUs or with
+# OPENBLAS_CORETYPE=Haswell, but numpy.linalg.solve() doesn't need that set on every backend.
 #
 # Switch back to KernelRidge once OpenBLAS's Cholesky handles these systems on every CPU.
 def kernel_ridge_predict(kernel, alpha, X, y, X_test):
