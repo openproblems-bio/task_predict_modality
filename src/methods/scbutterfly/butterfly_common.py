@@ -20,6 +20,7 @@ import torch
 from scipy.sparse import csr_matrix, issparse
 
 import chrom_utils
+from seed import seed_everything
 
 logger = logging.getLogger(__name__)
 
@@ -169,7 +170,7 @@ class _SparseBatchLoader:
     Batches hold the same values in the same layout (RNA columns, then ATAC), and come
     back on the device as float32, so the training loop's ``.cuda().to(torch.float32)``
     is a no-op. Shuffling draws a ``torch.randperm``, like ``DataLoader``, so it follows
-    the seed scButterfly sets.
+    the seed.
     """
 
     def __init__(self, dataset, batch_size, shuffle=False, num_workers=0, drop_last=False):
@@ -322,7 +323,7 @@ def validation_cells(n_train):
     return sorted(shuffled[:max(1, int(0.1 * n_train))])
 
 
-def build_butterfly(train_mod1, train_mod2, test_mod1, n_top_genes, Butterfly,
+def build_butterfly(train_mod1, train_mod2, test_mod1, n_top_genes, Butterfly, seed,
                     model_all_target_features=True):
     """Build + preprocess + construct a Butterfly for the given data.
 
@@ -337,7 +338,7 @@ def build_butterfly(train_mod1, train_mod2, test_mod1, n_top_genes, Butterfly,
     Returns a dict with the constructed ``butterfly``, the resolved ``direction``,
     ``test_id`` and ``validation_id`` (row indices of the test and held-out training
     cells), ``chrom_list``, and the preprocessed and the original target var names.
-    Deterministic given the same inputs, so train and predict produce identical
+    Deterministic given the same inputs and seed, so train and predict produce identical
     architecture/preprocessing.
     """
     direction, mod1, mod2 = detect_direction(train_mod1, train_mod2)
@@ -387,6 +388,8 @@ def build_butterfly(train_mod1, train_mod2, test_mod1, n_top_genes, Butterfly,
     ATAC_data = chrom_utils.apply_sort(ATAC_data, sort_index)
 
     butterfly = Butterfly()
+    # Butterfly() seeds python, numpy and torch with 19193
+    seed_everything(seed)
     butterfly.load_data(RNA_data, ATAC_data, train_id_final, test_id, validation_id)
     del RNA_data, ATAC_data  # load_data keeps its own copies
     butterfly.data_preprocessing(

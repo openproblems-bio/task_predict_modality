@@ -73,6 +73,10 @@ info:
 resources:
   - type: r_script
     path: script.R
+# __merge__ appends to the api's test_resources
+test_resources:
+  - type: python_script
+    path: test_prediction_layout.py
 engines:
   - type: docker
     image: openproblems/base_r:1

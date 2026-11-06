@@ -9,10 +9,13 @@ par <- list(
   input_test_mod1 = paste0(path, "test_mod1.h5ad"),
   input_train_mod2 = paste0(path, "train_mod2.h5ad"),
   output = "output.h5ad",
-  n_pcs = 4L
+  n_pcs = 4L,
+  seed = 0L
 )
 meta <- list(name = "foo")
 ## VIASH END
+
+set.seed(par$seed)
 
 cat("Reading mod1 files\n")
 input_train_mod1 <- anndata::read_h5ad(par$input_train_mod1)

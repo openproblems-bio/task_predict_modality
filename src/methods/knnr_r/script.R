@@ -11,10 +11,13 @@ par <- list(
   output = "output.h5ad",
   n_pcs = 4L,
   n_neighbors = 3,
-  distance_method = "pearson"
+  distance_method = "pearson",
+  seed = 0L
 )
 meta <- list(name = "foo")
 ## VIASH END
+
+set.seed(par$seed)
 
 cat("Reading mod1 h5ad files\n")
 input_train_mod1 <- anndata::read_h5ad(par$input_train_mod1)

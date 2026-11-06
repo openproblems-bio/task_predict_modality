@@ -415,6 +415,7 @@ Arguments:
 | `--input_train_mod2` | `file` | The mod2 expression values of the train cells. |
 | `--input_test_mod1` | `file` | The mod1 expression values of the test cells. |
 | `--output` | `file` | (*Output*) A prediction of the mod2 expression values of the test cells. |
+| `--seed` | `integer` | (*Optional*) Seed for the random number generators of the method. Default: `0`. |
 
 </div>
 
@@ -432,6 +433,7 @@ Arguments:
 | `--input_train_mod2` | `file` | The mod2 expression values of the train cells. |
 | `--input_test_mod1` | `file` | (*Optional*) The mod1 expression values of the test cells. |
 | `--output` | `file` | (*Output*) A pretrained model for predicting the expression of one modality from another. |
+| `--seed` | `integer` | (*Optional*) Seed for the random number generators used for training the model. Default: `0`. |
 
 </div>
 
@@ -450,6 +452,7 @@ Arguments:
 | `--input_test_mod1` | `file` | The mod1 expression values of the test cells. |
 | `--input_test_mod2` | `file` | The ground-truth mod2 expression values of the test cells. |
 | `--output` | `file` | (*Output*) A prediction of the mod2 expression values of the test cells. |
+| `--seed` | `integer` | (*Optional*) Seed for the random number generators of the control method, if it uses any. Default: `0`. |
 
 </div>
 

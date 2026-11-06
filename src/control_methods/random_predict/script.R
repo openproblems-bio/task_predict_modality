@@ -7,10 +7,13 @@ par <- list(
   input_train_mod1 = "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/train_mod1.h5ad",
   input_test_mod1 = "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/test_mod1.h5ad",
   input_train_mod2 = "resources_test/task_predict_modality/openproblems_neurips2021/bmmc_cite/train_mod2.h5ad",
-  output = "output.h5ad"
+  output = "output.h5ad",
+  seed = 0L
 )
 meta <- list(name = "foo")
 ## VIASH END
+
+set.seed(par$seed)
 
 cat("Reading h5ad files\n")
 input_train_mod2 <- anndata::read_h5ad(par$input_train_mod2)

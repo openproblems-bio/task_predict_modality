@@ -1,3 +1,5 @@
+import sys
+
 import anndata as ad
 import cellmapper as cm
 from scipy.sparse import csc_matrix
@@ -13,12 +15,19 @@ par = {
     'fallback_representation': 'joint_pca',  # or None for fallback_representation
     'n_neighbors': 30,
     'kernel_method': 'gauss',
-    'mask_var': "hvg"  # variable to mask for fallback representation
+    'mask_var': "hvg",  # variable to mask for fallback representation
+    'seed': 0,
 }
 meta = {
   'name': 'cellmapper_linear',
+  'resources_dir': 'src/utils',
 }
 ## VIASH END
+
+sys.path.append(meta['resources_dir'])
+from seed import seed_everything
+
+seed_everything(par['seed'])
 
 print('Reading input files', flush=True)
 input_train_mod1 = ad.read_h5ad(par['input_train_mod1'])

@@ -67,6 +67,7 @@ resources:
     path: script.py
   - path: utils.py
     dest: utils.py 
+  - path: /src/utils/seed.py
 engines:
   - type: docker
     image: openproblems/base_pytorch_nvidia:1
