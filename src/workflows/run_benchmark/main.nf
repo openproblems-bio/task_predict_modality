@@ -31,6 +31,7 @@ methods = [
 // construct list of metrics
 metrics = [
   correlation,
+  deg,
   mse
 ]
 

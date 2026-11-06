@@ -1,4 +1,8 @@
-# task_predict_modality 0.2.1
+# task_predict_modality 0.3.0
+
+## NEW FUNCTIONALITY
+
+* `deg`: Added the `deg_f1` and `spearman_z` metrics, which compare one-vs-rest Wilcoxon DE results of Leiden clusters of the ground truth between the ground truth and the prediction (PR #84).
 
 ## MAJOR CHANGES
 

@@ -1,0 +1,77 @@
+__merge__: ../../api/comp_metric.yaml
+name: deg
+info:
+  metrics:
+    - name: deg_f1
+      label: DEG F1
+      summary: The F1 score of the predicted marker genes against the ground-truth marker genes.
+      description: |
+        Leiden clusters of the ground truth with at least 30 cells are tested one-vs-rest with a Wilcoxon
+        rank-sum test, on the ground truth and on the prediction. Up-regulated features with a
+        Benjamini-Hochberg adjusted p-value below 0.05 and an effect above the modality's threshold are
+        the DEGs. The metric is the F1 score of the predicted against the ground-truth DEGs, averaged
+        over the clusters. Clusters without ground-truth DEGs are skipped. Scores 0 when the prediction calls no DEGs.
+        The effect threshold is absolute, so the prediction must be on the scale of the `normalized` layer.
+      min: 0
+      max: 1
+      maximize: true
+      references:
+        doi:
+          - 10.1108/eb026584
+    - name: spearman_z
+      label: Spearman DE z-score
+      summary: The rank correlation of the ground-truth and predicted DE z-scores over all features.
+      description: |
+        Leiden clusters of the ground truth with at least 30 cells are tested one-vs-rest with a Wilcoxon
+        rank-sum test, on the ground truth and on the prediction. The metric is the Spearman correlation
+        of the ground-truth and predicted z-scores over all features, averaged over the clusters.
+      min: -1
+      max: 1
+      maximize: true
+      references:
+        doi:
+          - 10.2307/1412159
+arguments:
+  - name: "--leiden_resolution"
+    type: double
+    default: 1
+    description: Resolution of the Leiden clustering of the ground truth that defines the groups.
+  - name: "--min_group_size"
+    type: integer
+    default: 30
+    description: Clusters with fewer cells are not scored.
+  - name: "--padj_threshold"
+    type: double
+    default: 0.05
+    description: Maximum Benjamini-Hochberg adjusted p-value of a DEG.
+  - name: "--effect_threshold_gex"
+    type: double
+    default: 0.25
+    description: Minimum difference of means (cluster minus rest) on the `normalized` layer for a DEG, when the target modality is GEX.
+  - name: "--effect_threshold_adt"
+    type: double
+    default: 0.5
+    description: Minimum difference of means (cluster minus rest) on the `normalized` layer for a DEG, when the target modality is ADT.
+  - name: "--effect_threshold_atac"
+    type: double
+    default: 0
+    description: Minimum difference of means (cluster minus rest) on the `normalized` layer for a DEG, when the target modality is ATAC.
+  - name: "--seed"
+    type: integer
+    default: 0
+    description: Random seed of the PCA, the neighbour graph and the Leiden clustering.
+resources:
+  - type: python_script
+    path: script.py
+engines:
+  - type: docker
+    image: openproblems/base_python:1
+    setup:
+      - type: python
+        packages:
+          - igraph
+runners:
+  - type: executable
+  - type: nextflow
+    directives:
+      label: [midtime, lowmem, lowcpu]
